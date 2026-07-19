@@ -143,31 +143,68 @@ function emptyReview() {
     sleepQuality:"",
     dreams:"",
     activities:[],
-    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{done:false,days:0}])),
+    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{status:"open",days:0}])),
     mood:"",
     gratitude1:"", gratitude2:"", allahName:"",
     notes:""
   };
 }
+function findPreviousStreaks(date) {
+  let cursor = date;
+  for (let i = 0; i < 3650; i++) {
+    cursor = addDays(cursor, -1);
+    const rawText = localStorage.getItem(storageKey(cursor));
+    if (!rawText) continue;
+    try {
+      const raw = JSON.parse(rawText);
+      if (!raw.streaks) continue;
+      const inherited = {};
+      STREAKS.forEach(s => {
+        const old = raw.streaks[s.key];
+        inherited[s.key] = {
+          status:"open",
+          days: typeof old === "object" && old !== null ? Number(old.days || 0) : 0
+        };
+      });
+      return inherited;
+    } catch {}
+  }
+  return Object.fromEntries(STREAKS.map(s => [s.key, {status:"open", days:0}]));
+}
+
 function loadReview(date) {
   try {
-    const raw = JSON.parse(localStorage.getItem(storageKey(date)) || "{}");
-    const merged = {...emptyReview(), ...raw};
+    const rawText = localStorage.getItem(storageKey(date));
+    const raw = rawText ? JSON.parse(rawText) : {};
+    const base = emptyReview();
+    if (!rawText) base.streaks = findPreviousStreaks(date);
+
+    const merged = {...base, ...raw};
     merged.prayers = {...emptyReview().prayers, ...(raw.prayers || {})};
-    merged.streaks = {...emptyReview().streaks};
+    merged.streaks = {...base.streaks};
+
     STREAKS.forEach(s => {
       const old = raw.streaks?.[s.key];
-      if (typeof old === "object" && old !== null) merged.streaks[s.key] = {done:!!old.done, days:Number(old.days||0)};
-      else if (typeof old === "boolean") merged.streaks[s.key] = {done:old, days:0};
+      if (typeof old === "object" && old !== null) {
+        let status = old.status;
+        if (!status && typeof old.done === "boolean") status = old.done ? "done" : "open";
+        merged.streaks[s.key] = {
+          status: status || "open",
+          days: Number(old.days || 0)
+        };
+      } else if (typeof old === "boolean") {
+        merged.streaks[s.key] = {status:old ? "done" : "open", days:0};
+      }
     });
     return merged;
-  } catch { return emptyReview(); }
+  } catch {
+    return emptyReview();
+  }
 }
 function saveReview(silent=false) {
   collectForm();
   localStorage.setItem(storageKey(selectedDate), JSON.stringify(currentData));
   updateProgress();
-  renderWeek();
   renderStats();
   if(!silent) {
     const btn=$("saveButton");
@@ -185,7 +222,6 @@ function setDate(date) {
   $("dateButton").textContent=formatDate(date);
   $("datePicker").value=date;
   fillForm();
-  renderWeek();
   renderStats();
   updateProgress();
 }
@@ -236,25 +272,61 @@ function renderActivities() {
 }
 function renderStreaks() {
   $("streakList").innerHTML=STREAKS.map(s=>{
-    const state=currentData.streaks?.[s.key] || {done:false,days:0};
-    return `<div class="streak-row">
-      <div class="streak-name"><strong>${s.label}</strong><small>Aktueller Streak</small></div>
+    const state=currentData.streaks?.[s.key] || {status:"open",days:0};
+    const done=state.status==="done";
+    const broken=state.status==="broken";
+    return `<div class="streak-row ${broken ? "streak-broken" : ""}">
+      <div class="streak-name">
+        <strong>${s.label}</strong>
+        <small>Aktueller Streak</small>
+      </div>
       <div class="streak-controls">
-        <input class="streak-days" type="number" min="0" inputmode="numeric" data-streak-days="${s.key}" value="${Number(state.days||0)}">
-        <span>Tage</span>
-        <label class="streak-check"><input type="checkbox" data-streak="${s.key}" ${state.done?"checked":""}> Heute geschafft</label>
+        <div class="streak-count-wrap">
+          <input class="streak-days" type="number" min="0" inputmode="numeric"
+                 data-streak-days="${s.key}" value="${Number(state.days||0)}">
+          <span>Tage</span>
+        </div>
+        <label class="streak-check">
+          <input type="checkbox" data-streak="${s.key}" ${done?"checked":""}>
+          Heute geschafft
+        </label>
+        <button type="button" class="break-button ${broken ? "active" : ""}"
+                data-break-streak="${s.key}">
+          ${broken ? "Unterbrochen" : "Unterbrechen"}
+        </button>
       </div>
     </div>`;
   }).join("");
+
   document.querySelectorAll("[data-streak-days]").forEach(inp=>inp.onchange=()=>{
-    currentData.streaks[inp.dataset.streakDays].days=Math.max(0,Number(inp.value||0)); saveReview(true);
+    const state=currentData.streaks[inp.dataset.streakDays];
+    state.days=Math.max(0,Number(inp.value||0));
+    saveReview(true);
   });
+
   document.querySelectorAll("[data-streak]").forEach(c=>c.onchange=()=>{
     const state=currentData.streaks[c.dataset.streak];
-    if(c.checked && !state.done) state.days=Number(state.days||0)+1;
-    if(!c.checked && state.done) state.days=Math.max(0,Number(state.days||0)-1);
-    state.done=c.checked;
-    saveReview(true); renderStreaks();
+    if(c.checked && state.status!=="done") {
+      state.days=Number(state.days||0)+1;
+      state.status="done";
+    } else if(!c.checked && state.status==="done") {
+      state.days=Math.max(0,Number(state.days||0)-1);
+      state.status="open";
+    }
+    saveReview(true);
+    renderStreaks();
+  });
+
+  document.querySelectorAll("[data-break-streak]").forEach(btn=>btn.onclick=()=>{
+    const state=currentData.streaks[btn.dataset.breakStreak];
+    if(state.status==="broken") {
+      state.status="open";
+    } else {
+      state.status="broken";
+      state.days=0;
+    }
+    saveReview(true);
+    renderStreaks();
   });
 }
 function completionScore(data) {
@@ -267,7 +339,7 @@ function completionScore(data) {
     PRAYERS.every(p=>data.prayers?.[p] && data.prayers[p]!=="Nicht gebetet"),
     !!data.sleepQuality,
     (data.activities||[]).length>0,
-    STREAKS.every(s=>data.streaks?.[s.key]?.done),
+    STREAKS.every(s=>data.streaks?.[s.key]?.status==="done"),
     !!data.mood,
     !!data.gratitude1,
     !!data.gratitude2,
@@ -291,41 +363,51 @@ function weekDates() {
     return d.toISOString().slice(0,10);
   });
 }
-function renderWeek() {
-  $("weekSummary").innerHTML=weekDates().map(date=>{
-    const d=loadReview(date);
-    const prayerCount=PRAYERS.filter(p=>d.prayers?.[p] && d.prayers[p]!=="Nicht gebetet").length;
-    const streakCount=STREAKS.filter(s=>d.streaks?.[s.key]?.done).length;
-    return `<div class="week-day" data-date="${date}">
-      <div class="week-date"><strong>${new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(new Date(date+"T12:00:00"))}</strong><small>${date.slice(8,10)}.${date.slice(5,7)}.</small></div>
-      <div class="week-metrics">
-        <span class="pill">☀️ ${d.morningRoutine?"✓":"–"}</span>
-        <span class="pill">🕋 ${prayerCount}/5</span>
-        <span class="pill">💧 ${(Number(d.water)/1000).toFixed(1)} L</span>
-        <span class="pill">👣 ${Number(d.steps||0).toLocaleString("de-DE")}</span>
-        <span class="pill">Streaks ${streakCount}/4</span>
+
+function renderStats() {
+  const dates=weekDates();
+  const reviews=dates.map(loadReview);
+  const prayers=reviews.reduce((n,d)=>n+PRAYERS.filter(p=>d.prayers?.[p] && d.prayers[p]!=="Nicht gebetet").length,0);
+  const morning=reviews.filter(d=>d.morningRoutine).length;
+  const evening=reviews.filter(d=>d.eveningRoutine).length;
+  const ramadan=Number(currentData.ramadanDays || 0);
+
+  const topStats = [
+    [prayers+"/35","Gebete"],
+    [morning+"/7","Morgenroutine"],
+    [evening+"/7","Abendroutine"],
+    [ramadan < 0 ? Math.abs(ramadan)+" offen" : ramadan === 0 ? "0 offen" : ramadan+" zusätzlich",
+     "Ramadan", ramadan < 0 ? "negative" : "positive"]
+  ];
+
+  const topHtml = topStats.map(([v,l,c=""])=>`
+    <div class="stat ${c}">
+      <strong>${v}</strong>
+      <span>${l}</span>
+    </div>`).join("");
+
+  const streakHtml = STREAKS.map(s=>{
+    const current=currentData.streaks?.[s.key] || {status:"open",days:0};
+    const doneCount=reviews.filter(d=>d.streaks?.[s.key]?.status==="done").length;
+    const brokenCount=reviews.filter(d=>d.streaks?.[s.key]?.status==="broken").length;
+    const note = brokenCount > 0
+      ? `<span class="streak-week-warning">${brokenCount}× unterbrochen</span>`
+      : `<span class="streak-week-ok">Keine Unterbrechung</span>`;
+    return `<div class="weekly-streak-card">
+      <div>
+        <strong>${s.label}</strong>
+        <small>${doneCount}/7 Tage erfüllt</small>
+      </div>
+      <div class="weekly-streak-side">
+        <b>${Number(current.days||0)} Tage</b>
+        ${note}
       </div>
     </div>`;
   }).join("");
-  document.querySelectorAll("[data-date]").forEach(el=>el.onclick=()=>setDate(el.dataset.date));
-}
-function renderStats() {
-  const reviews=weekDates().map(loadReview);
-  const prayers=reviews.reduce((n,d)=>n+PRAYERS.filter(p=>d.prayers?.[p] && d.prayers[p]!=="Nicht gebetet").length,0);
-  const steps=reviews.reduce((n,d)=>n+Number(d.steps||0),0);
-  const water=reviews.reduce((n,d)=>n+Number(d.water||0),0);
-  const morning=reviews.filter(d=>d.morningRoutine).length;
-  const evening=reviews.filter(d=>d.eveningRoutine).length;
-  const streakDays=reviews.reduce((n,d)=>n+(STREAKS.every(s=>d.streaks?.[s.key]?.done)?1:0),0);
-  const stats=[
-    [prayers+"/35","Gebete"],
-    [steps.toLocaleString("de-DE"),"Schritte"],
-    [(water/1000).toFixed(1)+" L","Wasser"],
-    [morning+"/7","Morgenroutine"],
-    [evening+"/7","Abendroutine"],
-    [streakDays+"/7","Alle Streaks"]
-  ];
-  $("statsGrid").innerHTML=stats.map(([v,l])=>`<div class="stat"><strong>${v}</strong><span>${l}</span></div>`).join("");
+
+  $("statsGrid").innerHTML =
+    `<div class="stats-top">${topHtml}</div>
+     <div class="weekly-streaks">${streakHtml}</div>`;
 }
 function updateRamadanDisplay(){
   const n=Number(currentData.ramadanDays||0);
@@ -341,6 +423,131 @@ function updateRamadanDisplay(){
     el.className="ramadan-positive";
   }
 }
+function getAllReviews() {
+  const reviews = [];
+  for (let i=0; i<localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith("roleplay-review-")) continue;
+    const date = key.replace("roleplay-review-","");
+    try {
+      reviews.push({date, data:JSON.parse(localStorage.getItem(key))});
+    } catch {}
+  }
+  return reviews.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function downloadTextFile(filename, text, type="application/json") {
+  const blob = new Blob([text], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportBackup() {
+  saveReview(true);
+  const payload = {
+    app:"Roleplay Tagesreview",
+    version:"1.2",
+    exportedAt:new Date().toISOString(),
+    reviews:getAllReviews()
+  };
+  downloadTextFile(
+    `roleplay-backup-${todayISO()}.json`,
+    JSON.stringify(payload,null,2)
+  );
+}
+
+function importBackup(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const payload = JSON.parse(reader.result);
+      if (!Array.isArray(payload.reviews)) throw new Error("Ungültiges Backup");
+      if (!confirm(`${payload.reviews.length} Tagesreviews importieren? Vorhandene Einträge mit demselben Datum werden ersetzt.`)) return;
+      payload.reviews.forEach(item => {
+        if (item.date && item.data) {
+          localStorage.setItem(storageKey(item.date), JSON.stringify(item.data));
+        }
+      });
+      setDate(selectedDate);
+      alert("Backup wurde erfolgreich importiert.");
+    } catch {
+      alert("Diese Datei ist kein gültiges Roleplay-Backup.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function pdfValue(value, fallback="–") {
+  if (value === true) return "Ja";
+  if (value === false) return "Nein";
+  return value === undefined || value === null || value === "" ? fallback : String(value);
+}
+
+function buildPdfDocument() {
+  saveReview(true);
+  const reviews=getAllReviews();
+  const rows=reviews.map(({date,data})=>{
+    const prayerText=PRAYERS.map(p=>`${p}: ${pdfValue(data.prayers?.[p],"Nicht eingetragen")}`).join("<br>");
+    const activities=(data.activities||[]).map(a=>`${escapeHTML(a.title)} (${escapeHTML(a.role)}, ${a.minutes} Min.)`).join("<br>") || "–";
+    const streakText=STREAKS.map(s=>{
+      const st=data.streaks?.[s.key] || {};
+      const status=st.status==="done" ? "erfüllt" : st.status==="broken" ? "unterbrochen" : "offen";
+      return `${s.label}: ${Number(st.days||0)} Tage (${status})`;
+    }).join("<br>");
+    const meals=[data.breakfast,data.lunch,data.dinner,data.snack].filter(Boolean).map(escapeHTML).join("<br>") || "–";
+    return `<section class="pdf-day">
+      <h2>${formatDate(date)}</h2>
+      <div class="pdf-grid">
+        <div><b>Vitalität</b><br>Mahlzeiten: ${meals}<br>Wasser: ${(Number(data.water||0)/1000).toFixed(1)} L<br>Schritte: ${Number(data.steps||0).toLocaleString("de-DE")}</div>
+        <div><b>Routinen</b><br>Morgen: ${pdfValue(data.morningRoutine)}<br>Abend: ${pdfValue(data.eveningRoutine)}</div>
+        <div><b>Islam</b><br>${prayerText}<br>Ramadan: ${Math.abs(Math.min(0,Number(data.ramadanDays||0)))} Tage offen</div>
+        <div><b>Schlaf</b><br>Qualität: ${pdfValue(data.sleepQuality)}<br>Träume: ${escapeHTML(pdfValue(data.dreams))}</div>
+        <div><b>Aktivitäten</b><br>${activities}</div>
+        <div><b>Streaks</b><br>${streakText}</div>
+        <div><b>Achtsamkeit</b><br>Stimmung: ${pdfValue(data.mood)}<br>Dankbarkeit 1: ${escapeHTML(pdfValue(data.gratitude1))}<br>Dankbarkeit 2: ${escapeHTML(pdfValue(data.gratitude2))}<br>Name Allahs: ${escapeHTML(pdfValue(data.allahName))}</div>
+        <div><b>Tagesnotiz</b><br>${escapeHTML(pdfValue(data.notes))}</div>
+      </div>
+    </section>`;
+  }).join("");
+
+  return `<!doctype html><html lang="de"><head><meta charset="utf-8">
+    <title>Roleplay Export ${todayISO()}</title>
+    <style>
+      @page { size:A4; margin:14mm; }
+      body { font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; color:#111; font-size:10.5pt; }
+      h1 { margin:0 0 4px; font-size:22pt; }
+      .meta { color:#666; margin-bottom:18px; }
+      .pdf-day { break-inside:avoid; page-break-inside:avoid; border-top:1px solid #bbb; padding:12px 0 16px; }
+      .pdf-day h2 { font-size:15pt; margin:0 0 9px; }
+      .pdf-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px 14px; }
+      .pdf-grid > div { line-height:1.45; overflow-wrap:anywhere; }
+      b { font-weight:700; }
+      @media print { .pdf-day { break-inside:avoid; } }
+    </style></head><body>
+    <h1>Roleplay Tagesreview</h1>
+    <div class="meta">Exportiert am ${new Intl.DateTimeFormat("de-DE",{dateStyle:"long",timeStyle:"short"}).format(new Date())} · ${reviews.length} Tage</div>
+    ${rows || "<p>Noch keine Einträge vorhanden.</p>"}
+    </body></html>`;
+}
+
+function exportPdf() {
+  const printWindow=window.open("","_blank");
+  if (!printWindow) {
+    alert("Bitte erlaube Pop-ups, damit der PDF-Export geöffnet werden kann.");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(buildPdfDocument());
+  printWindow.document.close();
+  printWindow.onload=()=>setTimeout(()=>printWindow.print(),300);
+}
+
 function escapeHTML(s=""){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 
 function init() {
@@ -351,7 +558,6 @@ function init() {
   $("nextDay").onclick=()=>setDate(addDays(selectedDate,1));
   $("dateButton").onclick=()=>$("datePicker").showPicker?.() || $("datePicker").click();
   $("datePicker").onchange=e=>setDate(e.target.value);
-  $("goToday").onclick=()=>setDate(todayISO());
   $("saveButton").onclick=()=>saveReview(false);
 
   document.querySelectorAll("input,select,textarea").forEach(el=>{
@@ -381,6 +587,15 @@ function init() {
     currentData.ramadanDays=Number($("ramadanDays").value||0);
     updateRamadanDisplay();
     saveReview(true);
+  };
+
+  $("exportPdf").onclick=exportPdf;
+  $("exportBackup").onclick=exportBackup;
+  $("importBackupButton").onclick=()=>$("importBackupInput").click();
+  $("importBackupInput").onchange=e=>{
+    const file=e.target.files?.[0];
+    if(file) importBackup(file);
+    e.target.value="";
   };
 
   $("addActivity").onclick=()=>$("activityDialog").showModal();

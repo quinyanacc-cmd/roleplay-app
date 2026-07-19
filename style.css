@@ -150,3 +150,49 @@ dialog label { margin-top:12px; }
   .ramadan-controls .small-button { flex:1; }
   .streak-row { align-items:flex-start; }
 }
+
+.stats-grid { display:block; }
+.stats-top { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.stat.negative strong { color:var(--danger); }
+.stat.positive strong { color:var(--success); }
+.weekly-streaks { margin-top:14px; display:grid; gap:9px; }
+.weekly-streak-card {
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:13px 14px; background:#f7f8fb; border-radius:16px;
+}
+.weekly-streak-card strong { display:block; }
+.weekly-streak-card small { color:var(--muted); display:block; margin-top:3px; }
+.weekly-streak-side { text-align:right; }
+.weekly-streak-side b { display:block; }
+.streak-week-warning { color:var(--danger); font-size:11px; }
+.streak-week-ok { color:var(--success); font-size:11px; }
+
+.streak-row { align-items:flex-start; }
+.streak-broken { border-left:3px solid var(--danger); padding-left:10px; }
+.streak-name { min-width:100px; }
+.streak-name small { display:block; color:var(--muted); font-weight:500; margin-top:3px; }
+.streak-controls { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.streak-count-wrap { display:flex; align-items:center; gap:7px; }
+.streak-days { width:82px; margin:0; text-align:center; }
+.streak-check { display:flex; align-items:center; gap:7px; color:var(--text); font-size:12px; }
+.streak-check input { width:20px; height:20px; margin:0; }
+.break-button {
+  border:1px solid var(--line); background:transparent; color:var(--muted);
+  border-radius:10px; padding:7px 9px; font-size:11px; font-weight:700;
+}
+.break-button.active { color:var(--danger); border-color:rgba(223,59,75,.35); background:rgba(223,59,75,.08); }
+
+.export-description { color:var(--muted); font-size:14px; line-height:1.45; margin:-4px 0 14px; }
+.export-buttons { display:grid; gap:9px; }
+.export-button { width:100%; padding:12px 14px; }
+
+@media (max-width:480px){
+  .streak-row { flex-direction:column; }
+  .streak-controls { width:100%; align-items:stretch; }
+  .streak-count-wrap { justify-content:flex-end; }
+  .streak-check { justify-content:flex-end; }
+  .break-button { align-self:flex-end; }
+}
+@media (prefers-color-scheme: dark) {
+  .weekly-streak-card { background:#25262c; }
+}

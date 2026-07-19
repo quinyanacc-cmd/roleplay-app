@@ -155,17 +155,23 @@
 
       <button id="saveButton" class="primary-button">Tagesreview speichern</button>
 
-      <section class="card">
-        <div class="section-title-row">
-          <h2>📊 Wochenübersicht</h2>
-          <button id="goToday" class="small-button">Heute</button>
-        </div>
-        <div id="weekSummary"></div>
-      </section>
 
       <section class="card">
         <h2>📈 Wochenstatistik</h2>
         <div id="statsGrid" class="stats-grid"></div>
+      </section>
+
+      <section class="card">
+        <h2>💾 Export & Sicherung</h2>
+        <p class="export-description">
+          Erstelle ein lesbares PDF oder sichere sämtliche Einträge als Datei, die später wieder importiert werden kann.
+        </p>
+        <div class="export-buttons">
+          <button id="exportPdf" class="small-button export-button" type="button">Als PDF exportieren</button>
+          <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
+          <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
+          <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+        </div>
       </section>
 
       <p class="privacy-note">🔒 Alle Einträge werden ausschließlich lokal in diesem Browser auf deinem iPhone gespeichert.</p>

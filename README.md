@@ -1,4 +1,4 @@
-# Roleplay Tagesreview v1.1
+# Roleplay Tagesreview v1.2
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -26,3 +26,16 @@ Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim
 - Streak-Zähler mit Tagesfortschritt
 - Überarbeitete Bereichsnamen und Reihenfolge
 - Emoji 🫆 für die Ich-Person
+
+
+## Änderungen in v1.2
+
+- Wochenübersicht entfernt
+- Streak-Tage frei eintragbar
+- Streak-Wert wird auf neue Tage übernommen
+- „Heute geschafft“ erhöht den Streak um einen Tag
+- Unterbrechungen können ausdrücklich markiert werden
+- Erweiterte Wochenstatistik
+- Ramadan-Anzeige in der Wochenstatistik
+- PDF-Export aller Tagesreviews
+- Vollständiges JSON-Backup und Wiederherstellung
