@@ -204,7 +204,6 @@ function loadReview(date) {
 function saveReview(silent=false) {
   collectForm();
   localStorage.setItem(storageKey(selectedDate), JSON.stringify(currentData));
-  updateProgress();
   renderStats();
   if(!silent) {
     const btn=$("saveButton");
@@ -223,7 +222,6 @@ function setDate(date) {
   $("datePicker").value=date;
   fillForm();
   renderStats();
-  updateProgress();
 }
 function fillForm() {
   ["breakfast","lunch","dinner","snack","water","steps","ramadanDays","dreams","gratitude1","gratitude2","allahName","notes"].forEach(id=>{
@@ -329,31 +327,8 @@ function renderStreaks() {
     renderStreaks();
   });
 }
-function completionScore(data) {
-  const checks = [
-    data.breakfast||data.lunch||data.dinner||data.snack,
-    Number(data.water)>0,
-    Number(data.steps)>0,
-    data.morningRoutine,
-    data.eveningRoutine,
-    PRAYERS.every(p=>data.prayers?.[p] && data.prayers[p]!=="Nicht gebetet"),
-    !!data.sleepQuality,
-    (data.activities||[]).length>0,
-    STREAKS.every(s=>data.streaks?.[s.key]?.status==="done"),
-    !!data.mood,
-    !!data.gratitude1,
-    !!data.gratitude2,
-    !!data.allahName,
-    !!data.notes
-  ];
-  return Math.round(checks.filter(Boolean).length/checks.length*100);
-}
-function updateProgress(){
-  collectForm();
-  const p=completionScore(currentData);
-  $("progressLabel").textContent=`${p} %`;
-  $("progressBar").style.width=`${p}%`;
-}
+
+
 function weekDates() {
   const base=new Date(selectedDate+"T12:00:00");
   const day=(base.getDay()+6)%7;
@@ -550,6 +525,10 @@ function exportPdf() {
 
 function escapeHTML(s=""){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 
+function updateHeaderCompactState() {
+  document.querySelector(".app-header")?.classList.toggle("compact", window.scrollY > 80);
+}
+
 function init() {
   $("allahName").innerHTML='<option value="">Bitte auswählen …</option>'+ALLAH_NAMES.map(n=>`<option>${n}</option>`).join("");
   $("activityRole").innerHTML=ROLES.map(r=>`<option value="${r.name}">${r.emoji} ${r.name}</option>`).join("");
@@ -563,7 +542,7 @@ function init() {
   document.querySelectorAll("input,select,textarea").forEach(el=>{
     if(!el.closest("#activityDialog") && el.id!=="datePicker") {
       el.addEventListener("change",()=>saveReview(true));
-      el.addEventListener("input",()=>{collectForm(); updateProgress();});
+      el.addEventListener("input",()=>{collectForm();});
     }
   });
 
@@ -610,6 +589,9 @@ function init() {
     $("activityTitle").value="";
     saveReview(true); renderActivities();
   };
+
+  window.addEventListener("scroll", updateHeaderCompactState, {passive:true});
+  updateHeaderCompactState();
 
   setDate(todayISO());
   if("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});

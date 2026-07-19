@@ -1,4 +1,4 @@
-# Roleplay Tagesreview v1.2
+# Roleplay Tagesreview v1.4
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -39,3 +39,23 @@ Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim
 - Ramadan-Anzeige in der Wochenstatistik
 - PDF-Export aller Tagesreviews
 - Vollständiges JSON-Backup und Wiederherstellung
+
+
+## Änderungen in v1.3
+
+- Prozentanzeige „Heute erledigt“ vollständig entfernt
+- Kopfzeile insgesamt schlanker gestaltet
+- Kopfzeile verkleinert sich beim Scrollen automatisch
+- Datum und Tagesnavigation bleiben weiterhin erreichbar
+- Alle Funktionen aus v1.2 bleiben erhalten
+
+
+## Änderungen in v1.4
+
+- Alle Funktionen und Anpassungen aus v1.3 bleiben erhalten
+- Logo vollständig neu für die Web-App aufbereitet
+- Farbverlauf füllt jetzt die komplette quadratische Bildfläche
+- Kein weißer Außenbereich und kein „Quadrat im Quadrat“ mehr
+- Fingerabdruck-/Personensymbol bleibt als Wiedererkennungsmerkmal erhalten
+- Darstellung als iPhone-Homescreen-Icon optimiert
+- Bestehende Dateinamen bleiben unverändert und können direkt überschrieben werden

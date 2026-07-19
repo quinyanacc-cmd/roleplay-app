@@ -196,3 +196,84 @@ dialog label { margin-top:12px; }
 @media (prefers-color-scheme: dark) {
   .weekly-streak-card { background:#25262c; }
 }
+
+
+/* v1.3: schlankere Kopfzeile */
+.app-header {
+  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
+  transition: padding .22s ease, background .22s ease, box-shadow .22s ease;
+}
+.brand-row {
+  gap: 9px;
+  transition: all .22s ease;
+}
+.app-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  transition: width .22s ease, height .22s ease, border-radius .22s ease;
+}
+h1 {
+  font-size: 21px;
+  transition: font-size .22s ease;
+}
+.eyebrow {
+  font-size: 9px;
+}
+.date-nav {
+  grid-template-columns: 36px 1fr 36px;
+  gap: 7px;
+  margin-top: 10px;
+  transition: margin .22s ease;
+}
+.icon-button {
+  height: 36px;
+  border-radius: 12px;
+  font-size: 24px;
+}
+.date-button {
+  min-height: 36px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.app-header.compact {
+  padding: calc(6px + env(safe-area-inset-top)) 12px 7px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.07);
+}
+.app-header.compact .brand-row {
+  align-items: center;
+}
+.app-header.compact .app-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.app-header.compact .eyebrow {
+  display: none;
+}
+.app-header.compact h1 {
+  font-size: 17px;
+  margin: 0;
+}
+.app-header.compact .date-nav {
+  margin-top: 6px;
+  grid-template-columns: 32px 1fr 32px;
+}
+.app-header.compact .icon-button {
+  height: 31px;
+  font-size: 21px;
+  border-radius: 10px;
+}
+.app-header.compact .date-button {
+  min-height: 31px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+/* v1.4: vollflächiges Roleplay-Logo */
+.app-logo {
+  object-fit: cover;
+  background: transparent;
+  border: 0;
+}
