@@ -277,3 +277,15 @@ h1 {
   background: transparent;
   border: 0;
 }
+
+
+/* v1.5: Export- und Backupbereich */
+.backup-status {
+  margin: 12px 2px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.export-buttons .export-button {
+  min-height: 44px;
+}

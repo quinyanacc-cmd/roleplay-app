@@ -1,4 +1,4 @@
-# Roleplay Tagesreview v1.4
+# Roleplay Tagesreview v1.5
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -59,3 +59,16 @@ Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim
 - Fingerabdruck-/Personensymbol bleibt als Wiedererkennungsmerkmal erhalten
 - Darstellung als iPhone-Homescreen-Icon optimiert
 - Bestehende Dateinamen bleiben unverändert und können direkt überschrieben werden
+
+
+## Änderungen in v1.5
+
+- Vollständiges JSON-Backup aller lokal gespeicherten Tagesreviews
+- Backup-Datei kann später wieder vollständig importiert werden
+- Strengere Prüfung importierter Sicherungsdateien
+- Anzeige des Zeitpunkts des letzten Backups
+- PDF-Export bleibt enthalten
+- Neuer Excel-/CSV-Export aller Tagesdaten
+- CSV ist für Microsoft Excel und Apple Numbers vorbereitet
+- Alle bisherigen Funktionen und das vollflächige Logo aus v1.4 bleiben erhalten
+- Dateinamen bleiben unverändert und können direkt in GitHub überschrieben werden

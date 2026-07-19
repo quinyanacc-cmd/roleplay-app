@@ -425,16 +425,18 @@ function downloadTextFile(filename, text, type="application/json") {
 
 function exportBackup() {
   saveReview(true);
-  const payload = {
-    app:"Roleplay Tagesreview",
-    version:"1.2",
-    exportedAt:new Date().toISOString(),
-    reviews:getAllReviews()
-  };
+  const payload = getBackupPayload();
   downloadTextFile(
     `roleplay-backup-${todayISO()}.json`,
     JSON.stringify(payload,null,2)
   );
+  localStorage.setItem("roleplay-last-backup-at", payload.exportedAt);
+  const status = $("backupStatus");
+  if (status) {
+    status.textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE",{
+      dateStyle:"medium", timeStyle:"short"
+    }).format(new Date(payload.exportedAt))}`;
+  }
 }
 
 function importBackup(file) {
@@ -442,14 +444,31 @@ function importBackup(file) {
   reader.onload = () => {
     try {
       const payload = JSON.parse(reader.result);
-      if (!Array.isArray(payload.reviews)) throw new Error("Ungültiges Backup");
-      if (!confirm(`${payload.reviews.length} Tagesreviews importieren? Vorhandene Einträge mit demselben Datum werden ersetzt.`)) return;
-      payload.reviews.forEach(item => {
-        if (item.date && item.data) {
-          localStorage.setItem(storageKey(item.date), JSON.stringify(item.data));
-        }
+      if (!payload || !Array.isArray(payload.reviews)) {
+        throw new Error("Ungültiges Backup");
+      }
+
+      const validReviews = payload.reviews.filter(item =>
+        item && typeof item.date === "string" && item.data && typeof item.data === "object"
+      );
+
+      if (!validReviews.length && payload.reviews.length) {
+        throw new Error("Keine gültigen Einträge");
+      }
+
+      if (!confirm(`${validReviews.length} Tagesreviews importieren? Vorhandene Einträge mit demselben Datum werden ersetzt.`)) {
+        return;
+      }
+
+      validReviews.forEach(item => {
+        localStorage.setItem(storageKey(item.date), JSON.stringify(item.data));
       });
+
+      localStorage.setItem("roleplay-last-import-at", new Date().toISOString());
       setDate(selectedDate);
+
+      const status = $("backupStatus");
+      if (status) status.textContent = `${validReviews.length} Tagesreviews erfolgreich importiert.`;
       alert("Backup wurde erfolgreich importiert.");
     } catch {
       alert("Diese Datei ist kein gültiges Roleplay-Backup.");
@@ -523,6 +542,91 @@ function exportPdf() {
   printWindow.onload=()=>setTimeout(()=>printWindow.print(),300);
 }
 
+
+function csvEscape(value) {
+  const text = value === undefined || value === null ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function exportCsv() {
+  saveReview(true);
+  const reviews = getAllReviews();
+
+  const headers = [
+    "Datum",
+    "Frühstück","Mittagessen","Abendessen","Snack",
+    "Wasser_ml","Schritte",
+    "Morgenroutine","Abendroutine",
+    "Fajr","Dhuhr","Asr","Maghrib","Ishaa",
+    "Ramadan_Tage",
+    "Schlafqualität","Träume",
+    "Stimmung","Dankbarkeit_1","Dankbarkeit_2","Name_Allahs",
+    "Cannabis_Tage","Cannabis_Status",
+    "Zwang_Tage","Zwang_Status",
+    "Alkohol_Tage","Alkohol_Status",
+    "Zigaretten_Tage","Zigaretten_Status",
+    "Aktivitäten","Notizen"
+  ];
+
+  const lines = [headers.map(csvEscape).join(";")];
+
+  reviews.forEach(({date,data}) => {
+    const activities = (data.activities || [])
+      .map(a => `${a.title || ""} | ${a.role || ""} | ${Number(a.minutes || 0)} Min.`)
+      .join(" / ");
+
+    const streak = key => data.streaks?.[key] || {days:0,status:"open"};
+
+    const row = [
+      date,
+      data.breakfast, data.lunch, data.dinner, data.snack,
+      Number(data.water || 0), Number(data.steps || 0),
+      data.morningRoutine ? "Ja" : "Nein",
+      data.eveningRoutine ? "Ja" : "Nein",
+      data.prayers?.Fajr || "",
+      data.prayers?.Dhuhr || "",
+      data.prayers?.Asr || "",
+      data.prayers?.Maghrib || "",
+      data.prayers?.Ishaa || "",
+      Number(data.ramadanDays || 0),
+      data.sleepQuality || "",
+      data.dreams || "",
+      data.mood || "",
+      data.gratitude1 || "",
+      data.gratitude2 || "",
+      data.allahName || "",
+      Number(streak("cannabis").days || 0), streak("cannabis").status || "open",
+      Number(streak("zwang").days || 0), streak("zwang").status || "open",
+      Number(streak("alcohol").days || 0), streak("alcohol").status || "open",
+      Number(streak("cigarettes").days || 0), streak("cigarettes").status || "open",
+      activities,
+      data.notes || ""
+    ];
+
+    lines.push(row.map(csvEscape).join(";"));
+  });
+
+  const bom = "\ufeff";
+  downloadTextFile(
+    `roleplay-export-${todayISO()}.csv`,
+    bom + lines.join("\r\n"),
+    "text/csv;charset=utf-8"
+  );
+
+  const status = $("backupStatus");
+  if (status) status.textContent = `CSV-Export erstellt: ${reviews.length} Tagesreviews.`;
+}
+
+function getBackupPayload() {
+  return {
+    app:"Roleplay Tagesreview",
+    version:"1.5",
+    schemaVersion:2,
+    exportedAt:new Date().toISOString(),
+    reviews:getAllReviews()
+  };
+}
+
 function escapeHTML(s=""){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 
 function updateHeaderCompactState() {
@@ -570,6 +674,7 @@ function init() {
 
   $("exportPdf").onclick=exportPdf;
   $("exportBackup").onclick=exportBackup;
+  $("exportCsv").onclick=exportCsv;
   $("importBackupButton").onclick=()=>$("importBackupInput").click();
   $("importBackupInput").onchange=e=>{
     const file=e.target.files?.[0];
@@ -589,6 +694,13 @@ function init() {
     $("activityTitle").value="";
     saveReview(true); renderActivities();
   };
+
+  const lastBackupAt = localStorage.getItem("roleplay-last-backup-at");
+  if (lastBackupAt && $("backupStatus")) {
+    $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE",{
+      dateStyle:"medium", timeStyle:"short"
+    }).format(new Date(lastBackupAt))}`;
+  }
 
   window.addEventListener("scroll", updateHeaderCompactState, {passive:true});
   updateHeaderCompactState();
