@@ -1,4 +1,4 @@
-# Roleplay Tagesreview
+# Roleplay Tagesreview v1.1
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -16,3 +16,13 @@ Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Bro
 ## Datenschutz
 
 Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim Löschen der Safari-Websitedaten können die lokalen Einträge verloren gehen.
+
+
+## Änderungen in v1.1
+
+- Leere Vorauswahl bei Gebeten
+- Ramadan-Zähler
+- Schlafqualität und Träume
+- Streak-Zähler mit Tagesfortschritt
+- Überarbeitete Bereichsnamen und Reihenfolge
+- Emoji 🫆 für die Ich-Person

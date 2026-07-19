@@ -39,7 +39,7 @@
 
     <main>
       <section class="card">
-        <h2>☀️ Allgemein</h2>
+        <h2>💪 Vitalität</h2>
 
         <div class="field-group">
           <label>🍽️ Mahlzeiten</label>
@@ -86,13 +86,41 @@
       </section>
 
       <section class="card">
-        <h2>🕋 Gebete</h2>
+        <h2>🕋 Islam</h2>
         <div id="prayerList" class="stack"></div>
+        <div class="ramadan-box">
+          <div>
+            <span class="subheading">Ramadan</span>
+            <strong id="ramadanDisplay">–29 Tage offen</strong>
+          </div>
+          <div class="ramadan-controls">
+            <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
+            <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>😴 Schlaf</h2>
+        <div class="field-group">
+          <label>Schlafqualität</label>
+          <div class="mood-grid sleep-grid" id="sleepGrid">
+            <button data-value="Sehr gut">😄<span>Sehr gut</span></button>
+            <button data-value="Gut">🙂<span>Gut</span></button>
+            <button data-value="Neutral">😐<span>Neutral</span></button>
+            <button data-value="Schlecht">🙁<span>Schlecht</span></button>
+            <button data-value="Sehr schlecht">😞<span>Sehr schlecht</span></button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="dreams">Träume</label>
+          <textarea id="dreams" rows="4" placeholder="Woran erinnerst du dich?"></textarea>
+        </div>
       </section>
 
       <section class="card">
         <div class="section-title-row">
-          <h2>🎯 Aktivitäten & Rollen</h2>
+          <h2>🎯 Aktivitäten</h2>
           <button id="addActivity" class="small-button">+ Aktivität</button>
         </div>
         <div id="activityList" class="stack"></div>
@@ -104,7 +132,8 @@
       </section>
 
       <section class="card">
-        <h2>😊 Stimmung</h2>
+        <h2>🧘 Achtsamkeit</h2>
+        <h3 class="subsection-title">Stimmung</h3>
         <div class="mood-grid" id="moodGrid">
           <button data-value="Sehr gut">😄<span>Sehr gut</span></button>
           <button data-value="Gut">🙂<span>Gut</span></button>
@@ -112,10 +141,7 @@
           <button data-value="Schlecht">🙁<span>Schlecht</span></button>
           <button data-value="Sehr schlecht">😞<span>Sehr schlecht</span></button>
         </div>
-      </section>
-
-      <section class="card">
-        <h2>🙏 Dankbarkeit</h2>
+        <h3 class="subsection-title gratitude-heading">Dankbarkeit</h3>
         <input id="gratitude1" placeholder="1. Wofür bist du heute dankbar?">
         <input id="gratitude2" placeholder="2. Wofür bist du heute dankbar?">
         <label for="allahName">3. Name Allahs</label>

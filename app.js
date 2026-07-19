@@ -1,8 +1,8 @@
 
 const PRAYERS = ["Fajr","Dhuhr","ʿAsr","Maghrib","ʿIschāʾ"];
-const PRAYER_STATES = ["Normal","Gemeinschaft","Verspätet","Nachgeholt","Nicht gebetet"];
+const PRAYER_STATES = ["","Normal","Gemeinschaft","Verspätet","Nachgeholt","Nicht gebetet"];
 const ROLES = [
-  {name:"Ich-Person", emoji:"🌀", color:"#54b7ff"},
+  {name:"Ich-Person", emoji:"🫆", color:"#54b7ff"},
   {name:"Vitalist", emoji:"🧬", color:"#234eae"},
   {name:"Unternehmer", emoji:"💰", color:"#f5c622"},
   {name:"Absolvent", emoji:"🎓", color:"#d92f38"},
@@ -11,10 +11,10 @@ const ROLES = [
   {name:"Familienmensch", emoji:"💌", color:"#32a852"}
 ];
 const STREAKS = [
-  {key:"smokeFree", label:"🚭 Rauchfrei"},
-  {key:"cannabisFree", label:"🍁 Cannabisfrei"},
-  {key:"abstinence", label:"❤️ Enthaltsamkeit"},
-  {key:"alcoholFree", label:"🍺 Alkoholfrei"}
+  {key:"cannabisFree", label:"Cannabis"},
+  {key:"compulsionFree", label:"Zwang"},
+  {key:"alcoholFree", label:"Alkohol"},
+  {key:"smokeFree", label:"Zigaretten"}
 ];
 const ALLAH_NAMES = [
 "الرَّحْمَن / Ar-Rahmān – Der Allerbarmer",
@@ -138,17 +138,30 @@ function emptyReview() {
     breakfast:"", lunch:"", dinner:"", snack:"",
     water:"0", steps:"",
     morningRoutine:false, eveningRoutine:false,
-    prayers:Object.fromEntries(PRAYERS.map(p=>[p,"Normal"])),
+    prayers:Object.fromEntries(PRAYERS.map(p=>[p,""])),
+    ramadanDays:-29,
+    sleepQuality:"",
+    dreams:"",
     activities:[],
-    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,true])),
+    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{done:false,days:0}])),
     mood:"",
     gratitude1:"", gratitude2:"", allahName:"",
     notes:""
   };
 }
 function loadReview(date) {
-  try { return {...emptyReview(), ...JSON.parse(localStorage.getItem(storageKey(date)) || "{}")}; }
-  catch { return emptyReview(); }
+  try {
+    const raw = JSON.parse(localStorage.getItem(storageKey(date)) || "{}");
+    const merged = {...emptyReview(), ...raw};
+    merged.prayers = {...emptyReview().prayers, ...(raw.prayers || {})};
+    merged.streaks = {...emptyReview().streaks};
+    STREAKS.forEach(s => {
+      const old = raw.streaks?.[s.key];
+      if (typeof old === "object" && old !== null) merged.streaks[s.key] = {done:!!old.done, days:Number(old.days||0)};
+      else if (typeof old === "boolean") merged.streaks[s.key] = {done:old, days:0};
+    });
+    return merged;
+  } catch { return emptyReview(); }
 }
 function saveReview(silent=false) {
   collectForm();
@@ -177,18 +190,20 @@ function setDate(date) {
   updateProgress();
 }
 function fillForm() {
-  ["breakfast","lunch","dinner","snack","water","steps","gratitude1","gratitude2","allahName","notes"].forEach(id=>{
+  ["breakfast","lunch","dinner","snack","water","steps","ramadanDays","dreams","gratitude1","gratitude2","allahName","notes"].forEach(id=>{
     if($(id)) $(id).value=currentData[id] ?? "";
   });
   $("morningRoutine").checked=!!currentData.morningRoutine;
   $("eveningRoutine").checked=!!currentData.eveningRoutine;
+  updateRamadanDisplay();
   renderPrayers();
   renderActivities();
   renderStreaks();
   document.querySelectorAll("#moodGrid button").forEach(b=>b.classList.toggle("active",b.dataset.value===currentData.mood));
+  document.querySelectorAll("#sleepGrid button").forEach(b=>b.classList.toggle("active",b.dataset.value===currentData.sleepQuality));
 }
 function collectForm() {
-  ["breakfast","lunch","dinner","snack","water","steps","gratitude1","gratitude2","allahName","notes"].forEach(id=>currentData[id]=$(id).value);
+  ["breakfast","lunch","dinner","snack","water","steps","ramadanDays","dreams","gratitude1","gratitude2","allahName","notes"].forEach(id=>currentData[id]=$(id).value);
   currentData.morningRoutine=$("morningRoutine").checked;
   currentData.eveningRoutine=$("eveningRoutine").checked;
 }
@@ -197,7 +212,7 @@ function renderPrayers() {
     <div class="prayer-row">
       <strong>${p}</strong>
       <select data-prayer="${p}">
-        ${PRAYER_STATES.map(s=>`<option ${currentData.prayers?.[p]===s?"selected":""}>${s}</option>`).join("")}
+        ${PRAYER_STATES.map(s=>`<option value="${s}" ${currentData.prayers?.[p]===s?"selected":""}>${s || "Noch nicht eingetragen"}</option>`).join("")}
       </select>
     </div>`).join("");
   document.querySelectorAll("[data-prayer]").forEach(sel=>sel.onchange=()=>{
@@ -220,13 +235,26 @@ function renderActivities() {
   });
 }
 function renderStreaks() {
-  $("streakList").innerHTML=STREAKS.map(s=>`
-    <label class="streak-row">
-      <span>${s.label}</span>
-      <input type="checkbox" data-streak="${s.key}" ${currentData.streaks?.[s.key]!==false?"checked":""}>
-    </label>`).join("");
+  $("streakList").innerHTML=STREAKS.map(s=>{
+    const state=currentData.streaks?.[s.key] || {done:false,days:0};
+    return `<div class="streak-row">
+      <div class="streak-name"><strong>${s.label}</strong><small>Aktueller Streak</small></div>
+      <div class="streak-controls">
+        <input class="streak-days" type="number" min="0" inputmode="numeric" data-streak-days="${s.key}" value="${Number(state.days||0)}">
+        <span>Tage</span>
+        <label class="streak-check"><input type="checkbox" data-streak="${s.key}" ${state.done?"checked":""}> Heute geschafft</label>
+      </div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("[data-streak-days]").forEach(inp=>inp.onchange=()=>{
+    currentData.streaks[inp.dataset.streakDays].days=Math.max(0,Number(inp.value||0)); saveReview(true);
+  });
   document.querySelectorAll("[data-streak]").forEach(c=>c.onchange=()=>{
-    currentData.streaks[c.dataset.streak]=c.checked; saveReview(true);
+    const state=currentData.streaks[c.dataset.streak];
+    if(c.checked && !state.done) state.days=Number(state.days||0)+1;
+    if(!c.checked && state.done) state.days=Math.max(0,Number(state.days||0)-1);
+    state.done=c.checked;
+    saveReview(true); renderStreaks();
   });
 }
 function completionScore(data) {
@@ -237,8 +265,9 @@ function completionScore(data) {
     data.morningRoutine,
     data.eveningRoutine,
     PRAYERS.every(p=>data.prayers?.[p] && data.prayers[p]!=="Nicht gebetet"),
+    !!data.sleepQuality,
     (data.activities||[]).length>0,
-    STREAKS.every(s=>data.streaks?.[s.key]!==false),
+    STREAKS.every(s=>data.streaks?.[s.key]?.done),
     !!data.mood,
     !!data.gratitude1,
     !!data.gratitude2,
@@ -266,7 +295,7 @@ function renderWeek() {
   $("weekSummary").innerHTML=weekDates().map(date=>{
     const d=loadReview(date);
     const prayerCount=PRAYERS.filter(p=>d.prayers?.[p] && d.prayers[p]!=="Nicht gebetet").length;
-    const streakCount=STREAKS.filter(s=>d.streaks?.[s.key]!==false).length;
+    const streakCount=STREAKS.filter(s=>d.streaks?.[s.key]?.done).length;
     return `<div class="week-day" data-date="${date}">
       <div class="week-date"><strong>${new Intl.DateTimeFormat("de-DE",{weekday:"short"}).format(new Date(date+"T12:00:00"))}</strong><small>${date.slice(8,10)}.${date.slice(5,7)}.</small></div>
       <div class="week-metrics">
@@ -274,7 +303,7 @@ function renderWeek() {
         <span class="pill">🕋 ${prayerCount}/5</span>
         <span class="pill">💧 ${(Number(d.water)/1000).toFixed(1)} L</span>
         <span class="pill">👣 ${Number(d.steps||0).toLocaleString("de-DE")}</span>
-        <span class="pill">🔥 ${streakCount}/4</span>
+        <span class="pill">Streaks ${streakCount}/4</span>
       </div>
     </div>`;
   }).join("");
@@ -287,7 +316,7 @@ function renderStats() {
   const water=reviews.reduce((n,d)=>n+Number(d.water||0),0);
   const morning=reviews.filter(d=>d.morningRoutine).length;
   const evening=reviews.filter(d=>d.eveningRoutine).length;
-  const streakDays=reviews.reduce((n,d)=>n+(STREAKS.every(s=>d.streaks?.[s.key]!==false)?1:0),0);
+  const streakDays=reviews.reduce((n,d)=>n+(STREAKS.every(s=>d.streaks?.[s.key]?.done)?1:0),0);
   const stats=[
     [prayers+"/35","Gebete"],
     [steps.toLocaleString("de-DE"),"Schritte"],
@@ -297,6 +326,20 @@ function renderStats() {
     [streakDays+"/7","Alle Streaks"]
   ];
   $("statsGrid").innerHTML=stats.map(([v,l])=>`<div class="stat"><strong>${v}</strong><span>${l}</span></div>`).join("");
+}
+function updateRamadanDisplay(){
+  const n=Number(currentData.ramadanDays||0);
+  const el=$("ramadanDisplay");
+  if(n<0){
+    el.textContent=`${Math.abs(n)} Tage offen`;
+    el.className="ramadan-negative";
+  } else if(n===0){
+    el.textContent="Keine Tage offen";
+    el.className="ramadan-zero";
+  } else {
+    el.textContent=`${n} zusätzliche Fastentage`;
+    el.className="ramadan-positive";
+  }
 }
 function escapeHTML(s=""){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 
@@ -323,6 +366,22 @@ function init() {
     document.querySelectorAll("#moodGrid button").forEach(x=>x.classList.toggle("active",x===b));
     saveReview(true);
   });
+  document.querySelectorAll("#sleepGrid button").forEach(b=>b.onclick=()=>{
+    currentData.sleepQuality=b.dataset.value;
+    document.querySelectorAll("#sleepGrid button").forEach(x=>x.classList.toggle("active",x===b));
+    saveReview(true);
+  });
+  $("ramadanComplete").onclick=()=>{
+    currentData.ramadanDays=Number(currentData.ramadanDays||0)+1;
+    $("ramadanDays").value=currentData.ramadanDays;
+    updateRamadanDisplay();
+    saveReview(true);
+  };
+  $("ramadanDays").oninput=()=>{
+    currentData.ramadanDays=Number($("ramadanDays").value||0);
+    updateRamadanDisplay();
+    saveReview(true);
+  };
 
   $("addActivity").onclick=()=>$("activityDialog").showModal();
   $("confirmActivity").onclick=e=>{
