@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f7fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Roleplay">
+  <link rel="apple-touch-icon" href="logo.jpeg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <title>Roleplay Tagesreview</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-row">
+        <img src="logo.jpeg" class="app-logo" alt="Roleplay Logo">
+        <div>
+          <p class="eyebrow">ROLEPLAY</p>
+          <h1>Tagesreview</h1>
+        </div>
+      </div>
+      <div class="date-nav">
+        <button id="prevDay" class="icon-button" aria-label="Vorheriger Tag">‹</button>
+        <button id="dateButton" class="date-button"></button>
+        <input id="datePicker" type="date" hidden>
+        <button id="nextDay" class="icon-button" aria-label="Nächster Tag">›</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-meta">
+          <span>Heute erledigt</span>
+          <strong id="progressLabel">0 %</strong>
+        </div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>☀️ Allgemein</h2>
+
+        <div class="field-group">
+          <label>🍽️ Mahlzeiten</label>
+          <div class="meal-grid">
+            <input id="breakfast" placeholder="Frühstück – was hast du gegessen?">
+            <input id="lunch" placeholder="Mittagessen – was hast du gegessen?">
+            <input id="dinner" placeholder="Abendessen – was hast du gegessen?">
+            <input id="snack" placeholder="Snack – optional">
+          </div>
+        </div>
+
+        <div class="two-column">
+          <div class="field-group">
+            <label for="water">💧 Getrunken</label>
+            <select id="water">
+              <option value="0">Noch nichts eingetragen</option>
+              <option value="500">0,5 Liter</option>
+              <option value="1000">1,0 Liter</option>
+              <option value="1500">1,5 Liter</option>
+              <option value="2000">2,0 Liter</option>
+              <option value="2500">2,5 Liter</option>
+              <option value="3000">3,0 Liter</option>
+              <option value="3500">3,5 Liter</option>
+              <option value="4000">4,0 Liter</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="steps">👣 Schritte</label>
+            <input id="steps" type="number" inputmode="numeric" min="0" step="100" placeholder="z. B. 5000">
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>🌅 Routinen</h2>
+        <label class="toggle-row">
+          <span><span class="big-emoji">☀️</span> Morgenroutine</span>
+          <input id="morningRoutine" type="checkbox">
+        </label>
+        <label class="toggle-row">
+          <span><span class="big-emoji">🌙</span> Abendroutine</span>
+          <input id="eveningRoutine" type="checkbox">
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>🕋 Gebete</h2>
+        <div id="prayerList" class="stack"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title-row">
+          <h2>🎯 Aktivitäten & Rollen</h2>
+          <button id="addActivity" class="small-button">+ Aktivität</button>
+        </div>
+        <div id="activityList" class="stack"></div>
+      </section>
+
+      <section class="card">
+        <h2>🔥 Streaks</h2>
+        <div id="streakList" class="stack"></div>
+      </section>
+
+      <section class="card">
+        <h2>😊 Stimmung</h2>
+        <div class="mood-grid" id="moodGrid">
+          <button data-value="Sehr gut">😄<span>Sehr gut</span></button>
+          <button data-value="Gut">🙂<span>Gut</span></button>
+          <button data-value="Neutral">😐<span>Neutral</span></button>
+          <button data-value="Schlecht">🙁<span>Schlecht</span></button>
+          <button data-value="Sehr schlecht">😞<span>Sehr schlecht</span></button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>🙏 Dankbarkeit</h2>
+        <input id="gratitude1" placeholder="1. Wofür bist du heute dankbar?">
+        <input id="gratitude2" placeholder="2. Wofür bist du heute dankbar?">
+        <label for="allahName">3. Name Allahs</label>
+        <select id="allahName"></select>
+      </section>
+
+      <section class="card">
+        <h2>📝 Tagesnotiz</h2>
+        <textarea id="notes" rows="5" placeholder="Gedanken, Erkenntnisse oder Besonderheiten …"></textarea>
+      </section>
+
+      <button id="saveButton" class="primary-button">Tagesreview speichern</button>
+
+      <section class="card">
+        <div class="section-title-row">
+          <h2>📊 Wochenübersicht</h2>
+          <button id="goToday" class="small-button">Heute</button>
+        </div>
+        <div id="weekSummary"></div>
+      </section>
+
+      <section class="card">
+        <h2>📈 Wochenstatistik</h2>
+        <div id="statsGrid" class="stats-grid"></div>
+      </section>
+
+      <p class="privacy-note">🔒 Alle Einträge werden ausschließlich lokal in diesem Browser auf deinem iPhone gespeichert.</p>
+    </main>
+  </div>
+
+  <dialog id="activityDialog">
+    <form method="dialog" id="activityForm">
+      <h3>Aktivität hinzufügen</h3>
+      <label>Titel
+        <input id="activityTitle" required placeholder="z. B. Arabisch lernen">
+      </label>
+      <label>Rolle
+        <select id="activityRole"></select>
+      </label>
+      <label>Dauer in Minuten
+        <input id="activityMinutes" type="number" min="5" step="5" value="30">
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-button">Abbrechen</button>
+        <button id="confirmActivity" value="default" class="primary-button compact">Hinzufügen</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
