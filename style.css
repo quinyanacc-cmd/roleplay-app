@@ -289,3 +289,34 @@ h1 {
 .export-buttons .export-button {
   min-height: 44px;
 }
+
+
+/* v1.6: Kopfzeile ohne eingeblendetes Logo */
+.brand-row {
+  min-height: 0;
+}
+.brand-row .app-logo {
+  display: none !important;
+}
+.app-header {
+  padding-top: calc(8px + env(safe-area-inset-top));
+}
+.app-header.compact {
+  padding-top: calc(5px + env(safe-area-inset-top));
+}
+
+/* v1.6: vereinfachte Streak-Bedienung */
+.streak-controls {
+  min-width: 145px;
+}
+.streak-count-wrap {
+  justify-content: flex-end;
+}
+.streak-days {
+  width: 86px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.break-button {
+  width: 100%;
+}

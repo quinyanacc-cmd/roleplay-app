@@ -1,4 +1,4 @@
-# Roleplay Tagesreview v1.5
+# Roleplay Tagesreview v1.6
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -72,3 +72,18 @@ Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim
 - CSV ist für Microsoft Excel und Apple Numbers vorbereitet
 - Alle bisherigen Funktionen und das vollflächige Logo aus v1.4 bleiben erhalten
 - Dateinamen bleiben unverändert und können direkt in GitHub überschrieben werden
+
+
+## Änderungen in v1.6
+
+- Logo vollständig aus der sichtbaren App-Kopfzeile entfernt
+- Oben stehen nur noch Roleplay und Tagesreview
+- Vom Nutzer bereitgestelltes Logo wieder als Homescreen-App-Symbol übernommen
+- Weißer Außenrand des Logos entfernt
+- Sättigung des Logos leicht erhöht, Motiv ansonsten unverändert
+- Streaks auf ein einziges frei editierbares Zahlenfeld reduziert
+- Schaltfläche „Heute geschafft“ entfernt
+- Neuer Tag übernimmt den vorherigen Streak und erhöht ihn automatisch um eins
+- „Unterbrechen“ setzt den betreffenden Streak auf null
+- PDF-, Backup-, Import- und CSV-Funktionen bleiben enthalten
+- Dateinamen bleiben unverändert und können direkt überschrieben werden

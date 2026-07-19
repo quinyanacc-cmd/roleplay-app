@@ -143,7 +143,7 @@ function emptyReview() {
     sleepQuality:"",
     dreams:"",
     activities:[],
-    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{status:"open",days:0}])),
+    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{days:0,broken:false}])),
     mood:"",
     gratitude1:"", gratitude2:"", allahName:"",
     notes:""
@@ -161,15 +161,22 @@ function findPreviousStreaks(date) {
       const inherited = {};
       STREAKS.forEach(s => {
         const old = raw.streaks[s.key];
+        const previousDays = typeof old === "object" && old !== null
+          ? Number(old.days || 0)
+          : 0;
+        const wasBroken = typeof old === "object" && old !== null
+          ? Boolean(old.broken || old.status === "broken")
+          : false;
+
         inherited[s.key] = {
-          status:"open",
-          days: typeof old === "object" && old !== null ? Number(old.days || 0) : 0
+          days: wasBroken ? 0 : previousDays + 1,
+          broken: false
         };
       });
       return inherited;
     } catch {}
   }
-  return Object.fromEntries(STREAKS.map(s => [s.key, {status:"open", days:0}]));
+  return Object.fromEntries(STREAKS.map(s => [s.key, {days:0,broken:false}]));
 }
 
 function loadReview(date) {
@@ -177,7 +184,10 @@ function loadReview(date) {
     const rawText = localStorage.getItem(storageKey(date));
     const raw = rawText ? JSON.parse(rawText) : {};
     const base = emptyReview();
-    if (!rawText) base.streaks = findPreviousStreaks(date);
+
+    if (!rawText) {
+      base.streaks = findPreviousStreaks(date);
+    }
 
     const merged = {...base, ...raw};
     merged.prayers = {...emptyReview().prayers, ...(raw.prayers || {})};
@@ -186,16 +196,15 @@ function loadReview(date) {
     STREAKS.forEach(s => {
       const old = raw.streaks?.[s.key];
       if (typeof old === "object" && old !== null) {
-        let status = old.status;
-        if (!status && typeof old.done === "boolean") status = old.done ? "done" : "open";
         merged.streaks[s.key] = {
-          status: status || "open",
-          days: Number(old.days || 0)
+          days:Number(old.days || 0),
+          broken:Boolean(old.broken || old.status === "broken")
         };
-      } else if (typeof old === "boolean") {
-        merged.streaks[s.key] = {status:old ? "done" : "open", days:0};
+      } else {
+        merged.streaks[s.key] = merged.streaks[s.key] || {days:0,broken:false};
       }
     });
+
     return merged;
   } catch {
     return emptyReview();
@@ -269,62 +278,58 @@ function renderActivities() {
   });
 }
 function renderStreaks() {
-  $("streakList").innerHTML=STREAKS.map(s=>{
-    const state=currentData.streaks?.[s.key] || {status:"open",days:0};
-    const done=state.status==="done";
-    const broken=state.status==="broken";
-    return `<div class="streak-row ${broken ? "streak-broken" : ""}">
+  $("streakList").innerHTML = STREAKS.map(s => {
+    const state = currentData.streaks?.[s.key] || {days:0,broken:false};
+
+    return `<div class="streak-row ${state.broken ? "streak-broken" : ""}">
       <div class="streak-name">
         <strong>${s.label}</strong>
-        <small>Aktueller Streak</small>
+        <small>Aktueller Stand</small>
       </div>
+
       <div class="streak-controls">
         <div class="streak-count-wrap">
-          <input class="streak-days" type="number" min="0" inputmode="numeric"
-                 data-streak-days="${s.key}" value="${Number(state.days||0)}">
+          <input
+            class="streak-days"
+            type="number"
+            min="0"
+            inputmode="numeric"
+            data-streak-days="${s.key}"
+            value="${Number(state.days || 0)}"
+            aria-label="${s.label} Tage"
+          >
           <span>Tage</span>
         </div>
-        <label class="streak-check">
-          <input type="checkbox" data-streak="${s.key}" ${done?"checked":""}>
-          Heute geschafft
-        </label>
-        <button type="button" class="break-button ${broken ? "active" : ""}"
-                data-break-streak="${s.key}">
-          ${broken ? "Unterbrochen" : "Unterbrechen"}
+
+        <button
+          type="button"
+          class="break-button ${state.broken ? "active" : ""}"
+          data-break-streak="${s.key}">
+          ${state.broken ? "Unterbrochen – 0 Tage" : "Unterbrechen"}
         </button>
       </div>
     </div>`;
   }).join("");
 
-  document.querySelectorAll("[data-streak-days]").forEach(inp=>inp.onchange=()=>{
-    const state=currentData.streaks[inp.dataset.streakDays];
-    state.days=Math.max(0,Number(inp.value||0));
-    saveReview(true);
+  document.querySelectorAll("[data-streak-days]").forEach(inp => {
+    inp.onchange = () => {
+      const state = currentData.streaks[inp.dataset.streakDays];
+      state.days = Math.max(0, Number(inp.value || 0));
+      state.broken = false;
+      saveReview(true);
+      renderStats();
+    };
   });
 
-  document.querySelectorAll("[data-streak]").forEach(c=>c.onchange=()=>{
-    const state=currentData.streaks[c.dataset.streak];
-    if(c.checked && state.status!=="done") {
-      state.days=Number(state.days||0)+1;
-      state.status="done";
-    } else if(!c.checked && state.status==="done") {
-      state.days=Math.max(0,Number(state.days||0)-1);
-      state.status="open";
-    }
-    saveReview(true);
-    renderStreaks();
-  });
-
-  document.querySelectorAll("[data-break-streak]").forEach(btn=>btn.onclick=()=>{
-    const state=currentData.streaks[btn.dataset.breakStreak];
-    if(state.status==="broken") {
-      state.status="open";
-    } else {
-      state.status="broken";
-      state.days=0;
-    }
-    saveReview(true);
-    renderStreaks();
+  document.querySelectorAll("[data-break-streak]").forEach(btn => {
+    btn.onclick = () => {
+      const state = currentData.streaks[btn.dataset.breakStreak];
+      state.days = 0;
+      state.broken = true;
+      saveReview(true);
+      renderStreaks();
+      renderStats();
+    };
   });
 }
 
@@ -362,9 +367,9 @@ function renderStats() {
     </div>`).join("");
 
   const streakHtml = STREAKS.map(s=>{
-    const current=currentData.streaks?.[s.key] || {status:"open",days:0};
-    const doneCount=reviews.filter(d=>d.streaks?.[s.key]?.status==="done").length;
-    const brokenCount=reviews.filter(d=>d.streaks?.[s.key]?.status==="broken").length;
+    const current=currentData.streaks?.[s.key] || {days:0,broken:false};
+    const doneCount=reviews.filter(d=>Number(d.streaks?.[s.key]?.days || 0) > 0).length;
+    const brokenCount=reviews.filter(d=>Boolean(d.streaks?.[s.key]?.broken)).length;
     const note = brokenCount > 0
       ? `<span class="streak-week-warning">${brokenCount}× unterbrochen</span>`
       : `<span class="streak-week-ok">Keine Unterbrechung</span>`;
@@ -491,7 +496,7 @@ function buildPdfDocument() {
     const activities=(data.activities||[]).map(a=>`${escapeHTML(a.title)} (${escapeHTML(a.role)}, ${a.minutes} Min.)`).join("<br>") || "–";
     const streakText=STREAKS.map(s=>{
       const st=data.streaks?.[s.key] || {};
-      const status=st.status==="done" ? "erfüllt" : st.status==="broken" ? "unterbrochen" : "offen";
+      const status=st.broken ? "unterbrochen" : "aktiv";
       return `${s.label}: ${Number(st.days||0)} Tage (${status})`;
     }).join("<br>");
     const meals=[data.breakfast,data.lunch,data.dinner,data.snack].filter(Boolean).map(escapeHTML).join("<br>") || "–";
@@ -595,10 +600,10 @@ function exportCsv() {
       data.gratitude1 || "",
       data.gratitude2 || "",
       data.allahName || "",
-      Number(streak("cannabis").days || 0), streak("cannabis").status || "open",
-      Number(streak("zwang").days || 0), streak("zwang").status || "open",
-      Number(streak("alcohol").days || 0), streak("alcohol").status || "open",
-      Number(streak("cigarettes").days || 0), streak("cigarettes").status || "open",
+      Number(streak("cannabis").days || 0), streak("cannabis").broken ? "unterbrochen" : "aktiv",
+      Number(streak("zwang").days || 0), streak("zwang").broken ? "unterbrochen" : "aktiv",
+      Number(streak("alcohol").days || 0), streak("alcohol").broken ? "unterbrochen" : "aktiv",
+      Number(streak("cigarettes").days || 0), streak("cigarettes").broken ? "unterbrochen" : "aktiv",
       activities,
       data.notes || ""
     ];
