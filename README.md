@@ -1,4 +1,4 @@
-# Roleplay Tagesreview v1.6
+# Roleplay Tagesreview v1.7
 
 Diese Web-App speichert alle persönlichen Eingaben ausschließlich lokal im Browser des verwendeten Geräts.
 
@@ -86,4 +86,17 @@ Es gibt keinen Server, kein Konto, kein Tracking und keine Cloud-Datenbank. Beim
 - Neuer Tag übernimmt den vorherigen Streak und erhöht ihn automatisch um eins
 - „Unterbrechen“ setzt den betreffenden Streak auf null
 - PDF-, Backup-, Import- und CSV-Funktionen bleiben enthalten
+- Dateinamen bleiben unverändert und können direkt überschrieben werden
+
+
+## Änderungen in v1.7
+
+- Neues vom Nutzer bereitgestelltes Logo als Homescreen-App-Symbol übernommen
+- Logo innerhalb der App bleibt ausgeblendet
+- Streaks vollständig aus der Wochenstatistik entfernt
+- Streak-Eingabe als großes, breites Zahlenfeld umgesetzt
+- Nur Zahlenwert und Schaltfläche „Unterbrechen“
+- Bestehende automatische Tagesübernahme bleibt erhalten
+- „Unterbrechen“ setzt den jeweiligen Streak auf null
+- Alle Export-, Backup- und Importfunktionen bleiben erhalten
 - Dateinamen bleiben unverändert und können direkt überschrieben werden

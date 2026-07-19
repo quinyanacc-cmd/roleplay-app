@@ -320,3 +320,80 @@ h1 {
 .break-button {
   width: 100%;
 }
+
+
+/* v1.7: große, einfache Streak-Eingabe */
+.streak-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f7f8fb;
+  display: grid;
+  gap: 12px;
+}
+.streak-card + .streak-card {
+  margin-top: 10px;
+}
+.streak-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.streak-card-head strong {
+  font-size: 16px;
+}
+.streak-card-head span {
+  color: var(--muted);
+  font-size: 12px;
+}
+.streak-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.streak-days-large {
+  width: 100%;
+  min-height: 54px;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  padding: 0 68px 0 16px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: left;
+}
+.streak-unit {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.break-button-large {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--danger);
+  font-weight: 700;
+}
+.break-button-large.active {
+  background: rgba(223,59,75,.08);
+  border-color: rgba(223,59,75,.35);
+}
+.streak-broken {
+  border-left: 3px solid var(--danger);
+}
+.weekly-streaks,
+.weekly-streak-card {
+  display: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .streak-card {
+    background: #25262c;
+  }
+}

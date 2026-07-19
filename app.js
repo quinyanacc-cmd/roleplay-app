@@ -281,43 +281,40 @@ function renderStreaks() {
   $("streakList").innerHTML = STREAKS.map(s => {
     const state = currentData.streaks?.[s.key] || {days:0,broken:false};
 
-    return `<div class="streak-row ${state.broken ? "streak-broken" : ""}">
-      <div class="streak-name">
+    return `<div class="streak-card ${state.broken ? "streak-broken" : ""}">
+      <div class="streak-card-head">
         <strong>${s.label}</strong>
-        <small>Aktueller Stand</small>
+        <span>${state.broken ? "Unterbrochen" : "Aktueller Stand"}</span>
       </div>
 
-      <div class="streak-controls">
-        <div class="streak-count-wrap">
-          <input
-            class="streak-days"
-            type="number"
-            min="0"
-            inputmode="numeric"
-            data-streak-days="${s.key}"
-            value="${Number(state.days || 0)}"
-            aria-label="${s.label} Tage"
-          >
-          <span>Tage</span>
-        </div>
-
-        <button
-          type="button"
-          class="break-button ${state.broken ? "active" : ""}"
-          data-break-streak="${s.key}">
-          ${state.broken ? "Unterbrochen – 0 Tage" : "Unterbrechen"}
-        </button>
+      <div class="streak-input-wrap">
+        <input
+          class="streak-days-large"
+          type="number"
+          min="0"
+          inputmode="numeric"
+          data-streak-days="${s.key}"
+          value="${Number(state.days || 0)}"
+          aria-label="${s.label} Tage"
+        >
+        <span class="streak-unit">Tage</span>
       </div>
+
+      <button
+        type="button"
+        class="break-button-large ${state.broken ? "active" : ""}"
+        data-break-streak="${s.key}">
+        Unterbrechen
+      </button>
     </div>`;
   }).join("");
 
   document.querySelectorAll("[data-streak-days]").forEach(inp => {
-    inp.onchange = () => {
+    inp.oninput = () => {
       const state = currentData.streaks[inp.dataset.streakDays];
       state.days = Math.max(0, Number(inp.value || 0));
       state.broken = false;
       saveReview(true);
-      renderStats();
     };
   });
 
@@ -328,7 +325,6 @@ function renderStreaks() {
       state.broken = true;
       saveReview(true);
       renderStreaks();
-      renderStats();
     };
   });
 }
@@ -365,29 +361,7 @@ function renderStats() {
       <strong>${v}</strong>
       <span>${l}</span>
     </div>`).join("");
-
-  const streakHtml = STREAKS.map(s=>{
-    const current=currentData.streaks?.[s.key] || {days:0,broken:false};
-    const doneCount=reviews.filter(d=>Number(d.streaks?.[s.key]?.days || 0) > 0).length;
-    const brokenCount=reviews.filter(d=>Boolean(d.streaks?.[s.key]?.broken)).length;
-    const note = brokenCount > 0
-      ? `<span class="streak-week-warning">${brokenCount}× unterbrochen</span>`
-      : `<span class="streak-week-ok">Keine Unterbrechung</span>`;
-    return `<div class="weekly-streak-card">
-      <div>
-        <strong>${s.label}</strong>
-        <small>${doneCount}/7 Tage erfüllt</small>
-      </div>
-      <div class="weekly-streak-side">
-        <b>${Number(current.days||0)} Tage</b>
-        ${note}
-      </div>
-    </div>`;
-  }).join("");
-
-  $("statsGrid").innerHTML =
-    `<div class="stats-top">${topHtml}</div>
-     <div class="weekly-streaks">${streakHtml}</div>`;
+$("statsGrid").innerHTML = `<div class="stats-top">${topHtml}</div>`;
 }
 function updateRamadanDisplay(){
   const n=Number(currentData.ramadanDays||0);
