@@ -1253,7 +1253,7 @@ function startRoutine(key) {
     currentData.routineProgress[key] = {};
     index = 0;
   }
-  routineSession = { key, index, remaining: routine.items[index].minutes * 60, running: true, interval: null, contextOpen: false };
+  routineSession = { key, index, remaining: routine.items[index].minutes * 60, running: true, interval: null, contextOpen: true };
   $("routineSessionDialog").showModal();
   renderRoutineSession();
   startSessionInterval();
@@ -1274,8 +1274,8 @@ function renderRoutineSession() {
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
   $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
-  $("sessionContextToggle").hidden = !item.context;
-  $("sessionContext").hidden = !routineSession.contextOpen || !item.context;
+  $("sessionContextToggle").hidden = true;
+  $("sessionContext").hidden = !item.context;
   $("sessionContext").textContent = item.context || "";
   const next = routine.items[routineSession.index + 1];
   $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
@@ -1499,7 +1499,7 @@ function bindEvents() {
   $("sessionSkip").addEventListener("click", () => completeSessionItem("skipped"));
   $("sessionMinus").addEventListener("click", () => { routineSession.remaining = Math.max(0, routineSession.remaining - 60); renderRoutineSession(); });
   $("sessionPlus").addEventListener("click", () => { routineSession.remaining += 60; renderRoutineSession(); });
-  $("sessionContextToggle").addEventListener("click", () => { routineSession.contextOpen = !routineSession.contextOpen; renderRoutineSession(); });
+  $("sessionContextToggle").addEventListener("click", () => {});
 
   window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
 }
