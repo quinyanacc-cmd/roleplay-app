@@ -1325,3 +1325,178 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
 .nav-button.active {
   color: var(--accent-strong);
 }
+
+
+/* --- v2.6 final fixes --- */
+.tri-state.tri-state-compact button {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.tri-state.tri-state-compact button .routine-state-button-label {
+  display: block !important;
+  font-size: 12px !important;
+  line-height: 1.15;
+  font-weight: 760;
+  color: var(--muted) !important;
+  text-align: center;
+}
+.tri-state.tri-state-compact button.active .routine-state-button-label {
+  color: var(--text) !important;
+}
+.tri-state.tri-state-compact button .status-circle.small {
+  display: grid !important;
+  place-items: center;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 15px !important;
+}
+.tri-state.tri-state-compact button .status-circle.neutral {
+  color: var(--muted) !important;
+}
+
+.sleep-slider-row input[type="range"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 100%;
+  height: 28px !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  accent-color: transparent !important;
+}
+.sleep-slider-row input[type="range"]::-webkit-slider-runnable-track {
+  -webkit-appearance: none;
+  height: 14px !important;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#38d4c3 0%,#53d38f 17%,#c6de5f 34%,#d9dee9 50%,#f7b54a 67%,#f47c5f 84%,#df4050 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);
+}
+.sleep-slider-row input[type="range"]::-moz-range-track {
+  height: 14px !important;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#38d4c3 0%,#53d38f 17%,#c6de5f 34%,#d9dee9 50%,#f7b54a 67%,#f47c5f 84%,#df4050 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.07);
+}
+.sleep-slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin-top: -5px !important;
+  border-radius: 50%;
+  background: #ffffff !important;
+  border: 4px solid #a58cff !important;
+  box-shadow: 0 4px 14px rgba(17,19,26,.2) !important;
+}
+.sleep-slider-row input[type="range"]::-moz-range-thumb {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50%;
+  background: #ffffff !important;
+  border: 4px solid #a58cff !important;
+  box-shadow: 0 4px 14px rgba(17,19,26,.2) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .sleep-slider-row input[type="range"]::-webkit-slider-runnable-track,
+  .sleep-slider-row input[type="range"]::-moz-range-track {
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08) !important;
+  }
+  .sleep-slider-row input[type="range"]::-webkit-slider-thumb,
+  .sleep-slider-row input[type="range"]::-moz-range-thumb {
+    background: #f8f9ff !important;
+    border-color: #b39bff !important;
+  }
+}
+
+#addActivity.plus-only,
+#addWater.plus-only {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#addActivity.plus-only .gradient-plus,
+#addWater.plus-only .gradient-plus,
+.gradient-plus {
+  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  margin: 0 !important;
+  transform: translateY(-1px);
+}
+#addActivity.plus-only .gradient-plus {
+  font-size: 34px !important;
+}
+
+.routine-hero {
+  overflow: hidden;
+}
+.routine-hero.morning {
+  background:
+    radial-gradient(circle at 16% 22%, rgba(255,255,255,.22) 0 8px, transparent 9px),
+    radial-gradient(circle at 24% 19%, rgba(255,255,255,.16) 0 4px, transparent 5px),
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.16) 0 6px, transparent 7px),
+    linear-gradient(160deg,#ff7a91 0%,#ff9a6a 48%,#f3bd69 100%) !important;
+}
+.routine-hero.morning .routine-thread {
+  opacity: .35;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255,255,255,.95) 0 5px, transparent 6px),
+    radial-gradient(circle at 28% 20%, rgba(255,255,255,.92) 0 16px, transparent 17px),
+    radial-gradient(circle at 38% 23%, rgba(255,255,255,.92) 0 14px, transparent 15px),
+    radial-gradient(circle at 32% 30%, rgba(255,255,255,.92) 0 15px, transparent 16px),
+    radial-gradient(circle at 70% 20%, rgba(255,255,255,.75) 0 3px, transparent 4px),
+    linear-gradient(135deg, transparent 0 44%, rgba(255,255,255,.14) 45% 47%, transparent 48% 100%);
+}
+.routine-hero.evening {
+  background:
+    radial-gradient(circle at 18% 17%, rgba(255,255,255,.8) 0 1.4px, transparent 2px),
+    radial-gradient(circle at 25% 24%, rgba(255,255,255,.74) 0 1.4px, transparent 2px),
+    radial-gradient(circle at 35% 12%, rgba(255,255,255,.62) 0 1.4px, transparent 2px),
+    radial-gradient(circle at 76% 16%, rgba(255,255,255,.68) 0 1.4px, transparent 2px),
+    linear-gradient(160deg,#6f5ee3 0%,#4840b8 55%,#1b2f78 100%) !important;
+}
+.routine-hero.evening .routine-thread {
+  opacity: .34;
+  background:
+    radial-gradient(circle at 18% 17%, rgba(255,255,255,.95) 0 2px, transparent 3px),
+    radial-gradient(circle at 26% 26%, rgba(255,255,255,.80) 0 2px, transparent 3px),
+    radial-gradient(circle at 40% 15%, rgba(255,255,255,.74) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 21%, rgba(255,255,255,.84) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 29%, rgba(255,255,255,.68) 0 2px, transparent 3px),
+    linear-gradient(135deg, transparent 0 44%, rgba(255,255,255,.14) 45% 47%, transparent 48% 100%);
+}
+
+.routine-session-dialog .session-timer-circle {
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(245,247,251,.98)) !important;
+  box-shadow: inset 0 0 0 1px var(--line), 0 18px 40px rgba(15,18,31,.08) !important;
+}
+.routine-session-dialog .session-timer-circle strong {
+  color: rgba(48,55,72,.28) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.9);
+}
+.routine-session-dialog #sessionTimer {
+  position: relative;
+  z-index: 2;
+  color: var(--text) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,.35);
+}
+@media (prefers-color-scheme: dark) {
+  .routine-session-dialog .session-timer-circle {
+    background: linear-gradient(180deg, rgba(32,38,54,.96), rgba(18,22,32,.99)) !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 16px 34px rgba(0,0,0,.32) !important;
+  }
+  .routine-session-dialog .session-timer-circle strong {
+    color: rgba(240,244,255,.20) !important;
+    text-shadow: none !important;
+  }
+  .routine-session-dialog #sessionTimer {
+    color: #f4f7ff !important;
+    text-shadow: 0 2px 12px rgba(0,0,0,.32);
+  }
+}

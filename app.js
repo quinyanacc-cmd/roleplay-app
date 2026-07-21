@@ -457,13 +457,13 @@ function routineStateButtonHTML(value) {
     done: "Erledigt",
     missed: "Nicht erledigt"
   };
-  return `${routineStateIconHTML(value, "small")}<span class="routine-state-button-label">${labels[value] || "Offen"}</span>`;
+  return `${routineStateIconHTML(value, "small")}<strong class="routine-state-button-label">${labels[value] || "Offen"}</strong>`;
 }
 
 function routineStateIconHTML(value, size = "small") {
   if (value === "done") return statusCircle("✓", "gradient", size);
   if (value === "missed") return statusCircle("✕", "missed", size);
-  return statusCircle("", "neutral", size);
+  return statusCircle("–", "neutral", size);
 }
 
 function renderWaterControl() {
@@ -894,52 +894,162 @@ function exportWeeklyPdf() {
 }
 
 function buildWeeklyPdf(reviews) {
-  const W = 842, H = 595, margin = 20;
+  const W = 1260, H = 842;
+  const margin = 24, gap = 10;
   const commands = [];
-  pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
-  pdfText(commands, "ROLEPLAY", margin, H - 24, 8, true, "7C8493");
-  pdfText(commands, "Wochenreflexion", margin, H - 44, 18, true, "17181C");
-  pdfText(commands, `${formatLongDate(reviews[0].date)} – ${formatLongDate(reviews[6].date)}`, W - 220, H - 40, 8, false, "616876");
+  const rect = (x, top, width, height, hex) => pdfFillRect(commands, x, H - top - height, width, height, hex);
+  const stroke = (x, top, width, height, hex, lw = 0.7) => pdfStrokeRect(commands, x, H - top - height, width, height, hex, lw);
+  const textAt = (value, x, top, size, bold, hex) => pdfText(commands, value, x, H - top - size, size, bold, hex);
+  const line = (x1, top1, x2, top2, hex, lw = 0.6) => pdfStrokeLine(commands, x1, H - top1, x2, H - top2, hex, lw);
+  const weekdayLabel = date => new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${date}T12:00:00`));
 
-  const tableX = margin, tableYTop = H - 64, tableW = W - margin * 2;
-  const labelW = 108, dayW = (tableW - labelW) / 7;
-  const rows = weeklyPdfRows(reviews);
-  const headerH = 46;
-  const rowH = (tableYTop - margin - headerH) / rows.length;
+  pdfFillRect(commands, 0, 0, W, H, "F4F6FB");
+  textAt("ROLEPLAY", margin, 18, 10, true, "758093");
+  textAt("Wochenplan", margin, 34, 22, true, "17181C");
+  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 162, 39, 10, false, "6B7382");
+  textAt("Ubersicht deiner Woche im App-Layout", W - 270, 34, 9, false, "7A8393");
 
-  pdfFillRect(commands, tableX, tableYTop - headerH, tableW, headerH, "F7F8FB");
-  pdfStrokeRect(commands, tableX, tableYTop - headerH, tableW, headerH, "E3E6ED", .7);
-  pdfText(commands, "EINTRAG", tableX + 10, tableYTop - 18, 7, true, "69707F");
+  const cardsTop = 72;
+  const cardW = (W - margin * 2 - gap * 6) / 7;
+  const cardH = H - cardsTop - margin;
+
+  const sectionBase = [
+    { title: "Vitalitat", height: 138 },
+    { title: "Routinen", height: 78 },
+    { title: "Gebete", height: 118 },
+    { title: "Reflexion", height: 126 },
+    { title: "Aktivitaten", height: 78 },
+    { title: "Streaks", height: 78 }
+  ];
 
   reviews.forEach((item, index) => {
     const role = getRole(item.data.role);
-    const x = tableX + labelW + index * dayW;
-    pdfFillRect(commands, x + 7, tableYTop - 39, dayW - 14, 13, "F2F4F7");
-    pdfText(commands, new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${item.date}T12:00:00`)), x + 5, tableYTop - 16, 6.1, true, "17181C");
-    pdfText(commands, formatLongDate(item.date), x + 5, tableYTop - 27, 5.2, false, "616876");
-    pdfText(commands, role.name, x + 10, tableYTop - 29.5, 5.2, true, role.color.slice(1));
-    pdfStrokeLine(commands, x, tableYTop - headerH, x, margin, "ECEFF4", .45);
-  });
+    const data = item.data;
+    const x = margin + index * (cardW + gap);
+    const headerH = 62;
+    const bodyPad = 8;
+    const sectionGap = 6;
+    const innerX = x + bodyPad;
+    const innerW = cardW - bodyPad * 2;
 
-  let currentY = tableYTop - headerH;
-  rows.forEach((row, rowIndex) => {
-    const y = currentY - rowH;
-    pdfFillRect(commands, tableX + 4, y + 3, tableW - 8, rowH - 6, rowIndex % 2 ? "FFFFFF" : "FBFCFE");
-    pdfStrokeRect(commands, tableX + 4, y + 3, tableW - 8, rowH - 6, "EDF0F4", .5);
-    pdfText(commands, row.label, tableX + 10, y + rowH / 2 - 2, 6.0, true, "252933");
-    row.values.forEach((value, index) => {
-      const x = tableX + labelW + index * dayW;
-      pdfText(commands, pdfFit(value, row.maxChars || 24), x + 4, y + rowH / 2 - 2, row.fontSize || 5.2, false, "30343D");
+    rect(x, cardsTop, cardW, cardH, "FFFFFF");
+    stroke(x, cardsTop, cardW, cardH, "DCE2EC", 0.9);
+    rect(x, cardsTop, cardW, headerH, role.color.replace('#',''));
+    textAt(role.name, x + 10, cardsTop + 10, 11, true, pdfContrast(role.color));
+    textAt(weekdayLabel(item.date), x + 10, cardsTop + 27, 8, true, pdfContrast(role.color));
+    textAt(formatLongDate(item.date), x + 10, cardsTop + 40, 7, false, pdfContrast(role.color));
+
+    let cursorTop = cardsTop + headerH + 10;
+    const routineLabel = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
+    const prayerLine = name => {
+      const state = data.prayers?.[name] || "";
+      return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
+    };
+    const meal = (label, value) => `${label}: ${value || "-"}`;
+    const cleanLines = value => pdfWrapText(value || "-", 24, 3);
+    const activityLines = (data.activities || []).length
+      ? (data.activities || []).slice(0, 4).flatMap(entry => pdfWrapText(`- ${entry.title}`, 24, 1))
+      : ["- Keine Aktivitaten"];
+    const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
+    const reflexionText = [
+      `Gefuhl: ${data.mood || '-'}`,
+      `Traume: ${data.dreams || '-'}`,
+      `Dankbar: ${[data.gratitude1, data.gratitude2].filter(Boolean).join(' / ') || '-'}`,
+      `Allah: ${latinAllahName(data.allahName) || '-'}`,
+      `Notiz: ${data.notes || '-'}`
+    ];
+
+    const sections = [
+      {
+        title: "Vitalitat",
+        lines: [
+          meal("Fruhstuck", data.breakfast),
+          meal("Mittag", data.lunch),
+          meal("Abend", data.dinner),
+          meal("Snack", data.snack),
+          `Getrunken: ${(Number(data.water || 0) / 1000).toFixed(1).replace('.', ',')} L`,
+          `Schritte: ${data.steps ? Number(data.steps).toLocaleString('de-DE') : '-'}`
+        ],
+        height: 138
+      },
+      {
+        title: "Routinen",
+        lines: [
+          `Morgen: ${routineLabel(data.morningRoutineState)}`,
+          `Abend: ${routineLabel(data.eveningRoutineState)}`,
+          `Schlaf: ${data.sleepQualityScore === '' || data.sleepQualityScore === undefined ? '-' : (SLEEP_LABELS[Number(data.sleepQualityScore)] || '-')}`,
+          `Fasten: ${data.fastingCompleted ? 'Geschafft' : `${Number(data.ramadanDays || 0)} offen`}`
+        ],
+        height: 78
+      },
+      {
+        title: "Gebete",
+        lines: PRAYERS.map(prayerLine),
+        height: 118
+      },
+      {
+        title: "Reflexion",
+        lines: reflexionText.flatMap(lineText => cleanLines(lineText)),
+        height: 126
+      },
+      {
+        title: "Aktivitaten",
+        lines: activityLines,
+        height: 78
+      },
+      {
+        title: "Streaks",
+        lines: streakLines,
+        height: 78
+      }
+    ];
+
+    sections.forEach(section => {
+      rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
+      stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.6);
+      textAt(section.title, innerX + 8, cursorTop + 8, 8.6, true, "1E2330");
+      line(innerX + 8, cursorTop + 20, innerX + innerW - 8, cursorTop + 20, "EDF1F6", 0.45);
+      let lineTop = cursorTop + 28;
+      const maxLines = Math.floor((section.height - 34) / 9.4);
+      section.lines.slice(0, maxLines).forEach(lineText => {
+        textAt(pdfFit(lineText, 28), innerX + 8, lineTop, 6.6, false, "404757");
+        lineTop += 9.4;
+      });
+      cursorTop += section.height + sectionGap;
     });
-    currentY = y;
   });
 
-  for (let index = 0; index <= 7; index += 1) {
-    const x = tableX + labelW + index * dayW;
-    pdfStrokeLine(commands, x, margin, x, tableYTop, "F0F2F6", .35);
-  }
-  pdfStrokeRect(commands, tableX, margin, tableW, tableYTop - margin, "DCE1E8", .75);
   return assemblePdf(commands.join("\n"), W, H);
+}
+
+function pdfWrapText(value, maxChars = 24, maxLines = 3) {
+  const clean = pdfPlainText(value).replace(/\s+/g, ' ').trim();
+  if (!clean) return ["-"];
+  const words = clean.split(' ');
+  const lines = [];
+  let current = '';
+  words.forEach(word => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxChars) current = candidate;
+    else {
+      if (current) lines.push(current);
+      current = word;
+    }
+  });
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  const trimmed = lines.slice(0, maxLines);
+  trimmed[maxLines - 1] = pdfFit(trimmed[maxLines - 1], Math.max(8, maxChars - 1));
+  return trimmed;
+}
+
+function pdfPlainText(value) {
+  return String(value ?? "")
+    .replace(/[–—]/g, "-")
+    .replace(/[ʿ‘’]/g, "'")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
 }
 
 function weeklyPdfRows(reviews) {
