@@ -2,7 +2,7 @@ const PRAYERS = ["Fajr", "Dhuhr", "ʿAsr", "Maghrib", "ʿIschāʾ"];
 const PRAYER_STATES = [
   { value: "", label: "Offen", icon: "○", short: "Offen" },
   { value: "Normal", label: "Gebetet", icon: "●", short: "Gebet" },
-  { value: "Gemeinschaft", label: "In Gemeinschaft", icon: "🕌", short: "Gemeinschaft" },
+  { value: "Gemeinschaft", label: "Moschee", icon: "🕌", short: "Moschee" },
   { value: "Verspätet", label: "Verspätet", icon: "🕓", short: "Verspätet" },
   { value: "Nachgeholt", label: "Nachgeholt", icon: "↩️", short: "Nachgeholt" },
   { value: "Nicht gebetet", label: "Nicht gebetet", icon: "❌", short: "Nicht gebetet" }
@@ -402,6 +402,7 @@ function fillForm() {
   $("sleepQuality").value = Number(currentData.sleepQualityScore || 0);
   $("mood").value = currentData.mood || "";
   updateSleepLabel();
+  renderWaterControl();
   updateRamadanDisplay();
   updateRoutineStateButtons();
   renderPrayers();
@@ -427,15 +428,52 @@ function applyHeaderTheme(role = getRole($("dayRole")?.value || currentData?.rol
   header.style.setProperty("--header-role-text", role.text);
 }
 
-function updateRoutineStateButtons() {
-  document.querySelectorAll("[data-routine-state]").forEach(group => {
-    const state = group.dataset.routineState === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
-    group.querySelectorAll("button").forEach(button => button.classList.toggle("active", button.dataset.state === state));
-  });
+function statusCircle(icon, variant = "neutral", size = "medium") {
+  return `<span class="status-circle ${variant} ${size}">${icon}</span>`;
 }
 
 function prayerStateMeta(value) {
   return PRAYER_STATES.find(option => option.value === value) || PRAYER_STATES[0];
+}
+
+function prayerStateIconHTML(value, size = "medium") {
+  const meta = prayerStateMeta(value);
+  if (value === "") return statusCircle("", "neutral", size);
+  if (value === "Normal") return statusCircle("✓", "gradient", size);
+  if (value === "Nicht gebetet") return statusCircle("✕", "missed", size);
+  return `<span class="status-emoji ${size}">${meta.icon}</span>`;
+}
+
+function routineStateIconHTML(value, size = "small") {
+  if (value === "done") return statusCircle("✓", "gradient", size);
+  if (value === "missed") return statusCircle("✕", "missed", size);
+  return statusCircle("", "neutral", size);
+}
+
+function renderWaterControl() {
+  const waterMl = Number(currentData?.water || 0);
+  if ($("water")) $("water").value = String(waterMl);
+  if ($("waterTotalDisplay")) $("waterTotalDisplay").textContent = `${(waterMl / 1000).toFixed(1).replace(".", ",")} Liter`;
+  if ($("waterDroplets")) {
+    const count = Math.max(1, Math.min(8, Math.round(waterMl / 500) || 1));
+    const filled = Math.min(8, Math.round(waterMl / 500));
+    $("waterDroplets").innerHTML = Array.from({length: count}, (_, index) => `<button type="button" class="water-drop ${index < filled ? 'filled' : ''}" data-water-direct="${(index + 1) * 500}" aria-label="${(index + 1) * 0.5} Liter">💧</button>`).join("");
+    document.querySelectorAll("[data-water-direct]").forEach(button => button.addEventListener("click", () => {
+      currentData.water = String(Number(button.dataset.waterDirect || 0));
+      renderWaterControl(); saveReview(true);
+    }));
+  }
+}
+
+function updateRoutineStateButtons() {
+  document.querySelectorAll("[data-routine-state]").forEach(group => {
+    const state = group.dataset.routineState === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
+    group.querySelectorAll("button").forEach(button => {
+      const isActive = button.dataset.state === state;
+      button.classList.toggle("active", isActive);
+      button.innerHTML = routineStateIconHTML(button.dataset.state, "small");
+    });
+  });
 }
 
 function renderPrayers() {
@@ -445,7 +483,7 @@ function renderPrayers() {
     return `<div class="prayer-card prayer-card-compact" data-state="${escapeHTML(state)}">
       <strong>${escapeHTML(prayer)}</strong>
       <button type="button" class="prayer-state-button" data-open-prayer="${escapeHTML(prayer)}" aria-label="Status ${escapeHTML(prayer)}: ${escapeHTML(meta.label)}">
-        <span class="prayer-state-icon">${escapeHTML(meta.icon)}</span>
+        ${prayerStateIconHTML(state, "medium")}
       </button>
       <small>${escapeHTML(meta.short)}</small>
     </div>`;
@@ -460,7 +498,7 @@ function openPrayerDialog(prayer) {
   const current = currentData.prayers?.[prayer] || "";
   $("prayerStateOptions").innerHTML = PRAYER_STATES.map(option => `
     <button type="button" class="prayer-option ${current === option.value ? "active" : ""}" data-prayer-option="${escapeHTML(option.value)}">
-      <span>${escapeHTML(option.icon)}</span>
+      ${prayerStateIconHTML(option.value, "medium")}
       <strong>${escapeHTML(option.label)}</strong>
     </button>`).join("");
   document.querySelectorAll("[data-prayer-option]").forEach(button => button.addEventListener("click", () => {
@@ -534,27 +572,19 @@ function renderActivities() {
   const list = $("activityList");
   list.innerHTML = (currentData.activities || []).map((activity, index) => {
     const role = getRole(activity.role);
-    return `<div class="activity-row" draggable="true" data-activity-index="${index}">
-      <span class="drag-handle" aria-hidden="true">≡</span>
+    return `<div class="activity-row legacy-activity" draggable="true" data-activity-index="${index}" style="--activity-color:${role.color}">
       <div class="activity-main">
-        <span class="role-dot" style="background:${role.color}"></span>
         <div class="activity-copy">
           <strong>${escapeHTML(activity.title)}</strong>
-          <small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</small>
+          <small>${escapeHTML(role.name)}</small>
         </div>
       </div>
-      <div class="activity-actions">
-        <button type="button" data-move-activity="up" data-index="${index}" aria-label="Nach oben">↑</button>
-        <button type="button" data-move-activity="down" data-index="${index}" aria-label="Nach unten">↓</button>
-        <button type="button" class="delete-button" data-delete-activity="${index}" aria-label="Löschen">×</button>
+      <div class="activity-actions compact">
+        <button type="button" class="delete-button emoji-delete" data-delete-activity="${index}" aria-label="Löschen">🗑️</button>
       </div>
     </div>`;
   }).join("");
 
-  document.querySelectorAll("[data-move-activity]").forEach(button => button.addEventListener("click", () => {
-    moveArrayItem(currentData.activities, Number(button.dataset.index), button.dataset.moveActivity === "up" ? -1 : 1);
-    saveReview(true); renderActivities();
-  }));
   document.querySelectorAll("[data-delete-activity]").forEach(button => button.addEventListener("click", () => {
     currentData.activities.splice(Number(button.dataset.deleteActivity), 1);
     saveReview(true); renderActivities();
@@ -643,7 +673,7 @@ function renderStats() {
   const dates = weekDates();
   const reviews = dates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
-  const communityCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
+  const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
   const sleepValues = reviews.map(item => Number(item.data.sleepQualityScore ?? 0));
   const averageSleep = sleepValues.length ? (sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length).toFixed(1) : "–";
@@ -656,12 +686,7 @@ function renderStats() {
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
   const topMood = Object.entries(moodCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || "–";
-
-  const roleCounts = Object.fromEntries(ROLES.map(role => [role.name, 0]));
-  reviews.forEach(item => (item.data.activities || []).forEach(activity => { roleCounts[getRole(activity.role).name] += 1; }));
-  const maxRoleCount = Math.max(1, ...Object.values(roleCounts));
-  const topRoleName = Object.entries(roleCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || ROLES[0].name;
-  const topRole = getRole(topRoleName);
+  const bestDayName = bestDay ? new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${bestDay.date}T12:00:00`)) : "–";
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
@@ -669,34 +694,34 @@ function renderStats() {
       <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Wochenfokus</span></div></div>
       <div class="week-summary-copy">
         <strong>${storedDays}/7 Tage reflektiert</strong>
-        <p>${weeklyScore >= 75 ? "Starke Woche: Du setzt deine Prioritäten sichtbar um." : weeklyScore >= 45 ? "Solide Basis. Die Tagesbalken zeigen dir sofort, wo noch Potenzial liegt." : "Die Statistik bewertet nicht dich, sondern macht sichtbar, wo du dir künftig leichter helfen kannst."}</p>
+        <p>${weeklyScore >= 75 ? "Starke Woche: viel Struktur, gute Routinen und klare Gebetsdisziplin." : weeklyScore >= 45 ? "Gute Basis. Unten siehst du farbige Wochenverläufe für Gebet, Routinen und Versorgung." : "Die Woche ist ein Spiegel, kein Urteil. Nutze die Übersicht als Orientierung für morgen."}</p>
       </div>
     </div>
-    <div class="stats-metrics">
+    <div class="stats-metrics colorful-metrics">
       ${statTile(`${prayerCount}/35`, "Gebete")}
-      ${statTile(String(communityCount), "in Gemeinschaft")}
-      ${statTile(`${routineDone}/14`, "Routinen erledigt")}
-      ${statTile(`${averageSleep}/5`, "Ø Schlafwert")}
-      ${statTile(totalSteps.toLocaleString("de-DE"), "Schritte gesamt")}
+      ${statTile(String(mosqueCount), "Moschee")}
+      ${statTile(`${routineDone}/14`, "Routinen")}
+      ${statTile(`${averageSleep}/5`, "Ø Schlaf")}
+      ${statTile(totalSteps.toLocaleString("de-DE"), "Schritte")}
       ${statTile(`${averageWater.toFixed(1)} L`, "Wasser / Tag")}
       ${statTile(String(fastDays), "Fastentage")}
       ${statTile(String(reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0)), "Aktivitäten")}
     </div>
     <div class="insight-grid">
-      <div class="insight-card">
+      <div class="insight-card role-highlight" style="--role-soft:rgba(74,140,255,.12);--role-text:#245ca5;">
         <span class="insight-label">Bester Tag</span>
-        <strong>${new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${bestDay.date}T12:00:00`))}</strong>
-        <small>${reviewCompletion(bestDay.data)}% Fokus · ${formatLongDate(bestDay.date)}</small>
+        <strong>${bestDayName}</strong>
+        <small>${bestDay ? `${reviewCompletion(bestDay.data)}% Fokus · ${formatLongDate(bestDay.date)}` : "–"}</small>
       </div>
       <div class="insight-card">
         <span class="insight-label">Häufigste Emotion</span>
         <strong>${escapeHTML(topMood)}</strong>
-        <small>Achtsamkeits-Muster dieser Woche</small>
+        <small>Achtsamkeits-Tendenz dieser Woche</small>
       </div>
-      <div class="insight-card role-highlight" style="--role-color:${topRole.color};--role-soft:${hexToRgba(topRole.color,.15)};--role-text:${topRole.text}">
-        <span class="insight-label">Prägendste Rolle</span>
-        <strong>${escapeHTML(topRole.emoji)} ${escapeHTML(topRole.name)}</strong>
-        <small>${roleCounts[topRole.name]} Aktivität(en)</small>
+      <div class="insight-card">
+        <span class="insight-label">Wochentrend</span>
+        <strong>${routineDone >= 8 ? "Stabil" : routineDone >= 4 ? "Im Aufbau" : "Neu sortieren"}</strong>
+        <small>${routineDone}/14 Routinen · ${fastDays} Fastentage</small>
       </div>
     </div>
     <div class="day-performance">
@@ -704,21 +729,41 @@ function renderStats() {
         const role = getRole(item.data.role);
         const score = reviewCompletion(item.data);
         const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-        return `<div class="day-performance-row">
-          <span class="day-label">${day}</span>
-          <div class="day-bar" style="--day-color:${role.color}"><span style="width:${score}%"></span></div>
-          <span class="day-score">${score}%</span>
-        </div>`;
+        return `<div class="day-performance-row"><span class="day-label">${day}</span><div class="day-bar" style="--day-color:${role.color}"><span style="width:${score}%"></span></div><span class="day-score">${score}%</span></div>`;
       }).join("")}
     </div>
-    <div class="role-week">
-      <h3>Gelebte Rollen durch Aktivitäten</h3>
-      <div class="role-bars">
-        ${ROLES.map(role => `<div class="role-bar-row">
-          <span class="role-name">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</span>
-          <div class="role-bar"><span style="width:${(roleCounts[role.name] / maxRoleCount) * 100}%;background:${role.color}"></span></div>
-          <strong>${roleCounts[role.name]}</strong>
-        </div>`).join("")}
+    <div class="weekly-visual-grid">
+      <div class="visual-panel">
+        <h3>Gebetswoche</h3>
+        ${reviews.map(item => {
+          const prayed = PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length;
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${(prayed/5)*100}%"></i></div><strong>${prayed}/5</strong></div>`;
+        }).join("")}
+      </div>
+      <div class="visual-panel">
+        <h3>Routinewoche</h3>
+        ${reviews.map(item => {
+          const routineCount = [item.data.morningRoutineState, item.data.eveningRoutineState].filter(v => v === "done").length;
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${(routineCount/2)*100}%"></i></div><strong>${routineCount}/2</strong></div>`;
+        }).join("")}
+      </div>
+      <div class="visual-panel">
+        <h3>Wasserwoche</h3>
+        ${reviews.map(item => {
+          const liters = Number(item.data.water || 0) / 1000;
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${Math.min(100, (liters / 3) * 100)}%"></i></div><strong>${liters.toFixed(1)}L</strong></div>`;
+        }).join("")}
+      </div>
+      <div class="visual-panel">
+        <h3>Schlafwoche</h3>
+        ${reviews.map(item => {
+          const score = 5 - Number(item.data.sleepQualityScore || 0);
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${(score/5)*100}%"></i></div><strong>${SLEEP_LABELS[Number(item.data.sleepQualityScore || 0)]}</strong></div>`;
+        }).join("")}
       </div>
     </div>`;
 }
@@ -726,6 +771,7 @@ function renderStats() {
 function statTile(value, label) {
   return `<div class="stat-tile"><strong>${escapeHTML(value)}</strong><span>${escapeHTML(label)}</span></div>`;
 }
+
 
 function getAllReviews() {
   const reviews = [];
@@ -759,7 +805,7 @@ function exportBackup() {
   saveReview(true);
   const payload = {
     app: "Roleplay",
-    version: "2.1",
+    version: "2.2",
     schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     reviews: getAllReviews(),
@@ -817,64 +863,55 @@ function exportWeeklyPdf() {
 }
 
 function buildWeeklyPdf(reviews) {
-  const W = 842, H = 595, margin = 22;
+  const W = 842, H = 595, margin = 20;
   const commands = [];
-  pdfFillRect(commands, 0, 0, W, H, "F6F7FB");
-  pdfText(commands, "ROLEPLAY", margin, H - 26, 8, true, "7C8493");
-  pdfText(commands, "Wochenreview", margin, H - 46, 18, true, "17181C");
-  pdfText(commands, `${formatLongDate(reviews[0].date)} – ${formatLongDate(reviews[6].date)}`, W - 235, H - 42, 8.2, false, "616876");
+  pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
+  pdfText(commands, "ROLEPLAY", margin, H - 24, 8, true, "7C8493");
+  pdfText(commands, "Wochenreflexion", margin, H - 44, 18, true, "17181C");
+  pdfText(commands, `${formatLongDate(reviews[0].date)} – ${formatLongDate(reviews[6].date)}`, W - 220, H - 40, 8, false, "616876");
 
-  const tableX = margin, tableYTop = H - 72, tableW = W - margin * 2;
-  const labelW = 118, dayW = (tableW - labelW) / 7;
-  const sections = weeklyPdfSections(reviews);
+  const tableX = margin, tableYTop = H - 64, tableW = W - margin * 2;
+  const labelW = 108, dayW = (tableW - labelW) / 7;
+  const rows = weeklyPdfRows(reviews);
   const headerH = 46;
-  const allRows = sections.flatMap(section => [{ type: "section", title: section.title }, ...section.rows]);
-  const rowUnits = allRows.reduce((sum, row) => sum + (row.type === "section" ? 1.15 : 1), 0);
-  const rowH = (tableYTop - margin - headerH) / rowUnits;
+  const rowH = (tableYTop - margin - headerH) / rows.length;
 
-  pdfFillRect(commands, tableX, tableYTop - headerH, labelW, headerH, "FFFFFF");
-  pdfStrokeRect(commands, tableX, tableYTop - headerH, tableW, headerH, "DCE0E8", .7);
-  pdfText(commands, "BEREICH", tableX + 8, tableYTop - 18, 7, true, "69707F");
+  pdfFillRect(commands, tableX, tableYTop - headerH, tableW, headerH, "F7F8FB");
+  pdfStrokeRect(commands, tableX, tableYTop - headerH, tableW, headerH, "E3E6ED", .7);
+  pdfText(commands, "EINTRAG", tableX + 10, tableYTop - 18, 7, true, "69707F");
 
   reviews.forEach((item, index) => {
     const role = getRole(item.data.role);
     const x = tableX + labelW + index * dayW;
-    pdfFillRect(commands, x, tableYTop - headerH, dayW, headerH, "FFFFFF");
-    pdfFillRect(commands, x + 3, tableYTop - 15, dayW - 6, 11, role.color.slice(1));
-    pdfText(commands, new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${item.date}T12:00:00`)), x + 5, tableYTop - 17, 6.1, true, "17181C");
-    pdfText(commands, formatLongDate(item.date), x + 5, tableYTop - 29, 5.4, false, "616876");
-    pdfText(commands, role.name, x + 8, tableYTop - 11.7, 5.4, true, pdfContrast(role.color));
-    pdfStrokeLine(commands, x, tableYTop - headerH, x, margin, "E3E6ED", .45);
+    pdfFillRect(commands, x + 7, tableYTop - 39, dayW - 14, 13, "F2F4F7");
+    pdfText(commands, new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${item.date}T12:00:00`)), x + 5, tableYTop - 16, 6.1, true, "17181C");
+    pdfText(commands, formatLongDate(item.date), x + 5, tableYTop - 27, 5.2, false, "616876");
+    pdfText(commands, role.name, x + 10, tableYTop - 29.5, 5.2, true, role.color.slice(1));
+    pdfStrokeLine(commands, x, tableYTop - headerH, x, margin, "ECEFF4", .45);
   });
 
   let currentY = tableYTop - headerH;
-  allRows.forEach((row, rowIndex) => {
-    const height = row.type === "section" ? rowH * 1.15 : rowH;
-    const y = currentY - height;
-    if (row.type === "section") {
-      pdfFillRect(commands, tableX, y, tableW, height, "EEF2FA");
-      pdfText(commands, row.title, tableX + 8, y + height / 2 - 2, 7.5, true, "3F516E");
-    } else {
-      pdfFillRect(commands, tableX, y, tableW, height, rowIndex % 2 ? "FFFFFF" : "FAFBFD");
-      pdfText(commands, row.label, tableX + 8, y + height / 2 - 2, 6.1, true, "252933");
-      row.values.forEach((value, index) => {
-        const x = tableX + labelW + index * dayW;
-        pdfText(commands, pdfFit(value, row.maxChars || 28), x + 4, y + height / 2 - 2, row.fontSize || 5.4, false, "30343D");
-      });
-    }
-    pdfStrokeLine(commands, tableX, y, tableX + tableW, y, "E3E6ED", .45);
+  rows.forEach((row, rowIndex) => {
+    const y = currentY - rowH;
+    pdfFillRect(commands, tableX + 4, y + 3, tableW - 8, rowH - 6, rowIndex % 2 ? "FFFFFF" : "FBFCFE");
+    pdfStrokeRect(commands, tableX + 4, y + 3, tableW - 8, rowH - 6, "EDF0F4", .5);
+    pdfText(commands, row.label, tableX + 10, y + rowH / 2 - 2, 6.0, true, "252933");
+    row.values.forEach((value, index) => {
+      const x = tableX + labelW + index * dayW;
+      pdfText(commands, pdfFit(value, row.maxChars || 24), x + 4, y + rowH / 2 - 2, row.fontSize || 5.2, false, "30343D");
+    });
     currentY = y;
   });
 
   for (let index = 0; index <= 7; index += 1) {
     const x = tableX + labelW + index * dayW;
-    pdfStrokeLine(commands, x, margin, x, tableYTop, "E3E6ED", .45);
+    pdfStrokeLine(commands, x, margin, x, tableYTop, "F0F2F6", .35);
   }
-  pdfStrokeRect(commands, tableX, margin, tableW, tableYTop - margin, "D3D8E1", .75);
+  pdfStrokeRect(commands, tableX, margin, tableW, tableYTop - margin, "DCE1E8", .75);
   return assemblePdf(commands.join("\n"), W, H);
 }
 
-function weeklyPdfSections(reviews) {
+function weeklyPdfRows(reviews) {
   const value = getter => reviews.map(item => getter(item.data));
   const meals = data => [data.breakfast, data.lunch, data.dinner, data.snack].filter(Boolean).join(" / ") || "-";
   const routineState = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
@@ -882,40 +919,25 @@ function weeklyPdfSections(reviews) {
   const activity = data => (data.activities || []).map(item => `${item.title} (${item.role})`).join(" / ") || "-";
   const streak = (data, key) => `${Number(data.streaks?.[key]?.days || 0)} T.`;
   return [
-    {
-      title: "Vitalität",
-      rows: [
-        { label: "Mahlzeiten", values: value(meals), maxChars: 30, fontSize: 5.0 },
-        { label: "Wasser", values: value(data => `${(Number(data.water || 0) / 1000).toFixed(1)} L`) },
-        { label: "Schritte", values: value(data => Number(data.steps || 0).toLocaleString("de-DE")) },
-        { label: "Schlafqualität", values: value(data => SLEEP_LABELS[Number(data.sleepQualityScore || 0)] || "-") },
-        { label: "Träume", values: value(data => data.dreams || "-"), maxChars: 32, fontSize: 4.9 }
-      ]
-    },
-    {
-      title: "Routinen & Islam",
-      rows: [
-        { label: "Morgenroutine", values: value(data => routineState(data.morningRoutineState)) },
-        { label: "Abendroutine", values: value(data => routineState(data.eveningRoutineState)) },
-        ...PRAYERS.map(prayerName => ({ label: prayerName, values: value(data => prayer(data, prayerName)), maxChars: 14 })),
-        { label: "Fasten", values: value(data => data.fastingCompleted ? "Geschafft" : "-") }
-      ]
-    },
-    {
-      title: "Achtsamkeit & Fortschritt",
-      rows: [
-        { label: "Emotion", values: value(data => data.mood || "-") },
-        { label: "Dankbar 1", values: value(data => data.gratitude1 || "-"), maxChars: 30, fontSize: 5.0 },
-        { label: "Dankbar 2", values: value(data => data.gratitude2 || "-"), maxChars: 30, fontSize: 5.0 },
-        { label: "99 Namen", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 24, fontSize: 4.9 },
-        { label: "Aktivitäten", values: value(activity), maxChars: 34, fontSize: 4.9 },
-        { label: "Cannabisfrei", values: value(data => streak(data, "cannabisFree")) },
-        { label: "Begierde", values: value(data => streak(data, "compulsionFree")) },
-        { label: "Alkoholfrei", values: value(data => streak(data, "alcoholFree")) },
-        { label: "Rauchfrei", values: value(data => streak(data, "smokeFree")) },
-        { label: "Tagesnotiz", values: value(data => data.notes || "-"), maxChars: 34, fontSize: 4.8 }
-      ]
-    }
+    { label: "Mahlzeiten", values: value(meals), maxChars: 28, fontSize: 4.9 },
+    { label: "Wasser", values: value(data => `${(Number(data.water || 0) / 1000).toFixed(1)} L`) },
+    { label: "Schritte", values: value(data => Number(data.steps || 0).toLocaleString("de-DE")) },
+    { label: "Schlaf", values: value(data => SLEEP_LABELS[Number(data.sleepQualityScore || 0)] || "-") },
+    { label: "Träume", values: value(data => data.dreams || "-"), maxChars: 26, fontSize: 4.8 },
+    { label: "Morgenroutine", values: value(data => routineState(data.morningRoutineState)) },
+    { label: "Abendroutine", values: value(data => routineState(data.eveningRoutineState)) },
+    ...PRAYERS.map(prayerName => ({ label: prayerName, values: value(data => prayer(data, prayerName)), maxChars: 12 })),
+    { label: "Fasten", values: value(data => data.fastingCompleted ? "Geschafft" : "-") },
+    { label: "Emotion", values: value(data => data.mood || "-") },
+    { label: "Dankbarkeit 1", values: value(data => data.gratitude1 || "-"), maxChars: 24, fontSize: 4.8 },
+    { label: "Dankbarkeit 2", values: value(data => data.gratitude2 || "-"), maxChars: 24, fontSize: 4.8 },
+    { label: "99 Namen", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 18, fontSize: 4.8 },
+    { label: "Aktivitäten", values: value(activity), maxChars: 28, fontSize: 4.8 },
+    { label: "Cannabis", values: value(data => streak(data, "cannabisFree")) },
+    { label: "Begierde", values: value(data => streak(data, "compulsionFree")) },
+    { label: "Alkohol", values: value(data => streak(data, "alcoholFree")) },
+    { label: "Rauchfrei", values: value(data => streak(data, "smokeFree")) },
+    { label: "Notiz", values: value(data => data.notes || "-"), maxChars: 28, fontSize: 4.8 }
   ];
 }
 
@@ -1095,19 +1117,15 @@ function renderRoutineCards() {
   if (!routines || !currentData) return;
   $("routineCards").innerHTML = orderedRoutineKeys().map(key => {
     const routine = routines[key];
-    const progress = routineProgress(key);
-    const preview = routine.items.slice(0, 4).map(item => `<span class="routine-preview-emoji">${escapeHTML(item.emoji)}</span>`).join("") || `<span class="routine-preview-emoji">✨</span>`;
     return `<button type="button" class="routine-hero ${routine.theme}" data-open-routine="${key}">
-      <div class="routine-hero-top">
+      <span class="routine-thread" aria-hidden="true"></span>
+      <div class="routine-hero-top simple">
         <div>
           <h2>${escapeHTML(routine.title)}</h2>
           <p>${escapeHTML(routine.description)}</p>
         </div>
-        <span class="routine-hero-progress">${progress.done}/${progress.total || 0}</span>
       </div>
-      <div class="routine-hero-preview">${preview}</div>
-      <span class="routine-hero-meta">${progress.done}/${progress.total} erledigt · ${routineMinutes(routine)} Min.</span>
-      <span class="routine-hero-play" data-start-routine="${key}" aria-label="${escapeHTML(routine.title)} starten">▶</span>
+      <span class="routine-hero-play" data-start-routine="${key}" role="button" aria-label="${escapeHTML(routine.title)} starten" tabindex="0">▶</span>
     </button>`;
   }).join("");
   document.querySelectorAll("[data-open-routine]").forEach(card => card.addEventListener("click", event => {
@@ -1124,7 +1142,6 @@ function openRoutineDetail(key) {
   activeRoutineKey = key;
   $("routineOverview").hidden = true;
   $("routineDetail").hidden = false;
-  if ($("addRoutine")) $("addRoutine").hidden = true;
   renderRoutineDetail(key);
 }
 
@@ -1132,38 +1149,28 @@ function closeRoutineDetail() {
   activeRoutineKey = null;
   $("routineDetail").hidden = true;
   $("routineOverview").hidden = false;
-  if ($("addRoutine")) $("addRoutine").hidden = false;
   renderRoutineCards();
 }
 
 function renderRoutineDetail(key) {
   const routine = routines[key];
   const progress = routineProgress(key);
-  $("routineDetailEyebrow").textContent = key === "morning" ? "TAGESSTART" : key === "evening" ? "TAGESABSCHLUSS" : "INDIVIDUELLE ROUTINE";
+  $("routineDetailEyebrow").textContent = key === "morning" ? "MORGEN" : key === "evening" ? "ABEND" : "FOKUS";
   $("routineDetailTitle").textContent = routine.title;
-  $("routineDetailMeta").textContent = `${routine.items.length} Schritte · ${routineMinutes(routine)} Minuten · ${progress.done} erledigt`;
-  $("routineAutoNext").checked = Boolean(routine.autoNext);
+  $("routineDetailMeta").textContent = `${routine.items.length} Schritte · ${routineMinutes(routine)} Minuten`;
   $("routineItemList").innerHTML = routine.items.map((item, index) => {
     const state = currentData.routineProgress?.[key]?.[item.id] || "";
-    return `<div class="routine-item" draggable="true" data-routine-index="${index}">
+    return `<div class="routine-item clean" draggable="true" data-routine-index="${index}">
       <span class="routine-number">${index + 1}</span>
-      <span class="routine-emoji">${escapeHTML(item.emoji)}</span>
+      <span class="routine-emoji-bubble">${escapeHTML(item.emoji)}</span>
       <div class="routine-item-copy">
         <strong>${escapeHTML(item.title)}</strong>
-        <small>${item.minutes} Min.${state === "done" ? " · erledigt" : state === "skipped" ? " · übersprungen" : ""}</small>
+        <small>${item.minutes} Min.${state === "done" ? " · erledigt" : state === "skipped" ? " · übersprungen" : progress.done ? "" : ""}</small>
       </div>
-      <div class="routine-item-actions">
-        <button type="button" data-move-routine="up" data-index="${index}" aria-label="Nach oben">↑</button>
-        <button type="button" data-move-routine="down" data-index="${index}" aria-label="Nach unten">↓</button>
-        <button type="button" data-edit-routine-item="${escapeHTML(item.id)}" aria-label="Bearbeiten">•••</button>
-      </div>
+      <button type="button" class="routine-item-menu" data-edit-routine-item="${escapeHTML(item.id)}" aria-label="Bearbeiten">⋯</button>
     </div>`;
   }).join("");
 
-  document.querySelectorAll("[data-move-routine]").forEach(button => button.addEventListener("click", () => {
-    moveArrayItem(routine.items, Number(button.dataset.index), button.dataset.moveRoutine === "up" ? -1 : 1);
-    saveRoutines(); renderRoutineDetail(key); renderRoutineCards();
-  }));
   document.querySelectorAll("[data-edit-routine-item]").forEach(button => button.addEventListener("click", () => openRoutineItemDialog(button.dataset.editRoutineItem)));
   document.querySelectorAll("[data-routine-index]").forEach(row => {
     row.addEventListener("dragstart", () => { routineDragIndex = Number(row.dataset.routineIndex); row.classList.add("dragging"); });
@@ -1247,6 +1254,7 @@ function renderRoutineSession() {
   if (!routineSession) return;
   const routine = routines[routineSession.key];
   const item = currentSessionItem();
+  $("routineSessionDialog").dataset.theme = routine.theme || "focus";
   $("sessionRoutineName").textContent = routine.title;
   $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${routine.items.length}`;
   $("sessionItemTitle").textContent = item.title;
@@ -1257,12 +1265,35 @@ function renderRoutineSession() {
   $("sessionContext").hidden = !routineSession.contextOpen || !item.context;
   $("sessionContext").textContent = item.context || "";
   const next = routine.items[routineSession.index + 1];
-  $("sessionNext").textContent = next ? `WEITER  ${next.title}` : "LETZTER SCHRITT";
+  $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
 }
 
 function formatTimer(seconds) {
   const value = Math.max(0, Math.round(seconds));
   return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function playTimerDoneTone() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [880, 1175, 988];
+    notes.forEach((frequency, index) => {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.value = frequency;
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      const start = ctx.currentTime + index * 0.18;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.14);
+      oscillator.start(start);
+      oscillator.stop(start + 0.16);
+    });
+  } catch (error) {
+    console.warn("Ton konnte nicht abgespielt werden", error);
+  }
 }
 
 function startSessionInterval() {
@@ -1273,8 +1304,8 @@ function startSessionInterval() {
     routineSession.remaining -= 1;
     if (routineSession.remaining <= 0) {
       routineSession.remaining = 0;
-      if (routines[routineSession.key].autoNext) completeSessionItem("done");
-      else routineSession.running = false;
+      routineSession.running = false;
+      playTimerDoneTone();
     }
     renderRoutineSession();
   }, 1000);
@@ -1321,7 +1352,7 @@ function switchPage(page) {
   $("rolePickerWrap").hidden = !review;
   $("dateNavigation").hidden = !review;
   document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
-  if (!review) { renderRoutineCards(); if ($("addRoutine")) $("addRoutine").hidden = Boolean(activeRoutineKey); }
+  if (!review) { renderRoutineCards();  }
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1395,9 +1426,12 @@ function bindEvents() {
   $("dayRole").addEventListener("change", () => { currentData.role = $("dayRole").value; applyRolePickerStyle(); saveReview(true); });
   $("saveButton").addEventListener("click", () => saveReview(false));
   ["breakfast", "lunch", "dinner", "snack", "water", "steps", "dreams", "gratitude1", "gratitude2", "allahName", "notes", "mood"].forEach(id => {
+    if (!$(id)) return;
     $(id).addEventListener("change", () => saveReview(true));
     $(id).addEventListener("input", () => { collectForm(); scheduleAutoSave(); });
   });
+  if ($("waterPlus")) $("waterPlus").addEventListener("click", () => { currentData.water = String(Math.min(5000, Number(currentData.water || 0) + 500)); renderWaterControl(); saveReview(true); });
+  if ($("waterMinus")) $("waterMinus").addEventListener("click", () => { currentData.water = String(Math.max(0, Number(currentData.water || 0) - 500)); renderWaterControl(); saveReview(true); });
   $("sleepQuality").addEventListener("input", () => { updateSleepLabel(); collectForm(); scheduleAutoSave(); });
   $("sleepQuality").addEventListener("change", () => saveReview(true));
   $("ramadanDays").addEventListener("input", () => { currentData.ramadanDays = Number($("ramadanDays").value || 0); updateRamadanDisplay(); });
@@ -1438,8 +1472,7 @@ function bindEvents() {
   $("openRoutines").addEventListener("click", () => switchPage("routines"));
   $("backToRoutineOverview").addEventListener("click", closeRoutineDetail);
   $("startRoutineDetail").addEventListener("click", () => startRoutine(activeRoutineKey));
-  $("routineAutoNext").addEventListener("change", () => { routines[activeRoutineKey].autoNext = $("routineAutoNext").checked; saveRoutines(); });
-  $("addRoutine").addEventListener("click", openRoutineDialog);
+  if ($("addRoutine")) $("addRoutine").addEventListener("click", openRoutineDialog);
   $("routineDialogForm").addEventListener("submit", saveRoutineFromForm);
   $("cancelRoutine").addEventListener("click", () => $("routineDialog").close());
   $("addRoutineItem").addEventListener("click", () => openRoutineItemDialog());

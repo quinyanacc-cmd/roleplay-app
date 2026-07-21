@@ -51,17 +51,15 @@
           <div class="two-column">
             <div class="field-group">
               <label for="water">Getrunken</label>
-              <select id="water">
-                <option value="0">Noch nichts eingetragen</option>
-                <option value="500">0,5 Liter</option>
-                <option value="1000">1,0 Liter</option>
-                <option value="1500">1,5 Liter</option>
-                <option value="2000">2,0 Liter</option>
-                <option value="2500">2,5 Liter</option>
-                <option value="3000">3,0 Liter</option>
-                <option value="3500">3,5 Liter</option>
-                <option value="4000">4,0 Liter</option>
-              </select>
+              <input id="water" type="hidden" value="0">
+              <div class="water-tracker" id="waterTracker">
+                <button id="waterMinus" class="water-step-button" type="button" aria-label="0,5 Liter abziehen">−</button>
+                <div class="water-display-wrap">
+                  <div class="water-droplets" id="waterDroplets"></div>
+                  <strong id="waterTotalDisplay">0,0 Liter</strong>
+                </div>
+                <button id="waterPlus" class="water-step-button gradient-action" type="button" aria-label="0,5 Liter hinzufügen">💧 +</button>
+              </div>
             </div>
             <div class="field-group">
               <label for="steps">Schritte</label>
@@ -75,28 +73,26 @@
             <h2>Routinen</h2>
             <button id="openRoutines" class="text-button" type="button">Routinen öffnen</button>
           </div>
-          <div class="routine-review-list">
-            <div class="routine-review-row">
-              <div>
-                <strong>Morgenroutine</strong>
-                <small>Erledigt, ausgelassen oder noch offen</small>
+          <div class="routine-review-grid">
+            <div class="routine-review-card">
+              <strong>Morgenroutine</strong>
+              <small>Heute Morgen bewusst gestalten</small>
+              <div class="tri-state tri-state-compact" data-routine-state="morning" role="group" aria-label="Status Morgenroutine">
+                <button type="button" data-state="" aria-label="Noch offen"></button>
+                <button type="button" data-state="done" aria-label="Erledigt"></button>
+                <button type="button" data-state="missed" aria-label="Nicht erledigt"></button>
               </div>
-              <div class="tri-state" data-routine-state="morning" role="group" aria-label="Status Morgenroutine">
-                <button type="button" data-state="" aria-label="Noch offen">–</button>
-                <button type="button" data-state="done" aria-label="Erledigt">✓</button>
-                <button type="button" data-state="missed" aria-label="Nicht erledigt">×</button>
-              </div>
+              <div class="routine-state-legend"><span>Offen</span><span>Erledigt</span><span>Nicht erledigt</span></div>
             </div>
-            <div class="routine-review-row">
-              <div>
-                <strong>Abendroutine</strong>
-                <small>Erledigt, ausgelassen oder noch offen</small>
+            <div class="routine-review-card">
+              <strong>Abendroutine</strong>
+              <small>Den Tag ruhig und sauber abschließen</small>
+              <div class="tri-state tri-state-compact" data-routine-state="evening" role="group" aria-label="Status Abendroutine">
+                <button type="button" data-state="" aria-label="Noch offen"></button>
+                <button type="button" data-state="done" aria-label="Erledigt"></button>
+                <button type="button" data-state="missed" aria-label="Nicht erledigt"></button>
               </div>
-              <div class="tri-state" data-routine-state="evening" role="group" aria-label="Status Abendroutine">
-                <button type="button" data-state="" aria-label="Noch offen">–</button>
-                <button type="button" data-state="done" aria-label="Erledigt">✓</button>
-                <button type="button" data-state="missed" aria-label="Nicht erledigt">×</button>
-              </div>
+              <div class="routine-state-legend"><span>Offen</span><span>Erledigt</span><span>Nicht erledigt</span></div>
             </div>
           </div>
         </section>
@@ -147,9 +143,9 @@
         <section class="card">
           <div class="section-title-row">
             <h2>Aktivitäten</h2>
-            <button id="addActivity" class="small-button" type="button">+ Aktivität</button>
+            <button id="addActivity" class="small-button plus-button" type="button"><span class="gradient-plus">＋</span><span>Aktivität</span></button>
           </div>
-          <p class="section-hint">Mit den Pfeilen oder per Ziehen kannst du die Priorität verändern.</p>
+          <p class="section-hint">Per Halten und Ziehen kannst du die Reihenfolge deiner Aktivitäten anpassen.</p>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
@@ -170,7 +166,7 @@
               <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
             </div>
             <div class="field-group compact-field">
-              <label for="gratitude2">Noch dankbar für …</label>
+              <label for="gratitude2" class="sr-only">Zweite Dankbarkeit</label>
               <input id="gratitude2" placeholder="Ein zweiter Dankbarkeitsmoment …">
             </div>
           </div>
@@ -215,11 +211,11 @@
         <div id="routineOverview" class="routine-overview">
           <p class="page-lead">Starte deine Routine als geführte Abfolge oder öffne sie zum Bearbeiten.</p>
           <div id="routineCards" class="routine-cards"></div>
-          <button id="addRoutine" class="floating-add-button" type="button" aria-label="Routine hinzufügen">＋</button>
+          <button id="addRoutine" class="bottom-add-routine" type="button"><span class="gradient-plus">＋</span><span>Routine hinzufügen</span></button>
         </div>
 
         <div id="routineDetail" class="routine-detail" hidden>
-          <button id="backToRoutineOverview" class="back-button" type="button">‹ Übersicht</button>
+          <button id="backToRoutineOverview" class="back-button icon-only" type="button" aria-label="Zur Übersicht">‹</button>
           <div class="routine-detail-head">
             <div>
               <p id="routineDetailEyebrow" class="eyebrow"></p>
@@ -229,16 +225,8 @@
             <button id="startRoutineDetail" class="round-play-button" type="button" aria-label="Routine starten">▶</button>
           </div>
 
-          <label class="setting-row">
-            <span>
-              <strong>Automatisch weiter</strong>
-              <small>Nach Ablauf direkt zum nächsten Schritt wechseln</small>
-            </span>
-            <input id="routineAutoNext" type="checkbox">
-          </label>
-
           <div id="routineItemList" class="routine-item-list"></div>
-          <button id="addRoutineItem" class="secondary-wide-button" type="button">+ Schritt hinzufügen</button>
+          <button id="addRoutineItem" class="secondary-wide-button plus-button wide" type="button"><span class="gradient-plus">＋</span><span>Schritt hinzufügen</span></button>
         </div>
       </section>
     </main>
@@ -250,7 +238,7 @@
       </button>
       <button class="nav-button active" data-page="review" type="button">
         <span class="nav-symbol">✓</span>
-        <span>Tagesreview</span>
+        <span>Tagesreflexion</span>
       </button>
     </nav>
   </div>
