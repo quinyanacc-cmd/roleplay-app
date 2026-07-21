@@ -122,12 +122,20 @@
           <div class="field-group sleep-quality-field">
             <div class="label-value-row">
               <label for="sleepQuality">Schlafqualität</label>
-              <strong id="sleepQualityLabel">Noch nicht eingetragen</strong>
+              <strong id="sleepQualityLabel">Sehr erholsam</strong>
+            </div>
+            <div class="sleep-meter" aria-hidden="true">
+              <div id="sleepMeterFill" class="sleep-meter-fill"></div>
             </div>
             <div class="sleep-slider-row">
               <span aria-hidden="true">😴</span>
               <input id="sleepQuality" type="range" min="0" max="5" step="1" value="0">
               <span aria-hidden="true">🥱</span>
+            </div>
+            <div class="sleep-legend-row">
+              <small>Sehr erholsam</small>
+              <span id="sleepMeterPill" class="sleep-meter-pill">Sehr erholsam</span>
+              <small>Kein Schlaf</small>
             </div>
           </div>
           <div class="field-group">
@@ -156,9 +164,15 @@
             <label for="mood">Wie fühlst du dich?</label>
             <select id="mood"></select>
           </div>
-          <div class="field-group gratitude-field">
-            <label for="gratitude1">Dankbar für …</label>
-            <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
+          <div class="gratitude-grid gratitude-field">
+            <div class="field-group compact-field">
+              <label for="gratitude1">Dankbar für …</label>
+              <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
+            </div>
+            <div class="field-group compact-field">
+              <label for="gratitude2">Noch dankbar für …</label>
+              <input id="gratitude2" placeholder="Ein zweiter Dankbarkeitsmoment …">
+            </div>
           </div>
           <div class="field-group">
             <label class="sr-only" for="allahName">Name Allahs auswählen</label>
@@ -201,6 +215,7 @@
         <div id="routineOverview" class="routine-overview">
           <p class="page-lead">Starte deine Routine als geführte Abfolge oder öffne sie zum Bearbeiten.</p>
           <div id="routineCards" class="routine-cards"></div>
+          <button id="addRoutine" class="floating-add-button" type="button" aria-label="Routine hinzufügen">＋</button>
         </div>
 
         <div id="routineDetail" class="routine-detail" hidden>
@@ -255,6 +270,13 @@
       <button id="calendarClose" class="primary-button compact" type="button">Schließen</button>
     </div>
   </dialog>
+  <dialog id="prayerDialog" class="form-dialog prayer-dialog">
+    <h3 id="prayerDialogTitle">Gebet</h3>
+    <div id="prayerStateOptions" class="prayer-state-options"></div>
+    <div class="dialog-actions">
+      <button id="prayerDialogClose" type="button" class="secondary-button">Schließen</button>
+    </div>
+  </dialog>
 
   <dialog id="activityDialog" class="form-dialog">
     <form id="activityForm">
@@ -266,6 +288,27 @@
       <div class="dialog-actions">
         <button id="cancelActivity" type="button" class="secondary-button">Abbrechen</button>
         <button id="confirmActivity" type="submit" class="primary-button compact">Hinzufügen</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <dialog id="routineDialog" class="form-dialog">
+    <form id="routineDialogForm">
+      <h3>Routine hinzufügen</h3>
+      <label for="routineTitle">Titel</label>
+      <input id="routineTitle" required placeholder="z. B. Fokusroutine">
+      <label for="routineDescription">Kurzbeschreibung</label>
+      <input id="routineDescription" placeholder="Wofür ist diese Routine gedacht?">
+      <label for="routineTheme">Design-Stimmung</label>
+      <select id="routineTheme">
+        <option value="morning">Morgen / warm</option>
+        <option value="evening">Abend / ruhig</option>
+        <option value="focus">Fokus / klar</option>
+      </select>
+      <div class="dialog-actions">
+        <button id="cancelRoutine" type="button" class="secondary-button">Abbrechen</button>
+        <button type="submit" class="primary-button compact">Erstellen</button>
       </div>
     </form>
   </dialog>
