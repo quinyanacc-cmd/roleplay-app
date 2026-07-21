@@ -3,192 +3,321 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f6f7fb">
+  <meta name="theme-color" content="#f5f6fa">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Roleplay">
   <link rel="apple-touch-icon" href="logo.jpeg">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
-  <title>Roleplay Tagesreview</title>
+  <title>Roleplay</title>
 </head>
 <body>
   <div class="app-shell">
-    <header class="app-header">
-      <div class="brand-row">
-<div>
+    <header class="app-header" id="appHeader">
+      <div class="header-title-row">
+        <div>
           <p class="eyebrow">ROLEPLAY</p>
-          <h1>Tagesreview</h1>
+          <h1 id="pageTitle">Tagesreview</h1>
         </div>
+        <label class="role-picker-wrap" id="rolePickerWrap">
+          <span class="sr-only">Tagesrolle auswählen</span>
+          <select id="dayRole" class="role-picker" aria-label="Tagesrolle auswählen"></select>
+        </label>
       </div>
-      <div class="date-nav">
-        <button id="prevDay" class="icon-button" aria-label="Vorheriger Tag">‹</button>
-        <button id="dateButton" class="date-button"></button>
-        <input id="datePicker" type="date" hidden>
-        <button id="nextDay" class="icon-button" aria-label="Nächster Tag">›</button>
+
+      <div class="date-nav" id="dateNavigation">
+        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag">‹</button>
+        <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
+        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag">›</button>
       </div>
     </header>
 
     <main>
-      <section class="card">
-        <h2>💪 Vitalität</h2>
+      <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
+        <section class="card">
+          <h2>Vitalität</h2>
 
-        <div class="field-group">
-          <label>🍽️ Mahlzeiten</label>
-          <div class="meal-grid">
-            <input id="breakfast" placeholder="Frühstück – was hast du gegessen?">
-            <input id="lunch" placeholder="Mittagessen – was hast du gegessen?">
-            <input id="dinner" placeholder="Abendessen – was hast du gegessen?">
-            <input id="snack" placeholder="Snack – optional">
-          </div>
-        </div>
-
-        <div class="two-column">
           <div class="field-group">
-            <label for="water">💧 Getrunken</label>
-            <select id="water">
-              <option value="0">Noch nichts eingetragen</option>
-              <option value="500">0,5 Liter</option>
-              <option value="1000">1,0 Liter</option>
-              <option value="1500">1,5 Liter</option>
-              <option value="2000">2,0 Liter</option>
-              <option value="2500">2,5 Liter</option>
-              <option value="3000">3,0 Liter</option>
-              <option value="3500">3,5 Liter</option>
-              <option value="4000">4,0 Liter</option>
-            </select>
+            <label>Mahlzeiten</label>
+            <div class="meal-grid">
+              <input id="breakfast" placeholder="Frühstück – was hast du gegessen?">
+              <input id="lunch" placeholder="Mittagessen – was hast du gegessen?">
+              <input id="dinner" placeholder="Abendessen – was hast du gegessen?">
+              <input id="snack" placeholder="Snack – optional">
+            </div>
+          </div>
+
+          <div class="two-column">
+            <div class="field-group">
+              <label for="water">Getrunken</label>
+              <select id="water">
+                <option value="0">Noch nichts eingetragen</option>
+                <option value="500">0,5 Liter</option>
+                <option value="1000">1,0 Liter</option>
+                <option value="1500">1,5 Liter</option>
+                <option value="2000">2,0 Liter</option>
+                <option value="2500">2,5 Liter</option>
+                <option value="3000">3,0 Liter</option>
+                <option value="3500">3,5 Liter</option>
+                <option value="4000">4,0 Liter</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="steps">Schritte</label>
+              <input id="steps" type="number" inputmode="numeric" min="0" step="100" placeholder="z. B. 5000">
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title-row">
+            <h2>Routinen</h2>
+            <button id="openRoutines" class="text-button" type="button">Routinen öffnen</button>
+          </div>
+          <div class="routine-review-list">
+            <div class="routine-review-row">
+              <div>
+                <strong>Morgenroutine</strong>
+                <small>Erledigt, ausgelassen oder noch offen</small>
+              </div>
+              <div class="tri-state" data-routine-state="morning" role="group" aria-label="Status Morgenroutine">
+                <button type="button" data-state="" aria-label="Noch offen">–</button>
+                <button type="button" data-state="done" aria-label="Erledigt">✓</button>
+                <button type="button" data-state="missed" aria-label="Nicht erledigt">×</button>
+              </div>
+            </div>
+            <div class="routine-review-row">
+              <div>
+                <strong>Abendroutine</strong>
+                <small>Erledigt, ausgelassen oder noch offen</small>
+              </div>
+              <div class="tri-state" data-routine-state="evening" role="group" aria-label="Status Abendroutine">
+                <button type="button" data-state="" aria-label="Noch offen">–</button>
+                <button type="button" data-state="done" aria-label="Erledigt">✓</button>
+                <button type="button" data-state="missed" aria-label="Nicht erledigt">×</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Islam</h2>
+          <div id="prayerList" class="prayer-strip"></div>
+          <div class="ramadan-box">
+            <div>
+              <span class="subheading">Fastentage</span>
+              <strong id="ramadanDisplay">–29 Tage offen</strong>
+              <small class="carry-hint">Der Stand wird beim nächsten Tag automatisch übernommen.</small>
+            </div>
+            <div class="ramadan-controls">
+              <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
+              <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Schlaf</h2>
+          <div class="field-group sleep-quality-field">
+            <div class="label-value-row">
+              <label for="sleepQuality">Schlafqualität</label>
+              <strong id="sleepQualityLabel">Noch nicht eingetragen</strong>
+            </div>
+            <div class="sleep-slider-row">
+              <span aria-hidden="true">😴</span>
+              <input id="sleepQuality" type="range" min="0" max="5" step="1" value="0">
+              <span aria-hidden="true">🥱</span>
+            </div>
           </div>
           <div class="field-group">
-            <label for="steps">👣 Schritte</label>
-            <input id="steps" type="number" inputmode="numeric" min="0" step="100" placeholder="z. B. 5000">
+            <label for="dreams">Träume</label>
+            <textarea id="dreams" rows="4" placeholder="Woran erinnerst du dich?"></textarea>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="card">
-        <h2>🌅 Routinen</h2>
-        <label class="toggle-row">
-          <span><span class="big-emoji">☀️</span> Morgenroutine</span>
-          <input id="morningRoutine" type="checkbox">
-        </label>
-        <label class="toggle-row">
-          <span><span class="big-emoji">🌙</span> Abendroutine</span>
-          <input id="eveningRoutine" type="checkbox">
-        </label>
-      </section>
-
-      <section class="card">
-        <h2>🕋 Islam</h2>
-        <div id="prayerList" class="stack"></div>
-        <div class="ramadan-box">
-          <div>
-            <span class="subheading">Ramadan</span>
-            <strong id="ramadanDisplay">–29 Tage offen</strong>
+        <section class="card">
+          <div class="section-title-row">
+            <h2>Aktivitäten</h2>
+            <button id="addActivity" class="small-button" type="button">+ Aktivität</button>
           </div>
-          <div class="ramadan-controls">
-            <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
-            <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
+          <p class="section-hint">Mit den Pfeilen oder per Ziehen kannst du die Priorität verändern.</p>
+          <div id="activityList" class="stack activity-list"></div>
+        </section>
+
+        <section class="card">
+          <h2>Streaks</h2>
+          <div id="streakList" class="stack streak-list"></div>
+        </section>
+
+        <section class="card">
+          <h2>Achtsamkeit</h2>
+          <div class="field-group">
+            <label for="mood">Wie fühlst du dich?</label>
+            <select id="mood"></select>
           </div>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>😴 Schlaf</h2>
-        <div class="field-group">
-          <label>Schlafqualität</label>
-          <div class="mood-grid sleep-grid" id="sleepGrid">
-            <button data-value="Sehr gut">😄<span>Sehr gut</span></button>
-            <button data-value="Gut">🙂<span>Gut</span></button>
-            <button data-value="Neutral">😐<span>Neutral</span></button>
-            <button data-value="Schlecht">🙁<span>Schlecht</span></button>
-            <button data-value="Sehr schlecht">😞<span>Sehr schlecht</span></button>
+          <div class="field-group gratitude-field">
+            <label for="gratitude1">Dankbar für …</label>
+            <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
           </div>
+          <div class="field-group">
+            <label class="sr-only" for="allahName">Name Allahs auswählen</label>
+            <select id="allahName" aria-label="Name Allahs auswählen"></select>
+          </div>
+        </section>
+
+        <section class="card notes-card">
+          <h2>Tagesnotiz</h2>
+          <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
+        </section>
+
+        <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
+
+        <section class="card stats-card">
+          <div class="section-title-row">
+            <h2>Wochenstatistik</h2>
+            <span id="weekLabel" class="week-label"></span>
+          </div>
+          <div id="statsGrid" class="stats-grid"></div>
+        </section>
+
+        <section class="card">
+          <h2>Export & Sicherung</h2>
+          <p class="export-description">Der PDF-Export erstellt einen Wochenplan im Querformat – angelehnt an deine bisherige Vorlage, aber im neuen Roleplay-Design.</p>
+          <div class="export-buttons">
+            <button id="exportPdf" class="small-button export-button" type="button">Wochenplan als PDF</button>
+            <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
+            <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
+            <button id="exportCsv" class="small-button export-button" type="button">Excel / CSV exportieren</button>
+            <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+          </div>
+          <p id="backupStatus" class="backup-status">Noch kein Backup in dieser Sitzung erstellt.</p>
+        </section>
+
+        <p class="privacy-note">Alle Einträge werden ausschließlich lokal in diesem Browser gespeichert.</p>
+      </section>
+
+      <section id="routinesPage" class="app-page" aria-label="Routinen">
+        <div id="routineOverview" class="routine-overview">
+          <p class="page-lead">Starte deine Routine als geführte Abfolge oder öffne sie zum Bearbeiten.</p>
+          <div id="routineCards" class="routine-cards"></div>
         </div>
-        <div class="field-group">
-          <label for="dreams">Träume</label>
-          <textarea id="dreams" rows="4" placeholder="Woran erinnerst du dich?"></textarea>
+
+        <div id="routineDetail" class="routine-detail" hidden>
+          <button id="backToRoutineOverview" class="back-button" type="button">‹ Übersicht</button>
+          <div class="routine-detail-head">
+            <div>
+              <p id="routineDetailEyebrow" class="eyebrow"></p>
+              <h2 id="routineDetailTitle"></h2>
+              <p id="routineDetailMeta" class="section-hint"></p>
+            </div>
+            <button id="startRoutineDetail" class="round-play-button" type="button" aria-label="Routine starten">▶</button>
+          </div>
+
+          <label class="setting-row">
+            <span>
+              <strong>Automatisch weiter</strong>
+              <small>Nach Ablauf direkt zum nächsten Schritt wechseln</small>
+            </span>
+            <input id="routineAutoNext" type="checkbox">
+          </label>
+
+          <div id="routineItemList" class="routine-item-list"></div>
+          <button id="addRoutineItem" class="secondary-wide-button" type="button">+ Schritt hinzufügen</button>
         </div>
       </section>
-
-      <section class="card">
-        <div class="section-title-row">
-          <h2>🎯 Aktivitäten</h2>
-          <button id="addActivity" class="small-button">+ Aktivität</button>
-        </div>
-        <div id="activityList" class="stack"></div>
-      </section>
-
-      <section class="card">
-        <h2>🔥 Streaks</h2>
-        <div id="streakList" class="stack"></div>
-      </section>
-
-      <section class="card">
-        <h2>🧘 Achtsamkeit</h2>
-        <h3 class="subsection-title">Stimmung</h3>
-        <div class="mood-grid" id="moodGrid">
-          <button data-value="Sehr gut">😄<span>Sehr gut</span></button>
-          <button data-value="Gut">🙂<span>Gut</span></button>
-          <button data-value="Neutral">😐<span>Neutral</span></button>
-          <button data-value="Schlecht">🙁<span>Schlecht</span></button>
-          <button data-value="Sehr schlecht">😞<span>Sehr schlecht</span></button>
-        </div>
-        <h3 class="subsection-title gratitude-heading">Dankbarkeit</h3>
-        <input id="gratitude1" placeholder="1. Wofür bist du heute dankbar?">
-        <input id="gratitude2" placeholder="2. Wofür bist du heute dankbar?">
-        <label for="allahName">3. Name Allahs</label>
-        <select id="allahName"></select>
-      </section>
-
-      <section class="card">
-        <h2>📝 Tagesnotiz</h2>
-        <textarea id="notes" rows="5" placeholder="Gedanken, Erkenntnisse oder Besonderheiten …"></textarea>
-      </section>
-
-      <button id="saveButton" class="primary-button">Tagesreview speichern</button>
-
-
-      <section class="card">
-        <h2>📈 Wochenstatistik</h2>
-        <div id="statsGrid" class="stats-grid"></div>
-      </section>
-
-      <section class="card">
-        <h2>💾 Export & Sicherung</h2>
-        <p class="export-description">
-          Erstelle ein lesbares PDF oder sichere sämtliche Einträge als Datei, die später wieder importiert werden kann.
-        </p>
-        <div class="export-buttons">
-          <button id="exportPdf" class="small-button export-button" type="button">Als PDF exportieren</button>
-          <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
-          <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
-          <button id="exportCsv" class="small-button export-button" type="button">Excel / CSV exportieren</button>
-          <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
-        </div>
-        <p id="backupStatus" class="backup-status">Noch kein Backup in dieser Sitzung erstellt.</p>
-      </section>
-
-      <p class="privacy-note">🔒 Alle Einträge werden ausschließlich lokal in diesem Browser auf deinem iPhone gespeichert.</p>
     </main>
+
+    <nav class="bottom-nav" aria-label="Hauptnavigation">
+      <button class="nav-button" data-page="routines" type="button">
+        <span class="nav-symbol">◫</span>
+        <span>Routinen</span>
+      </button>
+      <button class="nav-button active" data-page="review" type="button">
+        <span class="nav-symbol">✓</span>
+        <span>Tagesreview</span>
+      </button>
+    </nav>
   </div>
 
-  <dialog id="activityDialog">
-    <form method="dialog" id="activityForm">
+  <dialog id="calendarDialog" class="calendar-dialog">
+    <div class="calendar-header">
+      <button id="calendarPrevMonth" class="icon-button" type="button" aria-label="Vorheriger Monat">‹</button>
+      <strong id="calendarMonthLabel"></strong>
+      <button id="calendarNextMonth" class="icon-button" type="button" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="calendar-weekdays" aria-hidden="true">
+      <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
+    </div>
+    <div id="calendarGrid" class="calendar-grid"></div>
+    <div class="calendar-footer">
+      <button id="calendarToday" class="secondary-button" type="button">Heute</button>
+      <button id="calendarClose" class="primary-button compact" type="button">Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="activityDialog" class="form-dialog">
+    <form id="activityForm">
       <h3>Aktivität hinzufügen</h3>
-      <label>Titel
-        <input id="activityTitle" required placeholder="z. B. Arabisch lernen">
-      </label>
-      <label>Rolle
-        <select id="activityRole"></select>
-      </label>
-      <label>Dauer in Minuten
-        <input id="activityMinutes" type="number" min="5" step="5" value="30">
-      </label>
+      <label for="activityTitle">Aktivität</label>
+      <input id="activityTitle" required placeholder="z. B. Arabisch lernen">
+      <label for="activityRole">Rolle</label>
+      <select id="activityRole"></select>
       <div class="dialog-actions">
-        <button value="cancel" class="secondary-button">Abbrechen</button>
-        <button id="confirmActivity" value="default" class="primary-button compact">Hinzufügen</button>
+        <button id="cancelActivity" type="button" class="secondary-button">Abbrechen</button>
+        <button id="confirmActivity" type="submit" class="primary-button compact">Hinzufügen</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="routineItemDialog" class="form-dialog">
+    <form id="routineItemForm">
+      <h3 id="routineItemDialogTitle">Schritt hinzufügen</h3>
+      <div class="emoji-title-grid">
+        <label for="routineItemEmoji">Emoji</label>
+        <label for="routineItemTitle">Bezeichnung</label>
+        <input id="routineItemEmoji" maxlength="8" placeholder="🕯️" aria-label="Emoji">
+        <input id="routineItemTitle" required placeholder="z. B. Kerze">
+      </div>
+      <div class="emoji-quick-picks" id="emojiQuickPicks"></div>
+      <label for="routineItemMinutes">Dauer in Minuten</label>
+      <input id="routineItemMinutes" type="number" min="1" max="180" value="5" inputmode="numeric">
+      <label for="routineItemContext">Kontext / Erinnerung</label>
+      <textarea id="routineItemContext" rows="4" placeholder="Optionaler Hinweis, Dua, Gedanke oder konkrete Anweisung …"></textarea>
+      <div class="dialog-actions split-actions">
+        <button id="deleteRoutineItem" type="button" class="danger-button" hidden>Löschen</button>
+        <span class="dialog-spacer"></span>
+        <button id="cancelRoutineItem" type="button" class="secondary-button">Abbrechen</button>
+        <button type="submit" class="primary-button compact">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="routineSessionDialog" class="routine-session-dialog">
+    <div class="session-topbar">
+      <button id="closeRoutineSession" class="session-icon-button" type="button" aria-label="Routine schließen">×</button>
+      <span id="sessionRoutineName" class="session-routine-name"></span>
+      <button id="sessionContextToggle" class="session-context-button" type="button">Kontext</button>
+    </div>
+    <div class="session-content">
+      <p id="sessionProgress" class="session-progress"></p>
+      <h2 id="sessionItemTitle"></h2>
+      <div id="sessionTimerCircle" class="session-timer-circle">
+        <div id="sessionItemEmoji" class="session-item-emoji"></div>
+        <strong id="sessionTimer">00:00</strong>
+        <div class="session-adjust">
+          <button id="sessionMinus" type="button">− 1m</button>
+          <button id="sessionPlus" type="button">+ 1m</button>
+        </div>
+      </div>
+      <div id="sessionContext" class="session-context" hidden></div>
+      <div class="session-controls">
+        <button id="sessionPause" class="session-secondary-control" type="button" aria-label="Pause">Ⅱ</button>
+        <button id="sessionComplete" class="session-complete-control" type="button" aria-label="Schritt erledigt">✓</button>
+        <button id="sessionSkip" class="session-secondary-control" type="button" aria-label="Schritt überspringen">›|</button>
+      </div>
+      <p id="sessionNext" class="session-next"></p>
+    </div>
   </dialog>
 
   <script src="app.js"></script>

@@ -1,16 +1,12 @@
 {
-  "name": "Roleplay Tagesreview",
+  "name": "Roleplay",
   "short_name": "Roleplay",
-  "start_url": "./",
+  "description": "Tagesreview, Wochenstatistik und geführte Routinen",
+  "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f6fa",
-  "theme_color": "#f5f6fa",
+  "background_color": "#f4f5f9",
+  "theme_color": "#f4f5f9",
   "icons": [
-    {
-      "src": "logo.jpeg",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    }
+    { "src": "logo.jpeg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
   ]
 }

@@ -1,21 +1,55 @@
+const PRAYERS = ["Fajr", "Dhuhr", "ʿAsr", "Maghrib", "ʿIschāʾ"];
+const PRAYER_STATES = [
+  { value: "", label: "– Offen" },
+  { value: "Normal", label: "✓ Gebetet" },
+  { value: "Gemeinschaft", label: "◉ Gemeinschaft" },
+  { value: "Verspätet", label: "◷ Verspätet" },
+  { value: "Nachgeholt", label: "↺ Nachgeholt" },
+  { value: "Nicht gebetet", label: "× Nicht gebetet" }
+];
 
-const PRAYERS = ["Fajr","Dhuhr","ʿAsr","Maghrib","ʿIschāʾ"];
-const PRAYER_STATES = ["","Normal","Gemeinschaft","Verspätet","Nachgeholt","Nicht gebetet"];
 const ROLES = [
-  {name:"Ich-Person", emoji:"🫆", color:"#54b7ff"},
-  {name:"Vitalist", emoji:"🧬", color:"#234eae"},
-  {name:"Unternehmer", emoji:"💰", color:"#f5c622"},
-  {name:"Absolvent", emoji:"🎓", color:"#d92f38"},
-  {name:"Muslim", emoji:"🕋", color:"#31c9c2"},
-  {name:"Wirt", emoji:"🏡", color:"#ff2a2a"},
-  {name:"Familienmensch", emoji:"💌", color:"#32a852"}
+  { name: "Yannick", emoji: "🫆", color: "#4AA8FF", text: "#174E7A" },
+  { name: "Vitalist", emoji: "🧬", color: "#193C8C", text: "#FFFFFF" },
+  { name: "Absolvent", emoji: "🎓", color: "#F07A32", text: "#6D2E09" },
+  { name: "Unternehmer", emoji: "💼", color: "#F2C94C", text: "#5D4800" },
+  { name: "Muslim", emoji: "🕋", color: "#2EC4B6", text: "#075C55" },
+  { name: "Wirt", emoji: "🏡", color: "#8E2F45", text: "#FFFFFF" },
+  { name: "Familienmensch", emoji: "💌", color: "#72C472", text: "#205B29" }
 ];
+
 const STREAKS = [
-  {key:"cannabisFree", label:"Cannabis"},
-  {key:"compulsionFree", label:"Zwang"},
-  {key:"alcoholFree", label:"Alkohol"},
-  {key:"smokeFree", label:"Zigaretten"}
+  { key: "cannabisFree", label: "Cannabisfrei" },
+  { key: "compulsionFree", label: "Begierde" },
+  { key: "alcoholFree", label: "Alkoholfrei" },
+  { key: "smokeFree", label: "Rauchfrei" }
 ];
+
+const EMOTIONS = [
+  { value: "", label: "Noch nicht eingetragen" },
+  { value: "Freudig", label: "😄 Freudig" },
+  { value: "Zufrieden", label: "🙂 Zufrieden" },
+  { value: "Ruhig", label: "😌 Ruhig" },
+  { value: "Dankbar", label: "🥰 Dankbar" },
+  { value: "Motiviert", label: "🔥 Motiviert" },
+  { value: "Nachdenklich", label: "🤔 Nachdenklich" },
+  { value: "Neutral", label: "😐 Neutral" },
+  { value: "Besorgt", label: "😟 Besorgt" },
+  { value: "Traurig", label: "😔 Traurig" },
+  { value: "Ärgerlich", label: "😠 Ärgerlich" },
+  { value: "Überfordert", label: "😫 Überfordert" },
+  { value: "Erschöpft", label: "🥱 Erschöpft" }
+];
+
+const SLEEP_LABELS = [
+  "Noch nicht eingetragen",
+  "Sehr erholsam",
+  "Erholsam",
+  "Ausgeglichen",
+  "Unruhig",
+  "Sehr schlecht"
+];
+
 const ALLAH_NAMES = [
 "الرَّحْمَن / Ar-Rahmān – Der Allerbarmer",
 "الرَّحِيم / Ar-Rahīm – Der Barmherzige",
@@ -118,573 +152,1147 @@ const ALLAH_NAMES = [
 "الصَّبُور / As-Sabūr – Der Geduldige"
 ];
 
+const DEFAULT_ROUTINES = {
+  morning: {
+    key: "morning",
+    title: "Morgenroutine",
+    description: "Starte deinen Tag mit Klarheit und Fokus.",
+    theme: "morning",
+    autoNext: false,
+    items: [
+      { id: "m-candle", emoji: "🕯️", title: "Kerze", minutes: 1, context: "Alles Lob gebührt Allah, Der uns nach dem Tod wieder lebendig machte - und zu Ihm ist die Auferstehung." },
+      { id: "m-medicine-cat", emoji: "🔛", title: "Tabletten / Katze", minutes: 3, context: "Medikamente einnehmen, Wasser trinken und Zizo versorgen." },
+      { id: "m-ibada", emoji: "🧎🏻", title: "Ibāda", minutes: 25, context: "Gebet, Dhikr und eine bewusste Hinwendung zu Allah." },
+      { id: "m-sport", emoji: "🤸🏻", title: "Sport", minutes: 5, context: "Kurz aktiv werden. Entscheidend ist, überhaupt anzufangen." },
+      { id: "m-bed", emoji: "🛏️", title: "Fertigmachen + Bett", minutes: 15, context: "Waschen, anziehen, Bett machen und den Raum in Ordnung bringen." },
+      { id: "m-breakfast", emoji: "🥗", title: "Frühstücken", minutes: 2, context: "Frühstück vorbereiten oder bewusst einplanen." },
+      { id: "m-thumb-yoga", emoji: "🪷", title: "Daumen Yoga", minutes: 3, context: "Kurze Mobilisation der Hände und Finger." },
+      { id: "m-quizlet", emoji: "📋", title: "Quizlet", minutes: 5, context: "Wiederholung statt Perfektion." },
+      { id: "m-peak", emoji: "💡", title: "Peak", minutes: 15, context: "Kognitives Training konzentriert durchführen." },
+      { id: "m-english", emoji: "🔤", title: "Englisch", minutes: 25, context: "Eine klar definierte Lerneinheit abschließen." },
+      { id: "m-arabic", emoji: "📒", title: "Arabisch", minutes: 5, context: "Auch eine kurze Wiederholung zählt." },
+      { id: "m-writing", emoji: "📝", title: "Schreiben", minutes: 10, context: "Gedanken festhalten oder am Buch weiterarbeiten." },
+      { id: "m-finish", emoji: "🎒", title: "Fertigmachen", minutes: 5, context: "Alles Nötige einpacken und den nächsten Übergang vorbereiten." }
+    ]
+  },
+  evening: {
+    key: "evening",
+    title: "Abendroutine",
+    description: "Schließe deinen Tag bewusst und ruhig ab.",
+    theme: "evening",
+    autoNext: false,
+    items: [
+      { id: "e-candle", emoji: "🕯️", title: "Kerze", minutes: 1, context: "Den Tag bewusst beenden und zur Ruhe kommen." },
+      { id: "e-clothes", emoji: "👕", title: "Kleidung vorbereiten", minutes: 3, context: "Kleidung für den nächsten Tag bereitlegen." },
+      { id: "e-hygiene", emoji: "🚿", title: "Hygiene", minutes: 8, context: "Duschen oder waschen, Zähne putzen und Körperpflege." },
+      { id: "e-cat", emoji: "🐈", title: "Katze versorgen", minutes: 3, context: "Futter, Wasser und Katzenbereich prüfen." },
+      { id: "e-tidy", emoji: "🧹", title: "Kurz aufräumen", minutes: 10, context: "Nur die wichtigsten Flächen und Dinge für morgen ordnen." },
+      { id: "e-review", emoji: "📓", title: "Tagesreview", minutes: 10, context: "Den Tag wahrheitsgemäß eintragen, ohne dich zu verurteilen." },
+      { id: "e-ibada", emoji: "🤲", title: "Ibāda", minutes: 15, context: "Ishā, Witr, Dhikr oder Qur'an entsprechend deiner Planung." },
+      { id: "e-phone", emoji: "📵", title: "Handy weglegen", minutes: 2, context: "Wecker stellen und das Handy außer Reichweite legen." },
+      { id: "e-bed", emoji: "🛌", title: "Schlaf vorbereiten", minutes: 8, context: "Zimmer abdunkeln, lüften und ruhig werden." },
+      { id: "e-lights", emoji: "🌙", title: "Licht aus", minutes: 1, context: "Den Tag abschließen und schlafen." }
+    ]
+  }
+};
+
+const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
 const $ = id => document.getElementById(id);
+
 let selectedDate = todayISO();
 let currentData = null;
+let calendarCursor = firstOfMonth(selectedDate);
+let routines = null;
+let activeRoutineKey = null;
+let editingRoutineItemId = null;
+let activityDragIndex = null;
+let routineDragIndex = null;
+let routineSession = null;
+let autoSaveTimer = null;
 
 function todayISO() {
   const d = new Date();
-  const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
-  return local.toISOString().slice(0,10);
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
 }
+
+function dateToISO(date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
 function addDays(iso, amount) {
-  const d = new Date(iso+"T12:00:00");
-  d.setDate(d.getDate()+amount);
-  return d.toISOString().slice(0,10);
+  const d = new Date(`${iso}T12:00:00`);
+  d.setDate(d.getDate() + amount);
+  return dateToISO(d);
 }
-function storageKey(date){ return `roleplay-review-${date}`; }
-function emptyReview() {
-  return {
-    breakfast:"", lunch:"", dinner:"", snack:"",
-    water:"0", steps:"",
-    morningRoutine:false, eveningRoutine:false,
-    prayers:Object.fromEntries(PRAYERS.map(p=>[p,""])),
-    ramadanDays:-29,
-    sleepQuality:"",
-    dreams:"",
-    activities:[],
-    streaks:Object.fromEntries(STREAKS.map(s=>[s.key,{days:0,broken:false}])),
-    mood:"",
-    gratitude1:"", gratitude2:"", allahName:"",
-    notes:""
-  };
+
+function firstOfMonth(iso) {
+  return `${iso.slice(0, 7)}-01`;
 }
-function findPreviousStreaks(date) {
+
+function storageKey(date) { return `roleplay-review-${date}`; }
+function safeParse(text, fallback = null) { try { return JSON.parse(text); } catch { return fallback; } }
+function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+function escapeHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+
+function getRole(name) {
+  const normalized = name === "Ich-Person" ? "Yannick" : name;
+  return ROLES.find(role => role.name === normalized) || ROLES[0];
+}
+
+function defaultRoleForDate(date) {
+  const weekday = new Date(`${date}T12:00:00`).getDay();
+  const names = ["Familienmensch", "Yannick", "Vitalist", "Unternehmer", "Absolvent", "Muslim", "Wirt"];
+  return names[weekday];
+}
+
+function findPreviousReview(date) {
   let cursor = date;
-  for (let i = 0; i < 3650; i++) {
+  for (let i = 0; i < 3650; i += 1) {
     cursor = addDays(cursor, -1);
     const rawText = localStorage.getItem(storageKey(cursor));
     if (!rawText) continue;
-    try {
-      const raw = JSON.parse(rawText);
-      if (!raw.streaks) continue;
-      const inherited = {};
-      STREAKS.forEach(s => {
-        const old = raw.streaks[s.key];
-        const previousDays = typeof old === "object" && old !== null
-          ? Number(old.days || 0)
-          : 0;
-        const wasBroken = typeof old === "object" && old !== null
-          ? Boolean(old.broken || old.status === "broken")
-          : false;
-
-        inherited[s.key] = {
-          days: wasBroken ? 0 : previousDays + 1,
-          broken: false
-        };
-      });
-      return inherited;
-    } catch {}
+    const data = safeParse(rawText);
+    if (data) return { date: cursor, data };
   }
-  return Object.fromEntries(STREAKS.map(s => [s.key, {days:0,broken:false}]));
+  return null;
+}
+
+function inheritedStreaks(previousData) {
+  return Object.fromEntries(STREAKS.map(streak => {
+    const old = previousData?.streaks?.[streak.key];
+    const previousDays = typeof old === "object" && old !== null ? Number(old.days || 0) : 0;
+    const wasBroken = typeof old === "object" && old !== null ? Boolean(old.broken || old.status === "broken") : false;
+    return [streak.key, { days: wasBroken ? 0 : previousDays + 1, broken: false }];
+  }));
+}
+
+function emptyReview(date) {
+  const previous = findPreviousReview(date)?.data;
+  return {
+    role: defaultRoleForDate(date),
+    breakfast: "", lunch: "", dinner: "", snack: "",
+    water: "0", steps: "",
+    morningRoutineState: "", eveningRoutineState: "",
+    morningRoutine: false, eveningRoutine: false,
+    routineProgress: { morning: {}, evening: {} },
+    prayers: Object.fromEntries(PRAYERS.map(prayer => [prayer, ""])),
+    ramadanDays: previous?.ramadanDays !== undefined ? Number(previous.ramadanDays) : -29,
+    fastingCompleted: false,
+    sleepQualityScore: 0,
+    dreams: "",
+    activities: [],
+    streaks: inheritedStreaks(previous),
+    mood: "",
+    gratitude1: "", gratitude2: "", allahName: "",
+    notes: ""
+  };
+}
+
+function legacySleepScore(value) {
+  return ({ "Sehr gut": 1, "Gut": 2, "Neutral": 3, "Schlecht": 4, "Sehr schlecht": 5 })[value] || 0;
+}
+
+function normalizeReview(raw, date, hasStoredValue) {
+  const base = emptyReview(date);
+  const merged = { ...base, ...(raw || {}) };
+  merged.role = getRole(raw?.role || base.role).name;
+  merged.prayers = { ...base.prayers, ...(raw?.prayers || {}) };
+  merged.activities = Array.isArray(raw?.activities) ? raw.activities.map(item => ({
+    title: String(item.title || ""),
+    role: getRole(item.role || "Yannick").name
+  })).filter(item => item.title) : [];
+  merged.morningRoutineState = raw?.morningRoutineState || (raw?.morningRoutine ? "done" : "");
+  merged.eveningRoutineState = raw?.eveningRoutineState || (raw?.eveningRoutine ? "done" : "");
+  merged.sleepQualityScore = Number(raw?.sleepQualityScore ?? legacySleepScore(raw?.sleepQuality)) || 0;
+  merged.routineProgress = {
+    morning: { ...(raw?.routineProgress?.morning || {}) },
+    evening: { ...(raw?.routineProgress?.evening || {}) }
+  };
+  merged.streaks = hasStoredValue ? { ...base.streaks } : base.streaks;
+  STREAKS.forEach(streak => {
+    const old = raw?.streaks?.[streak.key];
+    if (old && typeof old === "object") {
+      merged.streaks[streak.key] = { days: Math.max(0, Number(old.days || 0)), broken: Boolean(old.broken || old.status === "broken") };
+    } else if (!merged.streaks[streak.key]) {
+      merged.streaks[streak.key] = { days: 0, broken: false };
+    }
+  });
+  return merged;
 }
 
 function loadReview(date) {
-  try {
-    const rawText = localStorage.getItem(storageKey(date));
-    const raw = rawText ? JSON.parse(rawText) : {};
-    const base = emptyReview();
-
-    if (!rawText) {
-      base.streaks = findPreviousStreaks(date);
-    }
-
-    const merged = {...base, ...raw};
-    merged.prayers = {...emptyReview().prayers, ...(raw.prayers || {})};
-    merged.streaks = {...base.streaks};
-
-    STREAKS.forEach(s => {
-      const old = raw.streaks?.[s.key];
-      if (typeof old === "object" && old !== null) {
-        merged.streaks[s.key] = {
-          days:Number(old.days || 0),
-          broken:Boolean(old.broken || old.status === "broken")
-        };
-      } else {
-        merged.streaks[s.key] = merged.streaks[s.key] || {days:0,broken:false};
-      }
-    });
-
-    return merged;
-  } catch {
-    return emptyReview();
-  }
+  const rawText = localStorage.getItem(storageKey(date));
+  const raw = rawText ? safeParse(rawText, {}) : {};
+  return normalizeReview(raw, date, Boolean(rawText));
 }
-function saveReview(silent=false) {
+
+function collectForm() {
+  if (!currentData) return;
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "allahName", "notes"].forEach(id => {
+    if ($(id)) currentData[id] = $(id).value;
+  });
+  currentData.ramadanDays = Number(currentData.ramadanDays || 0);
+  currentData.sleepQualityScore = Number($("sleepQuality")?.value || 0);
+  currentData.mood = $("mood")?.value || "";
+  currentData.role = $("dayRole")?.value || currentData.role;
+  currentData.morningRoutine = currentData.morningRoutineState === "done";
+  currentData.eveningRoutine = currentData.eveningRoutineState === "done";
+}
+
+function scheduleAutoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveReview(true), 550);
+}
+
+function saveReview(silent = false) {
   collectForm();
   localStorage.setItem(storageKey(selectedDate), JSON.stringify(currentData));
   renderStats();
-  if(!silent) {
-    const btn=$("saveButton");
-    const old=btn.textContent;
-    btn.textContent="✓ Gespeichert";
-    setTimeout(()=>btn.textContent=old,1000);
+  renderRoutineCards();
+  if (!silent) {
+    const button = $("saveButton");
+    const original = button.textContent;
+    button.textContent = "✓ Gespeichert";
+    setTimeout(() => { button.textContent = original; }, 1100);
   }
 }
+
 function formatDate(iso) {
-  return new Intl.DateTimeFormat("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(new Date(iso+"T12:00:00"));
+  return new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${iso}T12:00:00`));
 }
+
+function formatShortDate(iso) {
+  return new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "2-digit" }).format(new Date(`${iso}T12:00:00`));
+}
+
 function setDate(date) {
-  selectedDate=date;
-  currentData=loadReview(date);
-  $("dateButton").textContent=formatDate(date);
-  $("datePicker").value=date;
+  selectedDate = date;
+  calendarCursor = firstOfMonth(date);
+  currentData = loadReview(date);
+  $("dateButton").textContent = formatDate(date);
   fillForm();
   renderStats();
+  renderRoutineCards();
+  if (activeRoutineKey) renderRoutineDetail(activeRoutineKey);
 }
+
 function fillForm() {
-  ["breakfast","lunch","dinner","snack","water","steps","ramadanDays","dreams","gratitude1","gratitude2","allahName","notes"].forEach(id=>{
-    if($(id)) $(id).value=currentData[id] ?? "";
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "allahName", "notes"].forEach(id => {
+    if ($(id)) $(id).value = currentData[id] ?? "";
   });
-  $("morningRoutine").checked=!!currentData.morningRoutine;
-  $("eveningRoutine").checked=!!currentData.eveningRoutine;
+  $("dayRole").value = getRole(currentData.role).name;
+  applyRolePickerStyle();
+  $("sleepQuality").value = Number(currentData.sleepQualityScore || 0);
+  $("mood").value = currentData.mood || "";
+  updateSleepLabel();
   updateRamadanDisplay();
+  updateRoutineStateButtons();
   renderPrayers();
   renderActivities();
   renderStreaks();
-  document.querySelectorAll("#moodGrid button").forEach(b=>b.classList.toggle("active",b.dataset.value===currentData.mood));
-  document.querySelectorAll("#sleepGrid button").forEach(b=>b.classList.toggle("active",b.dataset.value===currentData.sleepQuality));
 }
-function collectForm() {
-  ["breakfast","lunch","dinner","snack","water","steps","ramadanDays","dreams","gratitude1","gratitude2","allahName","notes"].forEach(id=>currentData[id]=$(id).value);
-  currentData.morningRoutine=$("morningRoutine").checked;
-  currentData.eveningRoutine=$("eveningRoutine").checked;
+
+function applyRolePickerStyle() {
+  const role = getRole($("dayRole").value || currentData?.role);
+  const picker = $("dayRole");
+  picker.style.setProperty("--role-color", role.color);
+  picker.style.setProperty("--role-soft", hexToRgba(role.color, .18));
+  picker.style.setProperty("--role-text", role.text);
 }
-function renderPrayers() {
-  $("prayerList").innerHTML=PRAYERS.map(p=>`
-    <div class="prayer-row">
-      <strong>${p}</strong>
-      <select data-prayer="${p}">
-        ${PRAYER_STATES.map(s=>`<option value="${s}" ${currentData.prayers?.[p]===s?"selected":""}>${s || "Noch nicht eingetragen"}</option>`).join("")}
-      </select>
-    </div>`).join("");
-  document.querySelectorAll("[data-prayer]").forEach(sel=>sel.onchange=()=>{
-    currentData.prayers[sel.dataset.prayer]=sel.value; saveReview(true);
+
+function updateRoutineStateButtons() {
+  document.querySelectorAll("[data-routine-state]").forEach(group => {
+    const state = group.dataset.routineState === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
+    group.querySelectorAll("button").forEach(button => button.classList.toggle("active", button.dataset.state === state));
   });
 }
-function renderActivities() {
-  $("activityList").innerHTML=(currentData.activities||[]).map((a,i)=>{
-    const r=ROLES.find(x=>x.name===a.role)||ROLES[0];
-    return `<div class="activity-row">
-      <div class="activity-main">
-        <span class="role-dot" style="background:${r.color}"></span>
-        <div class="activity-copy"><strong>${r.emoji} ${escapeHTML(a.title)}</strong><small>${a.role} · ${a.minutes} Min.</small></div>
-      </div>
-      <button class="delete-button" data-delete-activity="${i}">🗑️</button>
+
+function renderPrayers() {
+  $("prayerList").innerHTML = PRAYERS.map(prayer => {
+    const state = currentData.prayers?.[prayer] || "";
+    return `<div class="prayer-card" data-state="${escapeHTML(state)}">
+      <strong>${escapeHTML(prayer)}</strong>
+      <select data-prayer="${escapeHTML(prayer)}" aria-label="Status ${escapeHTML(prayer)}">
+        ${PRAYER_STATES.map(option => `<option value="${escapeHTML(option.value)}" ${state === option.value ? "selected" : ""}>${escapeHTML(option.label)}</option>`).join("")}
+      </select>
     </div>`;
   }).join("");
-  document.querySelectorAll("[data-delete-activity]").forEach(b=>b.onclick=()=>{
-    currentData.activities.splice(Number(b.dataset.deleteActivity),1); saveReview(true); renderActivities();
+
+  document.querySelectorAll("[data-prayer]").forEach(select => {
+    select.addEventListener("change", () => {
+      currentData.prayers[select.dataset.prayer] = select.value;
+      saveReview(true);
+      renderPrayers();
+    });
   });
 }
-function renderStreaks() {
-  $("streakList").innerHTML = STREAKS.map(s => {
-    const state = currentData.streaks?.[s.key] || {days:0,broken:false};
 
+function propagateRamadanForward(fromDate) {
+  let runningValue = Number(currentData.ramadanDays || 0);
+  for (let offset = 1; offset <= 3650; offset += 1) {
+    const date = addDays(fromDate, offset);
+    const rawText = localStorage.getItem(storageKey(date));
+    if (!rawText) continue;
+    const raw = safeParse(rawText);
+    if (!raw) continue;
+    if (raw.fastingCompleted) runningValue += 1;
+    raw.ramadanDays = runningValue;
+    localStorage.setItem(storageKey(date), JSON.stringify(raw));
+  }
+}
+
+function propagateStreaksForward(fromDate) {
+  let running = Object.fromEntries(STREAKS.map(streak => {
+    const state = currentData.streaks?.[streak.key] || { days: 0, broken: false };
+    return [streak.key, { days: Number(state.days || 0), broken: Boolean(state.broken) }];
+  }));
+
+  for (let offset = 1; offset <= 3650; offset += 1) {
+    const date = addDays(fromDate, offset);
+    const rawText = localStorage.getItem(storageKey(date));
+    if (!rawText) continue;
+    const raw = safeParse(rawText);
+    if (!raw) continue;
+    raw.streaks = raw.streaks || {};
+    STREAKS.forEach(streak => {
+      const existing = raw.streaks[streak.key];
+      const brokenHere = Boolean(existing?.broken || existing?.status === "broken");
+      const next = brokenHere ? { days: 0, broken: true } : { days: running[streak.key].broken ? 0 : running[streak.key].days + 1, broken: false };
+      raw.streaks[streak.key] = next;
+      running[streak.key] = next;
+    });
+    localStorage.setItem(storageKey(date), JSON.stringify(raw));
+  }
+}
+
+function updateRamadanDisplay() {
+  const value = Number($("ramadanDays").value || 0);
+  const display = $("ramadanDisplay");
+  display.className = value < 0 ? "ramadan-negative" : value === 0 ? "ramadan-zero" : "ramadan-positive";
+  display.textContent = value < 0 ? `${Math.abs(value)} Tage offen` : value === 0 ? "Alle Tage nachgeholt" : `${value} zusätzliche Tage`;
+  const button = $("ramadanComplete");
+  button.disabled = Boolean(currentData?.fastingCompleted);
+  button.textContent = currentData?.fastingCompleted ? "Fastentag geschafft ✓" : "Fastentag geschafft";
+}
+
+function updateSleepLabel() {
+  const score = Number($("sleepQuality").value || 0);
+  $("sleepQualityLabel").textContent = SLEEP_LABELS[score] || SLEEP_LABELS[0];
+}
+
+function renderActivities() {
+  const list = $("activityList");
+  list.innerHTML = (currentData.activities || []).map((activity, index) => {
+    const role = getRole(activity.role);
+    return `<div class="activity-row" draggable="true" data-activity-index="${index}">
+      <span class="drag-handle" aria-hidden="true">≡</span>
+      <div class="activity-main">
+        <span class="role-dot" style="background:${role.color}"></span>
+        <div class="activity-copy">
+          <strong>${escapeHTML(activity.title)}</strong>
+          <small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</small>
+        </div>
+      </div>
+      <div class="activity-actions">
+        <button type="button" data-move-activity="up" data-index="${index}" aria-label="Nach oben">↑</button>
+        <button type="button" data-move-activity="down" data-index="${index}" aria-label="Nach unten">↓</button>
+        <button type="button" class="delete-button" data-delete-activity="${index}" aria-label="Löschen">×</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  document.querySelectorAll("[data-move-activity]").forEach(button => button.addEventListener("click", () => {
+    moveArrayItem(currentData.activities, Number(button.dataset.index), button.dataset.moveActivity === "up" ? -1 : 1);
+    saveReview(true); renderActivities();
+  }));
+  document.querySelectorAll("[data-delete-activity]").forEach(button => button.addEventListener("click", () => {
+    currentData.activities.splice(Number(button.dataset.deleteActivity), 1);
+    saveReview(true); renderActivities();
+  }));
+  document.querySelectorAll("[data-activity-index]").forEach(row => {
+    row.addEventListener("dragstart", () => { activityDragIndex = Number(row.dataset.activityIndex); row.classList.add("dragging"); });
+    row.addEventListener("dragend", () => { activityDragIndex = null; row.classList.remove("dragging"); });
+    row.addEventListener("dragover", event => event.preventDefault());
+    row.addEventListener("drop", event => {
+      event.preventDefault();
+      const targetIndex = Number(row.dataset.activityIndex);
+      if (activityDragIndex === null || activityDragIndex === targetIndex) return;
+      const [item] = currentData.activities.splice(activityDragIndex, 1);
+      currentData.activities.splice(targetIndex, 0, item);
+      saveReview(true); renderActivities();
+    });
+  });
+}
+
+function moveArrayItem(array, index, delta) {
+  const target = index + delta;
+  if (target < 0 || target >= array.length) return;
+  [array[index], array[target]] = [array[target], array[index]];
+}
+
+function renderStreaks() {
+  $("streakList").innerHTML = STREAKS.map(streak => {
+    const state = currentData.streaks?.[streak.key] || { days: 0, broken: false };
     return `<div class="streak-card ${state.broken ? "streak-broken" : ""}">
       <div class="streak-card-head">
-        <strong>${s.label}</strong>
-        <span>${state.broken ? "Unterbrochen" : "Aktueller Stand"}</span>
+        <strong>${escapeHTML(streak.label)}</strong>
+        <span class="streak-status">${state.broken ? "Unterbrochen" : "Aktiv"}</span>
       </div>
-
       <div class="streak-input-wrap">
-        <input
-          class="streak-days-large"
-          type="number"
-          min="0"
-          inputmode="numeric"
-          data-streak-days="${s.key}"
-          value="${Number(state.days || 0)}"
-          aria-label="${s.label} Tage"
-        >
+        <input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${streak.key}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage">
         <span class="streak-unit">Tage</span>
       </div>
-
-      <button
-        type="button"
-        class="break-button-large ${state.broken ? "active" : ""}"
-        data-break-streak="${s.key}">
-        Unterbrechen
-      </button>
+      <button type="button" class="break-button-large ${state.broken ? "active" : ""}" data-break-streak="${streak.key}">${state.broken ? "Unterbrechung eingetragen" : "Streak unterbrechen"}</button>
     </div>`;
   }).join("");
 
-  document.querySelectorAll("[data-streak-days]").forEach(inp => {
-    inp.oninput = () => {
-      const state = currentData.streaks[inp.dataset.streakDays];
-      state.days = Math.max(0, Number(inp.value || 0));
-      state.broken = false;
-      saveReview(true);
-    };
-  });
+  document.querySelectorAll("[data-streak-days]").forEach(input => input.addEventListener("change", () => {
+    const state = currentData.streaks[input.dataset.streakDays];
+    state.days = Math.max(0, Number(input.value || 0));
+    state.broken = false;
+    saveReview(true); propagateStreaksForward(selectedDate); renderStreaks();
+  }));
+  document.querySelectorAll("[data-break-streak]").forEach(button => button.addEventListener("click", () => {
+    const state = currentData.streaks[button.dataset.breakStreak];
+    state.days = 0; state.broken = true;
+    saveReview(true); propagateStreaksForward(selectedDate); renderStreaks();
+  }));
+}
 
-  document.querySelectorAll("[data-break-streak]").forEach(btn => {
-    btn.onclick = () => {
-      const state = currentData.streaks[btn.dataset.breakStreak];
-      state.days = 0;
-      state.broken = true;
-      saveReview(true);
-      renderStreaks();
-    };
+function weekDates(reference = selectedDate) {
+  const base = new Date(`${reference}T12:00:00`);
+  const day = (base.getDay() + 6) % 7;
+  const monday = new Date(base);
+  monday.setDate(base.getDate() - day);
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + index);
+    return dateToISO(date);
   });
 }
 
-
-function weekDates() {
-  const base=new Date(selectedDate+"T12:00:00");
-  const day=(base.getDay()+6)%7;
-  const monday=new Date(base); monday.setDate(base.getDate()-day);
-  return Array.from({length:7},(_,i)=>{
-    const d=new Date(monday); d.setDate(monday.getDate()+i);
-    return d.toISOString().slice(0,10);
-  });
+function reviewCompletion(data) {
+  const prayerScore = PRAYERS.filter(prayer => data.prayers?.[prayer] && data.prayers[prayer] !== "Nicht gebetet").length;
+  let earned = 0;
+  earned += [data.breakfast, data.lunch, data.dinner, data.snack].some(Boolean) ? 1 : 0;
+  earned += Number(data.water || 0) >= 2000 ? 1 : 0;
+  earned += Number(data.steps || 0) >= 5000 ? 1 : 0;
+  earned += data.morningRoutineState === "done" ? 1 : 0;
+  earned += data.eveningRoutineState === "done" ? 1 : 0;
+  earned += prayerScore;
+  earned += Number(data.sleepQualityScore || 0) > 0 ? 1 : 0;
+  earned += data.mood ? 1 : 0;
+  earned += (data.gratitude1 || data.allahName) ? 1 : 0;
+  earned += (data.activities || []).length ? 1 : 0;
+  earned += data.notes ? 1 : 0;
+  return Math.round((earned / 16) * 100);
 }
 
 function renderStats() {
-  const dates=weekDates();
-  const reviews=dates.map(loadReview);
-  const prayers=reviews.reduce((n,d)=>n+PRAYERS.filter(p=>d.prayers?.[p] && d.prayers[p]!=="Nicht gebetet").length,0);
-  const morning=reviews.filter(d=>d.morningRoutine).length;
-  const evening=reviews.filter(d=>d.eveningRoutine).length;
-  const ramadan=Number(currentData.ramadanDays || 0);
+  if (!currentData) return;
+  const dates = weekDates();
+  const reviews = dates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
+  const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
+  const communityCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
+  const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
+  const sleepValues = reviews.map(item => Number(item.data.sleepQualityScore || 0)).filter(Boolean);
+  const averageSleep = sleepValues.length ? (sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length).toFixed(1) : "–";
+  const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
+  const averageWater = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0) / 7000;
+  const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
+  const weeklyScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / 7);
+  const storedDays = reviews.filter(item => item.stored).length;
 
-  const topStats = [
-    [prayers+"/35","Gebete"],
-    [morning+"/7","Morgenroutine"],
-    [evening+"/7","Abendroutine"],
-    [ramadan < 0 ? Math.abs(ramadan)+" offen" : ramadan === 0 ? "0 offen" : ramadan+" zusätzlich",
-     "Ramadan", ramadan < 0 ? "negative" : "positive"]
-  ];
+  const roleCounts = Object.fromEntries(ROLES.map(role => [role.name, 0]));
+  reviews.forEach(item => (item.data.activities || []).forEach(activity => { roleCounts[getRole(activity.role).name] += 1; }));
+  const maxRoleCount = Math.max(1, ...Object.values(roleCounts));
 
-  const topHtml = topStats.map(([v,l,c=""])=>`
-    <div class="stat ${c}">
-      <strong>${v}</strong>
-      <span>${l}</span>
-    </div>`).join("");
-$("statsGrid").innerHTML = `<div class="stats-top">${topHtml}</div>`;
+  $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
+  $("statsGrid").innerHTML = `
+    <div class="week-summary">
+      <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Wochenfokus</span></div></div>
+      <div class="week-summary-copy">
+        <strong>${storedDays}/7 Tage reflektiert</strong>
+        <p>${weeklyScore >= 75 ? "Starke Woche: Du setzt deine Prioritäten sichtbar um." : weeklyScore >= 45 ? "Solide Basis. Die Tagesbalken zeigen dir sofort, wo Potenzial liegt." : "Die Statistik bewertet nicht dich, sondern macht ungenutzte Handlungsspielräume sichtbar."}</p>
+      </div>
+    </div>
+    <div class="stats-metrics">
+      ${statTile(`${prayerCount}/35`, "Gebete")}
+      ${statTile(String(communityCount), "in Gemeinschaft")}
+      ${statTile(`${routineDone}/14`, "Routinen erledigt")}
+      ${statTile(averageSleep === "–" ? "–" : `${averageSleep}/5`, "Ø Schlafwert (1 = gut)")}
+      ${statTile(totalSteps.toLocaleString("de-DE"), "Schritte gesamt")}
+      ${statTile(`${averageWater.toFixed(1)} L`, "Wasser pro Tag")}
+      ${statTile(String(fastDays), "Fastentage")}
+      ${statTile(String(reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0)), "Aktivitäten")}
+    </div>
+    <div class="day-performance">
+      ${reviews.map(item => {
+        const role = getRole(item.data.role);
+        const score = reviewCompletion(item.data);
+        const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+        return `<div class="day-performance-row">
+          <span class="day-label">${day}</span>
+          <div class="day-bar" style="--day-color:${role.color}"><span style="width:${score}%"></span></div>
+          <span class="day-score">${score}%</span>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="role-week">
+      <h3>Gelebte Rollen durch Aktivitäten</h3>
+      <div class="role-bars">
+        ${ROLES.map(role => `<div class="role-bar-row">
+          <span class="role-name">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</span>
+          <div class="role-bar"><span style="width:${(roleCounts[role.name] / maxRoleCount) * 100}%;background:${role.color}"></span></div>
+          <strong>${roleCounts[role.name]}</strong>
+        </div>`).join("")}
+      </div>
+    </div>`;
 }
-function updateRamadanDisplay(){
-  const n=Number(currentData.ramadanDays||0);
-  const el=$("ramadanDisplay");
-  if(n<0){
-    el.textContent=`${Math.abs(n)} Tage offen`;
-    el.className="ramadan-negative";
-  } else if(n===0){
-    el.textContent="Keine Tage offen";
-    el.className="ramadan-zero";
-  } else {
-    el.textContent=`${n} zusätzliche Fastentage`;
-    el.className="ramadan-positive";
-  }
+
+function statTile(value, label) {
+  return `<div class="stat-tile"><strong>${escapeHTML(value)}</strong><span>${escapeHTML(label)}</span></div>`;
 }
+
 function getAllReviews() {
   const reviews = [];
-  for (let i=0; i<localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || !key.startsWith("roleplay-review-")) continue;
-    const date = key.replace("roleplay-review-","");
-    try {
-      reviews.push({date, data:JSON.parse(localStorage.getItem(key))});
-    } catch {}
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith("roleplay-review-")) continue;
+    const date = key.replace("roleplay-review-", "");
+    const raw = safeParse(localStorage.getItem(key));
+    if (raw) reviews.push({ date, data: normalizeReview(raw, date, true) });
   }
-  return reviews.sort((a,b)=>a.date.localeCompare(b.date));
+  return reviews.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function downloadTextFile(filename, text, type="application/json") {
-  const blob = new Blob([text], {type});
+function downloadTextFile(filename, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  downloadBlob(filename, blob);
+}
+
+function downloadBlob(filename, blob) {
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
 function exportBackup() {
   saveReview(true);
-  const payload = getBackupPayload();
-  downloadTextFile(
-    `roleplay-backup-${todayISO()}.json`,
-    JSON.stringify(payload,null,2)
-  );
-  localStorage.setItem("roleplay-last-backup-at", payload.exportedAt);
-  const status = $("backupStatus");
-  if (status) {
-    status.textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE",{
-      dateStyle:"medium", timeStyle:"short"
-    }).format(new Date(payload.exportedAt))}`;
-  }
+  const payload = {
+    app: "Roleplay",
+    version: "2.0",
+    schemaVersion: 3,
+    exportedAt: new Date().toISOString(),
+    reviews: getAllReviews(),
+    routines
+  };
+  downloadTextFile(`roleplay-backup-${todayISO()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+  localStorage.setItem("roleplay-last-backup-at", new Date().toISOString());
+  $("backupStatus").textContent = `Backup erstellt: ${payload.reviews.length} Tagesreviews und beide Routinen.`;
 }
 
 function importBackup(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const payload = JSON.parse(reader.result);
-      if (!payload || !Array.isArray(payload.reviews)) {
-        throw new Error("Ungültiges Backup");
-      }
-
-      const validReviews = payload.reviews.filter(item =>
-        item && typeof item.date === "string" && item.data && typeof item.data === "object"
-      );
-
-      if (!validReviews.length && payload.reviews.length) {
-        throw new Error("Keine gültigen Einträge");
-      }
-
-      if (!confirm(`${validReviews.length} Tagesreviews importieren? Vorhandene Einträge mit demselben Datum werden ersetzt.`)) {
-        return;
-      }
-
-      validReviews.forEach(item => {
-        localStorage.setItem(storageKey(item.date), JSON.stringify(item.data));
-      });
-
-      localStorage.setItem("roleplay-last-import-at", new Date().toISOString());
-      setDate(selectedDate);
-
-      const status = $("backupStatus");
-      if (status) status.textContent = `${validReviews.length} Tagesreviews erfolgreich importiert.`;
-      alert("Backup wurde erfolgreich importiert.");
-    } catch {
-      alert("Diese Datei ist kein gültiges Roleplay-Backup.");
+    const payload = safeParse(reader.result);
+    const validReviews = Array.isArray(payload?.reviews) ? payload.reviews.filter(item => /^\d{4}-\d{2}-\d{2}$/.test(item?.date) && item?.data) : [];
+    if (!validReviews.length) { alert("Diese Datei enthält keine gültigen Roleplay-Tagesreviews."); return; }
+    if (!confirm(`${validReviews.length} Tagesreviews importieren? Vorhandene Einträge mit demselben Datum werden ersetzt.`)) return;
+    validReviews.forEach(item => localStorage.setItem(storageKey(item.date), JSON.stringify(item.data)));
+    if (payload.routines) {
+      routines = normalizeRoutines(payload.routines);
+      saveRoutines();
     }
+    localStorage.setItem("roleplay-last-import-at", new Date().toISOString());
+    setDate(selectedDate);
+    $("backupStatus").textContent = `${validReviews.length} Tagesreviews erfolgreich importiert.`;
+    alert("Backup wurde erfolgreich importiert.");
   };
   reader.readAsText(file);
 }
 
-function pdfValue(value, fallback="–") {
-  if (value === true) return "Ja";
-  if (value === false) return "Nein";
-  return value === undefined || value === null || value === "" ? fallback : String(value);
-}
-
-function buildPdfDocument() {
-  saveReview(true);
-  const reviews=getAllReviews();
-  const rows=reviews.map(({date,data})=>{
-    const prayerText=PRAYERS.map(p=>`${p}: ${pdfValue(data.prayers?.[p],"Nicht eingetragen")}`).join("<br>");
-    const activities=(data.activities||[]).map(a=>`${escapeHTML(a.title)} (${escapeHTML(a.role)}, ${a.minutes} Min.)`).join("<br>") || "–";
-    const streakText=STREAKS.map(s=>{
-      const st=data.streaks?.[s.key] || {};
-      const status=st.broken ? "unterbrochen" : "aktiv";
-      return `${s.label}: ${Number(st.days||0)} Tage (${status})`;
-    }).join("<br>");
-    const meals=[data.breakfast,data.lunch,data.dinner,data.snack].filter(Boolean).map(escapeHTML).join("<br>") || "–";
-    return `<section class="pdf-day">
-      <h2>${formatDate(date)}</h2>
-      <div class="pdf-grid">
-        <div><b>Vitalität</b><br>Mahlzeiten: ${meals}<br>Wasser: ${(Number(data.water||0)/1000).toFixed(1)} L<br>Schritte: ${Number(data.steps||0).toLocaleString("de-DE")}</div>
-        <div><b>Routinen</b><br>Morgen: ${pdfValue(data.morningRoutine)}<br>Abend: ${pdfValue(data.eveningRoutine)}</div>
-        <div><b>Islam</b><br>${prayerText}<br>Ramadan: ${Math.abs(Math.min(0,Number(data.ramadanDays||0)))} Tage offen</div>
-        <div><b>Schlaf</b><br>Qualität: ${pdfValue(data.sleepQuality)}<br>Träume: ${escapeHTML(pdfValue(data.dreams))}</div>
-        <div><b>Aktivitäten</b><br>${activities}</div>
-        <div><b>Streaks</b><br>${streakText}</div>
-        <div><b>Achtsamkeit</b><br>Stimmung: ${pdfValue(data.mood)}<br>Dankbarkeit 1: ${escapeHTML(pdfValue(data.gratitude1))}<br>Dankbarkeit 2: ${escapeHTML(pdfValue(data.gratitude2))}<br>Name Allahs: ${escapeHTML(pdfValue(data.allahName))}</div>
-        <div><b>Tagesnotiz</b><br>${escapeHTML(pdfValue(data.notes))}</div>
-      </div>
-    </section>`;
-  }).join("");
-
-  return `<!doctype html><html lang="de"><head><meta charset="utf-8">
-    <title>Roleplay Export ${todayISO()}</title>
-    <style>
-      @page { size:A4; margin:14mm; }
-      body { font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif; color:#111; font-size:10.5pt; }
-      h1 { margin:0 0 4px; font-size:22pt; }
-      .meta { color:#666; margin-bottom:18px; }
-      .pdf-day { break-inside:avoid; page-break-inside:avoid; border-top:1px solid #bbb; padding:12px 0 16px; }
-      .pdf-day h2 { font-size:15pt; margin:0 0 9px; }
-      .pdf-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px 14px; }
-      .pdf-grid > div { line-height:1.45; overflow-wrap:anywhere; }
-      b { font-weight:700; }
-      @media print { .pdf-day { break-inside:avoid; } }
-    </style></head><body>
-    <h1>Roleplay Tagesreview</h1>
-    <div class="meta">Exportiert am ${new Intl.DateTimeFormat("de-DE",{dateStyle:"long",timeStyle:"short"}).format(new Date())} · ${reviews.length} Tage</div>
-    ${rows || "<p>Noch keine Einträge vorhanden.</p>"}
-    </body></html>`;
-}
-
-function exportPdf() {
-  const printWindow=window.open("","_blank");
-  if (!printWindow) {
-    alert("Bitte erlaube Pop-ups, damit der PDF-Export geöffnet werden kann.");
-    return;
-  }
-  printWindow.document.open();
-  printWindow.document.write(buildPdfDocument());
-  printWindow.document.close();
-  printWindow.onload=()=>setTimeout(()=>printWindow.print(),300);
-}
-
-
 function csvEscape(value) {
-  const text = value === undefined || value === null ? "" : String(value);
-  return `"${text.replace(/"/g, '""')}"`;
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
 }
 
 function exportCsv() {
   saveReview(true);
-  const reviews = getAllReviews();
-
-  const headers = [
-    "Datum",
-    "Frühstück","Mittagessen","Abendessen","Snack",
-    "Wasser_ml","Schritte",
-    "Morgenroutine","Abendroutine",
-    "Fajr","Dhuhr","Asr","Maghrib","Ishaa",
-    "Ramadan_Tage",
-    "Schlafqualität","Träume",
-    "Stimmung","Dankbarkeit_1","Dankbarkeit_2","Name_Allahs",
-    "Cannabis_Tage","Cannabis_Status",
-    "Zwang_Tage","Zwang_Status",
-    "Alkohol_Tage","Alkohol_Status",
-    "Zigaretten_Tage","Zigaretten_Status",
-    "Aktivitäten","Notizen"
-  ];
-
+  const headers = ["Datum", "Rolle", "Frühstück", "Mittagessen", "Abendessen", "Snack", "Wasser_ml", "Schritte", "Morgenroutine", "Abendroutine", ...PRAYERS, "Ramadan_Tage", "Fastentag", "Schlafqualität_1_bis_5", "Träume", "Emotion", "Dankbarkeit", "Name_Allahs", "Cannabis_Tage", "Begierde_Tage", "Alkohol_Tage", "Rauchfrei_Tage", "Aktivitäten", "Notizen"];
   const lines = [headers.map(csvEscape).join(";")];
-
-  reviews.forEach(({date,data}) => {
-    const activities = (data.activities || [])
-      .map(a => `${a.title || ""} | ${a.role || ""} | ${Number(a.minutes || 0)} Min.`)
-      .join(" / ");
-
-    const streak = key => data.streaks?.[key] || {days:0,status:"open"};
-
-    const row = [
-      date,
-      data.breakfast, data.lunch, data.dinner, data.snack,
-      Number(data.water || 0), Number(data.steps || 0),
-      data.morningRoutine ? "Ja" : "Nein",
-      data.eveningRoutine ? "Ja" : "Nein",
-      data.prayers?.Fajr || "",
-      data.prayers?.Dhuhr || "",
-      data.prayers?.Asr || "",
-      data.prayers?.Maghrib || "",
-      data.prayers?.Ishaa || "",
-      Number(data.ramadanDays || 0),
-      data.sleepQuality || "",
-      data.dreams || "",
-      data.mood || "",
-      data.gratitude1 || "",
-      data.gratitude2 || "",
-      data.allahName || "",
-      Number(streak("cannabis").days || 0), streak("cannabis").broken ? "unterbrochen" : "aktiv",
-      Number(streak("zwang").days || 0), streak("zwang").broken ? "unterbrochen" : "aktiv",
-      Number(streak("alcohol").days || 0), streak("alcohol").broken ? "unterbrochen" : "aktiv",
-      Number(streak("cigarettes").days || 0), streak("cigarettes").broken ? "unterbrochen" : "aktiv",
-      activities,
-      data.notes || ""
-    ];
-
+  getAllReviews().forEach(({ date, data }) => {
+    const activities = (data.activities || []).map(activity => `${activity.title} | ${activity.role}`).join(" / ");
+    const row = [date, data.role, data.breakfast, data.lunch, data.dinner, data.snack, data.water, data.steps, data.morningRoutineState, data.eveningRoutineState, ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, data.dreams, data.mood, data.gratitude1, data.allahName, ...STREAKS.map(streak => Number(data.streaks?.[streak.key]?.days || 0)), activities, data.notes];
     lines.push(row.map(csvEscape).join(";"));
   });
-
-  const bom = "\ufeff";
-  downloadTextFile(
-    `roleplay-export-${todayISO()}.csv`,
-    bom + lines.join("\r\n"),
-    "text/csv;charset=utf-8"
-  );
-
-  const status = $("backupStatus");
-  if (status) status.textContent = `CSV-Export erstellt: ${reviews.length} Tagesreviews.`;
+  downloadTextFile(`roleplay-export-${todayISO()}.csv`, `\ufeff${lines.join("\r\n")}`, "text/csv;charset=utf-8");
+  $("backupStatus").textContent = "CSV-Export wurde erstellt.";
 }
 
-function getBackupPayload() {
-  return {
-    app:"Roleplay Tagesreview",
-    version:"1.5",
-    schemaVersion:2,
-    exportedAt:new Date().toISOString(),
-    reviews:getAllReviews()
+function exportWeeklyPdf() {
+  saveReview(true);
+  const dates = weekDates();
+  const reviews = dates.map(date => ({ date, data: loadReview(date) }));
+  const pdfBytes = buildWeeklyPdf(reviews);
+  downloadBlob(`roleplay-wochenplan-${dates[0]}-${dates[6]}.pdf`, new Blob([pdfBytes], { type: "application/pdf" }));
+  $("backupStatus").textContent = `PDF-Wochenplan ${formatShortDate(dates[0])} – ${formatShortDate(dates[6])} erstellt.`;
+}
+
+function buildWeeklyPdf(reviews) {
+  const W = 842, H = 595, margin = 24;
+  const commands = [];
+  const pageBg = "F7F8FB";
+  pdfFillRect(commands, 0, 0, W, H, pageBg);
+  pdfText(commands, "ROLEPLAY", margin, H - 28, 8, true, "687080");
+  pdfText(commands, "Wochenplan & Review", margin, H - 47, 18, true, "17181C");
+  pdfText(commands, `${formatShortDate(reviews[0].date)} - ${formatShortDate(reviews[6].date)}`, W - 130, H - 43, 9, true, "687080");
+
+  const tableX = margin, tableYTop = H - 68, tableW = W - margin * 2;
+  const labelW = 96, dayW = (tableW - labelW) / 7;
+  const headerH = 34;
+  const rows = weeklyPdfRows(reviews);
+  const rowH = (tableYTop - margin - headerH) / rows.length;
+
+  pdfFillRect(commands, tableX, tableYTop - headerH, labelW, headerH, "20242D");
+  pdfText(commands, "BEREICH", tableX + 7, tableYTop - 21, 7, true, "FFFFFF");
+  reviews.forEach((item, index) => {
+    const role = getRole(item.data.role);
+    const x = tableX + labelW + index * dayW;
+    pdfFillRect(commands, x, tableYTop - headerH, dayW, headerH, role.color.slice(1));
+    const dayName = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "").toUpperCase();
+    pdfText(commands, `${dayName} ${formatShortDate(item.date)}`, x + 5, tableYTop - 13, 7, true, pdfContrast(role.color));
+    pdfText(commands, role.name, x + 5, tableYTop - 25, 6, true, pdfContrast(role.color));
+  });
+
+  rows.forEach((row, rowIndex) => {
+    const y = tableYTop - headerH - (rowIndex + 1) * rowH;
+    pdfFillRect(commands, tableX, y, tableW, rowH, rowIndex % 2 ? "FFFFFF" : "F0F2F6");
+    pdfFillRect(commands, tableX, y, 4, rowH, row.color);
+    pdfText(commands, row.label, tableX + 8, y + rowH / 2 - 2, 6.5, true, "252933");
+    row.values.forEach((value, index) => {
+      const x = tableX + labelW + index * dayW;
+      pdfText(commands, pdfFit(value, row.maxChars || 28), x + 4, y + rowH / 2 - 2, row.fontSize || 5.7, false, "30343D");
+    });
+    pdfStrokeLine(commands, tableX, y, tableX + tableW, y, "D8DAE1", .45);
+  });
+
+  for (let index = 0; index <= 7; index += 1) {
+    const x = tableX + labelW + index * dayW;
+    pdfStrokeLine(commands, x, margin, x, tableYTop, "D2D5DD", .45);
+  }
+  pdfStrokeRect(commands, tableX, margin, tableW, tableYTop - margin, "C9CCD5", .7);
+  return assemblePdf(commands.join("\n"), W, H);
+}
+
+function weeklyPdfRows(reviews) {
+  const value = getter => reviews.map(item => getter(item.data));
+  const meals = data => [data.breakfast, data.lunch, data.dinner, data.snack].filter(Boolean).join(" / ") || "-";
+  const status = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "-";
+  const activity = data => (data.activities || []).map(item => `${item.title} (${item.role})`).join(" / ") || "-";
+  const streak = (data, key) => `${Number(data.streaks?.[key]?.days || 0)} T.`;
+  return [
+    { label: "Mahlzeiten", color: "E67E58", values: value(meals), maxChars: 32, fontSize: 5.2 },
+    { label: "Wasser", color: "4AA8FF", values: value(data => `${(Number(data.water || 0) / 1000).toFixed(1)} L`) },
+    { label: "Schritte", color: "4AA8FF", values: value(data => Number(data.steps || 0).toLocaleString("de-DE")) },
+    { label: "Morgenroutine", color: "8B79E8", values: value(data => status(data.morningRoutineState)) },
+    { label: "Abendroutine", color: "8B79E8", values: value(data => status(data.eveningRoutineState)) },
+    ...PRAYERS.map(prayer => ({ label: prayer, color: "2EC4B6", values: value(data => data.prayers?.[prayer] || "-") })),
+    { label: "Fasten", color: "2EC4B6", values: value(data => data.fastingCompleted ? "Geschafft" : "-") },
+    { label: "Schlaf", color: "6670B8", values: value(data => data.sleepQualityScore ? SLEEP_LABELS[data.sleepQualityScore] : "-") },
+    { label: "Aktivitäten", color: "F2C94C", values: value(activity), maxChars: 34, fontSize: 5.0 },
+    { label: "Cannabisfrei", color: "26A269", values: value(data => streak(data, "cannabisFree")) },
+    { label: "Begierde", color: "26A269", values: value(data => streak(data, "compulsionFree")) },
+    { label: "Alkoholfrei", color: "26A269", values: value(data => streak(data, "alcoholFree")) },
+    { label: "Rauchfrei", color: "26A269", values: value(data => streak(data, "smokeFree")) },
+    { label: "Emotion", color: "D65AA5", values: value(data => data.mood || "-") },
+    { label: "Dankbar für", color: "D65AA5", values: value(data => data.gratitude1 || "-"), maxChars: 32, fontSize: 5.1 },
+    { label: "Name Allahs", color: "D65AA5", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 30, fontSize: 5.0 },
+    { label: "Tagesnotiz", color: "59606E", values: value(data => data.notes || "-"), maxChars: 35, fontSize: 4.9 }
+  ];
+}
+
+function latinAllahName(value) {
+  if (!value) return "";
+  return value.includes("/") ? value.split("/").slice(1).join("/").trim() : value;
+}
+
+function pdfFit(value, maxChars) {
+  const clean = pdfSafeText(value).replace(/\s+/g, " ").trim();
+  return clean.length > maxChars ? `${clean.slice(0, Math.max(0, maxChars - 3))}...` : clean;
+}
+
+function pdfSafeText(value) {
+  return String(value ?? "")
+    .replace(/[–—]/g, "-")
+    .replace(/[ʿ‘’]/g, "'")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E\xA0-\xFF]/g, "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function pdfFillRect(commands, x, y, width, height, hex) {
+  const [r, g, b] = pdfRgb(hex);
+  commands.push(`q ${r} ${g} ${b} rg ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re f Q`);
+}
+function pdfStrokeRect(commands, x, y, width, height, hex, lineWidth) {
+  const [r, g, b] = pdfRgb(hex);
+  commands.push(`q ${r} ${g} ${b} RG ${lineWidth} w ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S Q`);
+}
+function pdfStrokeLine(commands, x1, y1, x2, y2, hex, lineWidth) {
+  const [r, g, b] = pdfRgb(hex);
+  commands.push(`q ${r} ${g} ${b} RG ${lineWidth} w ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S Q`);
+}
+function pdfText(commands, text, x, y, size, bold, hex) {
+  const [r, g, b] = pdfRgb(hex);
+  commands.push(`BT /${bold ? "F2" : "F1"} ${size} Tf ${r} ${g} ${b} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${pdfSafeText(text)}) Tj ET`);
+}
+function pdfRgb(hex) {
+  const clean = hex.replace("#", "");
+  return [0, 2, 4].map(index => (parseInt(clean.slice(index, index + 2), 16) / 255).toFixed(3));
+}
+function pdfContrast(hex) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16), g = parseInt(clean.slice(2, 4), 16), b = parseInt(clean.slice(4, 6), 16);
+  return ((r * 299 + g * 587 + b * 114) / 1000) > 155 ? "17202A" : "FFFFFF";
+}
+
+function assemblePdf(content, width, height) {
+  const objects = [];
+  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+  objects[2] = "<< /Type /Pages /Kids [5 0 R] /Count 1 >>";
+  objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+  objects[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+  objects[5] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>`;
+  objects[6] = `<< /Length ${binaryLength(content)} >>\nstream\n${content}\nendstream`;
+
+  let pdf = "%PDF-1.4\n%âãÏÓ\n";
+  const offsets = [0];
+  for (let index = 1; index < objects.length; index += 1) {
+    offsets[index] = binaryLength(pdf);
+    pdf += `${index} 0 obj\n${objects[index]}\nendobj\n`;
+  }
+  const xrefOffset = binaryLength(pdf);
+  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
+  for (let index = 1; index < objects.length; index += 1) pdf += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
+  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return binaryStringToUint8Array(pdf);
+}
+
+function binaryLength(text) { return text.length; }
+function binaryStringToUint8Array(text) {
+  const bytes = new Uint8Array(text.length);
+  for (let index = 0; index < text.length; index += 1) bytes[index] = text.charCodeAt(index) & 0xFF;
+  return bytes;
+}
+
+function hexToRgba(hex, alpha) {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.slice(0, 2), 16), g = parseInt(clean.slice(2, 4), 16), b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function rawReviewForCalendar(date) {
+  const rawText = localStorage.getItem(storageKey(date));
+  if (!rawText) return null;
+  return safeParse(rawText, {});
+}
+
+function renderCalendar() {
+  const monthDate = new Date(`${calendarCursor}T12:00:00`);
+  $("calendarMonthLabel").textContent = new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(monthDate);
+  const weekdayOffset = (monthDate.getDay() + 6) % 7;
+  const start = addDays(calendarCursor, -weekdayOffset);
+  $("calendarGrid").innerHTML = Array.from({ length: 42 }, (_, index) => {
+    const date = addDays(start, index);
+    const raw = rawReviewForCalendar(date);
+    const role = getRole(raw?.role || defaultRoleForDate(date));
+    const outside = date.slice(0, 7) !== calendarCursor.slice(0, 7);
+    const classes = ["calendar-day", outside ? "outside" : "", date === todayISO() ? "today" : "", raw ? "has-entry" : "", date === selectedDate ? "selected" : ""].filter(Boolean).join(" ");
+    const style = raw ? `--entry-color:${role.color};--entry-soft:${hexToRgba(role.color,.18)};--entry-text:${role.text}` : "";
+    return `<button type="button" class="${classes}" style="${style}" data-calendar-date="${date}" aria-label="${formatDate(date)}${raw ? `, Eintrag in Rolle ${role.name}` : ""}">${Number(date.slice(-2))}</button>`;
+  }).join("");
+  document.querySelectorAll("[data-calendar-date]").forEach(button => button.addEventListener("click", () => {
+    setDate(button.dataset.calendarDate);
+    $("calendarDialog").close();
+  }));
+}
+
+function openCalendar() {
+  calendarCursor = firstOfMonth(selectedDate);
+  renderCalendar();
+  $("calendarDialog").showModal();
+}
+
+function normalizeRoutines(value) {
+  const clone = JSON.parse(JSON.stringify(DEFAULT_ROUTINES));
+  ["morning", "evening"].forEach(key => {
+    const incoming = value?.[key];
+    if (!incoming) return;
+    clone[key] = {
+      ...clone[key],
+      ...incoming,
+      items: Array.isArray(incoming.items) && incoming.items.length ? incoming.items.map((item, index) => ({
+        id: item.id || `${key}-${Date.now()}-${index}`,
+        emoji: item.emoji || "✨",
+        title: item.title || "Neuer Schritt",
+        minutes: clamp(Number(item.minutes || 5), 1, 180),
+        context: item.context || ""
+      })) : clone[key].items
+    };
+  });
+  return clone;
+}
+
+function loadRoutines() {
+  const stored = safeParse(localStorage.getItem("roleplay-routines-v2"));
+  return normalizeRoutines(stored);
+}
+
+function saveRoutines() {
+  localStorage.setItem("roleplay-routines-v2", JSON.stringify(routines));
+}
+
+function routineMinutes(routine) {
+  return routine.items.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+}
+
+function routineProgress(key) {
+  const progress = currentData?.routineProgress?.[key] || {};
+  const items = routines[key].items;
+  const done = items.filter(item => progress[item.id] === "done").length;
+  const resolved = items.filter(item => ["done", "skipped"].includes(progress[item.id])).length;
+  return { done, resolved, total: items.length };
+}
+
+function renderRoutineCards() {
+  if (!routines || !currentData) return;
+  $("routineCards").innerHTML = ["morning", "evening"].map(key => {
+    const routine = routines[key];
+    const progress = routineProgress(key);
+    return `<button type="button" class="routine-hero ${routine.theme}" data-open-routine="${key}">
+      <h2>${escapeHTML(routine.title)}</h2>
+      <p>${escapeHTML(routine.description)}</p>
+      <span class="routine-hero-meta">${progress.done}/${progress.total} erledigt · ${routineMinutes(routine)} Min.</span>
+      <span class="routine-hero-play" data-start-routine="${key}" aria-label="${escapeHTML(routine.title)} starten">▶</span>
+    </button>`;
+  }).join("");
+  document.querySelectorAll("[data-open-routine]").forEach(card => card.addEventListener("click", event => {
+    if (event.target.closest("[data-start-routine]")) return;
+    openRoutineDetail(card.dataset.openRoutine);
+  }));
+  document.querySelectorAll("[data-start-routine]").forEach(button => button.addEventListener("click", event => {
+    event.stopPropagation();
+    startRoutine(button.dataset.startRoutine);
+  }));
+}
+
+function openRoutineDetail(key) {
+  activeRoutineKey = key;
+  $("routineOverview").hidden = true;
+  $("routineDetail").hidden = false;
+  renderRoutineDetail(key);
+}
+
+function closeRoutineDetail() {
+  activeRoutineKey = null;
+  $("routineDetail").hidden = true;
+  $("routineOverview").hidden = false;
+  renderRoutineCards();
+}
+
+function renderRoutineDetail(key) {
+  const routine = routines[key];
+  const progress = routineProgress(key);
+  $("routineDetailEyebrow").textContent = key === "morning" ? "TAGESSTART" : "TAGESABSCHLUSS";
+  $("routineDetailTitle").textContent = routine.title;
+  $("routineDetailMeta").textContent = `${routine.items.length} Schritte · ${routineMinutes(routine)} Minuten · ${progress.done} erledigt`;
+  $("routineAutoNext").checked = Boolean(routine.autoNext);
+  $("routineItemList").innerHTML = routine.items.map((item, index) => {
+    const state = currentData.routineProgress?.[key]?.[item.id] || "";
+    return `<div class="routine-item" draggable="true" data-routine-index="${index}">
+      <span class="routine-number">${index + 1}</span>
+      <span class="routine-emoji">${escapeHTML(item.emoji)}</span>
+      <div class="routine-item-copy">
+        <strong>${escapeHTML(item.title)}</strong>
+        <small>${item.minutes} Min.${state === "done" ? " · erledigt" : state === "skipped" ? " · übersprungen" : ""}</small>
+      </div>
+      <div class="routine-item-actions">
+        <button type="button" data-move-routine="up" data-index="${index}" aria-label="Nach oben">↑</button>
+        <button type="button" data-move-routine="down" data-index="${index}" aria-label="Nach unten">↓</button>
+        <button type="button" data-edit-routine-item="${escapeHTML(item.id)}" aria-label="Bearbeiten">•••</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  document.querySelectorAll("[data-move-routine]").forEach(button => button.addEventListener("click", () => {
+    moveArrayItem(routine.items, Number(button.dataset.index), button.dataset.moveRoutine === "up" ? -1 : 1);
+    saveRoutines(); renderRoutineDetail(key); renderRoutineCards();
+  }));
+  document.querySelectorAll("[data-edit-routine-item]").forEach(button => button.addEventListener("click", () => openRoutineItemDialog(button.dataset.editRoutineItem)));
+  document.querySelectorAll("[data-routine-index]").forEach(row => {
+    row.addEventListener("dragstart", () => { routineDragIndex = Number(row.dataset.routineIndex); row.classList.add("dragging"); });
+    row.addEventListener("dragend", () => { routineDragIndex = null; row.classList.remove("dragging"); });
+    row.addEventListener("dragover", event => event.preventDefault());
+    row.addEventListener("drop", event => {
+      event.preventDefault();
+      const targetIndex = Number(row.dataset.routineIndex);
+      if (routineDragIndex === null || routineDragIndex === targetIndex) return;
+      const [item] = routine.items.splice(routineDragIndex, 1);
+      routine.items.splice(targetIndex, 0, item);
+      saveRoutines(); renderRoutineDetail(key); renderRoutineCards();
+    });
+  });
+}
+
+function openRoutineItemDialog(itemId = null) {
+  editingRoutineItemId = itemId;
+  const item = itemId ? routines[activeRoutineKey].items.find(entry => entry.id === itemId) : null;
+  $("routineItemDialogTitle").textContent = item ? "Schritt bearbeiten" : "Schritt hinzufügen";
+  $("routineItemEmoji").value = item?.emoji || "✨";
+  $("routineItemTitle").value = item?.title || "";
+  $("routineItemMinutes").value = item?.minutes || 5;
+  $("routineItemContext").value = item?.context || "";
+  $("deleteRoutineItem").hidden = !item;
+  $("routineItemDialog").showModal();
+}
+
+function saveRoutineItemFromForm(event) {
+  event.preventDefault();
+  const title = $("routineItemTitle").value.trim();
+  if (!title) return;
+  const item = {
+    id: editingRoutineItemId || `${activeRoutineKey}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    emoji: $("routineItemEmoji").value.trim() || "✨",
+    title,
+    minutes: clamp(Number($("routineItemMinutes").value || 5), 1, 180),
+    context: $("routineItemContext").value.trim()
   };
+  const list = routines[activeRoutineKey].items;
+  const index = list.findIndex(entry => entry.id === editingRoutineItemId);
+  if (index >= 0) list[index] = item; else list.push(item);
+  saveRoutines();
+  $("routineItemDialog").close();
+  renderRoutineDetail(activeRoutineKey); renderRoutineCards();
 }
 
-function escapeHTML(s=""){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
+function deleteRoutineItem() {
+  if (!editingRoutineItemId || !confirm("Diesen Schritt wirklich löschen?")) return;
+  const list = routines[activeRoutineKey].items;
+  const index = list.findIndex(item => item.id === editingRoutineItemId);
+  if (index >= 0) list.splice(index, 1);
+  delete currentData.routineProgress?.[activeRoutineKey]?.[editingRoutineItemId];
+  saveRoutines(); saveReview(true);
+  $("routineItemDialog").close();
+  renderRoutineDetail(activeRoutineKey); renderRoutineCards();
+}
 
-function updateHeaderCompactState() {
-  document.querySelector(".app-header")?.classList.toggle("compact", window.scrollY > 80);
+function startRoutine(key) {
+  const routine = routines[key];
+  if (!routine.items.length) return;
+  const progress = currentData.routineProgress?.[key] || {};
+  let index = routine.items.findIndex(item => !["done", "skipped"].includes(progress[item.id]));
+  if (index < 0) {
+    if (!confirm("Diese Routine ist heute bereits abgeschlossen. Fortschritt zurücksetzen und erneut starten?")) return;
+    currentData.routineProgress[key] = {};
+    index = 0;
+  }
+  routineSession = { key, index, remaining: routine.items[index].minutes * 60, running: true, interval: null, contextOpen: false };
+  $("routineSessionDialog").showModal();
+  renderRoutineSession();
+  startSessionInterval();
+}
+
+function currentSessionItem() {
+  return routines[routineSession.key].items[routineSession.index];
+}
+
+function renderRoutineSession() {
+  if (!routineSession) return;
+  const routine = routines[routineSession.key];
+  const item = currentSessionItem();
+  $("sessionRoutineName").textContent = routine.title;
+  $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${routine.items.length}`;
+  $("sessionItemTitle").textContent = item.title;
+  $("sessionItemEmoji").textContent = item.emoji;
+  $("sessionTimer").textContent = formatTimer(routineSession.remaining);
+  $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
+  $("sessionContextToggle").hidden = !item.context;
+  $("sessionContext").hidden = !routineSession.contextOpen || !item.context;
+  $("sessionContext").textContent = item.context || "";
+  const next = routine.items[routineSession.index + 1];
+  $("sessionNext").textContent = next ? `WEITER  ${next.title}` : "LETZTER SCHRITT";
+}
+
+function formatTimer(seconds) {
+  const value = Math.max(0, Math.round(seconds));
+  return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+function startSessionInterval() {
+  clearInterval(routineSession?.interval);
+  if (!routineSession) return;
+  routineSession.interval = setInterval(() => {
+    if (!routineSession?.running) return;
+    routineSession.remaining -= 1;
+    if (routineSession.remaining <= 0) {
+      routineSession.remaining = 0;
+      if (routines[routineSession.key].autoNext) completeSessionItem("done");
+      else routineSession.running = false;
+    }
+    renderRoutineSession();
+  }, 1000);
+}
+
+function completeSessionItem(status) {
+  if (!routineSession) return;
+  const key = routineSession.key;
+  const routine = routines[key];
+  const item = currentSessionItem();
+  currentData.routineProgress[key][item.id] = status;
+  const nextIndex = routineSession.index + 1;
+  if (nextIndex >= routine.items.length) {
+    const allDone = routine.items.every(entry => currentData.routineProgress[key][entry.id] === "done");
+    if (key === "morning") currentData.morningRoutineState = allDone ? "done" : "missed";
+    else currentData.eveningRoutineState = allDone ? "done" : "missed";
+    saveReview(true);
+    closeRoutineSession();
+    alert(allDone ? `${routine.title} abgeschlossen.` : `${routine.title} beendet. Übersprungene Schritte wurden markiert.`);
+    return;
+  }
+  routineSession.index = nextIndex;
+  routineSession.remaining = routine.items[nextIndex].minutes * 60;
+  routineSession.running = true;
+  routineSession.contextOpen = false;
+  saveReview(true);
+  renderRoutineSession();
+}
+
+function closeRoutineSession() {
+  if (routineSession?.interval) clearInterval(routineSession.interval);
+  routineSession = null;
+  if ($("routineSessionDialog").open) $("routineSessionDialog").close();
+  updateRoutineStateButtons();
+  renderRoutineCards();
+  if (activeRoutineKey) renderRoutineDetail(activeRoutineKey);
+}
+
+function switchPage(page) {
+  const review = page === "review";
+  $("reviewPage").classList.toggle("active", review);
+  $("routinesPage").classList.toggle("active", !review);
+  $("pageTitle").textContent = review ? "Tagesreview" : "Routinen";
+  $("rolePickerWrap").hidden = !review;
+  $("dateNavigation").hidden = !review;
+  document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+  if (!review) renderRoutineCards();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function initOptions() {
+  $("dayRole").innerHTML = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
+  $("activityRole").innerHTML = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
+  $("mood").innerHTML = EMOTIONS.map(emotion => `<option value="${escapeHTML(emotion.value)}">${escapeHTML(emotion.label)}</option>`).join("");
+  $("allahName").innerHTML = `<option value="">Name Allahs auswählen …</option>${ALLAH_NAMES.map(name => `<option>${escapeHTML(name)}</option>`).join("")}`;
+  $("emojiQuickPicks").innerHTML = QUICK_EMOJIS.map(emoji => `<button type="button" data-emoji="${escapeHTML(emoji)}">${escapeHTML(emoji)}</button>`).join("");
+}
+
+function bindEvents() {
+  $("prevDay").addEventListener("click", () => setDate(addDays(selectedDate, -1)));
+  $("nextDay").addEventListener("click", () => setDate(addDays(selectedDate, 1)));
+  $("dateButton").addEventListener("click", openCalendar);
+  $("calendarPrevMonth").addEventListener("click", () => {
+    const date = new Date(`${calendarCursor}T12:00:00`); date.setMonth(date.getMonth() - 1); calendarCursor = dateToISO(date); renderCalendar();
+  });
+  $("calendarNextMonth").addEventListener("click", () => {
+    const date = new Date(`${calendarCursor}T12:00:00`); date.setMonth(date.getMonth() + 1); calendarCursor = dateToISO(date); renderCalendar();
+  });
+  $("calendarToday").addEventListener("click", () => { setDate(todayISO()); $("calendarDialog").close(); });
+  $("calendarClose").addEventListener("click", () => $("calendarDialog").close());
+
+  $("dayRole").addEventListener("change", () => { currentData.role = $("dayRole").value; applyRolePickerStyle(); saveReview(true); });
+  $("saveButton").addEventListener("click", () => saveReview(false));
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "dreams", "gratitude1", "allahName", "notes", "mood"].forEach(id => {
+    $(id).addEventListener("change", () => saveReview(true));
+    $(id).addEventListener("input", () => { collectForm(); scheduleAutoSave(); });
+  });
+  $("sleepQuality").addEventListener("input", () => { updateSleepLabel(); collectForm(); scheduleAutoSave(); });
+  $("sleepQuality").addEventListener("change", () => saveReview(true));
+  $("ramadanDays").addEventListener("input", () => { currentData.ramadanDays = Number($("ramadanDays").value || 0); updateRamadanDisplay(); });
+  $("ramadanDays").addEventListener("change", () => { saveReview(true); propagateRamadanForward(selectedDate); });
+  $("ramadanComplete").addEventListener("click", () => {
+    if (currentData.fastingCompleted) return;
+    currentData.ramadanDays = Number(currentData.ramadanDays || 0) + 1;
+    currentData.fastingCompleted = true;
+    $("ramadanDays").value = currentData.ramadanDays;
+    updateRamadanDisplay(); saveReview(true); propagateRamadanForward(selectedDate);
+  });
+  document.querySelectorAll("[data-routine-state] button").forEach(button => button.addEventListener("click", () => {
+    const key = button.closest("[data-routine-state]").dataset.routineState;
+    if (key === "morning") currentData.morningRoutineState = button.dataset.state;
+    else currentData.eveningRoutineState = button.dataset.state;
+    updateRoutineStateButtons(); saveReview(true);
+  }));
+
+  $("addActivity").addEventListener("click", () => { $("activityTitle").value = ""; $("activityDialog").showModal(); setTimeout(() => $("activityTitle").focus(), 50); });
+  $("cancelActivity").addEventListener("click", () => $("activityDialog").close());
+  $("activityForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const title = $("activityTitle").value.trim();
+    if (!title) return;
+    currentData.activities.push({ title, role: $("activityRole").value });
+    $("activityDialog").close(); saveReview(true); renderActivities();
+  });
+
+  $("exportPdf").addEventListener("click", exportWeeklyPdf);
+  $("exportBackup").addEventListener("click", exportBackup);
+  $("exportCsv").addEventListener("click", exportCsv);
+  $("importBackupButton").addEventListener("click", () => $("importBackupInput").click());
+  $("importBackupInput").addEventListener("change", event => {
+    const file = event.target.files?.[0]; if (file) importBackup(file); event.target.value = "";
+  });
+
+  document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => switchPage(button.dataset.page)));
+  $("openRoutines").addEventListener("click", () => switchPage("routines"));
+  $("backToRoutineOverview").addEventListener("click", closeRoutineDetail);
+  $("startRoutineDetail").addEventListener("click", () => startRoutine(activeRoutineKey));
+  $("routineAutoNext").addEventListener("change", () => { routines[activeRoutineKey].autoNext = $("routineAutoNext").checked; saveRoutines(); });
+  $("addRoutineItem").addEventListener("click", () => openRoutineItemDialog());
+  $("routineItemForm").addEventListener("submit", saveRoutineItemFromForm);
+  $("cancelRoutineItem").addEventListener("click", () => $("routineItemDialog").close());
+  $("deleteRoutineItem").addEventListener("click", deleteRoutineItem);
+  document.querySelectorAll("[data-emoji]").forEach(button => button.addEventListener("click", () => { $("routineItemEmoji").value = button.dataset.emoji; }));
+
+  $("closeRoutineSession").addEventListener("click", closeRoutineSession);
+  $("routineSessionDialog").addEventListener("cancel", event => { event.preventDefault(); closeRoutineSession(); });
+  $("sessionPause").addEventListener("click", () => { routineSession.running = !routineSession.running; renderRoutineSession(); });
+  $("sessionComplete").addEventListener("click", () => completeSessionItem("done"));
+  $("sessionSkip").addEventListener("click", () => completeSessionItem("skipped"));
+  $("sessionMinus").addEventListener("click", () => { routineSession.remaining = Math.max(0, routineSession.remaining - 60); renderRoutineSession(); });
+  $("sessionPlus").addEventListener("click", () => { routineSession.remaining += 60; renderRoutineSession(); });
+  $("sessionContextToggle").addEventListener("click", () => { routineSession.contextOpen = !routineSession.contextOpen; renderRoutineSession(); });
+
+  window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
 }
 
 function init() {
-  $("allahName").innerHTML='<option value="">Bitte auswählen …</option>'+ALLAH_NAMES.map(n=>`<option>${n}</option>`).join("");
-  $("activityRole").innerHTML=ROLES.map(r=>`<option value="${r.name}">${r.emoji} ${r.name}</option>`).join("");
-
-  $("prevDay").onclick=()=>setDate(addDays(selectedDate,-1));
-  $("nextDay").onclick=()=>setDate(addDays(selectedDate,1));
-  $("dateButton").onclick=()=>$("datePicker").showPicker?.() || $("datePicker").click();
-  $("datePicker").onchange=e=>setDate(e.target.value);
-  $("saveButton").onclick=()=>saveReview(false);
-
-  document.querySelectorAll("input,select,textarea").forEach(el=>{
-    if(!el.closest("#activityDialog") && el.id!=="datePicker") {
-      el.addEventListener("change",()=>saveReview(true));
-      el.addEventListener("input",()=>{collectForm();});
-    }
-  });
-
-  document.querySelectorAll("#moodGrid button").forEach(b=>b.onclick=()=>{
-    currentData.mood=b.dataset.value;
-    document.querySelectorAll("#moodGrid button").forEach(x=>x.classList.toggle("active",x===b));
-    saveReview(true);
-  });
-  document.querySelectorAll("#sleepGrid button").forEach(b=>b.onclick=()=>{
-    currentData.sleepQuality=b.dataset.value;
-    document.querySelectorAll("#sleepGrid button").forEach(x=>x.classList.toggle("active",x===b));
-    saveReview(true);
-  });
-  $("ramadanComplete").onclick=()=>{
-    currentData.ramadanDays=Number(currentData.ramadanDays||0)+1;
-    $("ramadanDays").value=currentData.ramadanDays;
-    updateRamadanDisplay();
-    saveReview(true);
-  };
-  $("ramadanDays").oninput=()=>{
-    currentData.ramadanDays=Number($("ramadanDays").value||0);
-    updateRamadanDisplay();
-    saveReview(true);
-  };
-
-  $("exportPdf").onclick=exportPdf;
-  $("exportBackup").onclick=exportBackup;
-  $("exportCsv").onclick=exportCsv;
-  $("importBackupButton").onclick=()=>$("importBackupInput").click();
-  $("importBackupInput").onchange=e=>{
-    const file=e.target.files?.[0];
-    if(file) importBackup(file);
-    e.target.value="";
-  };
-
-  $("addActivity").onclick=()=>$("activityDialog").showModal();
-  $("confirmActivity").onclick=e=>{
-    const title=$("activityTitle").value.trim();
-    if(!title){ e.preventDefault(); return; }
-    currentData.activities.push({
-      title,
-      role:$("activityRole").value,
-      minutes:Number($("activityMinutes").value||30)
-    });
-    $("activityTitle").value="";
-    saveReview(true); renderActivities();
-  };
-
+  initOptions();
+  routines = loadRoutines();
+  bindEvents();
   const lastBackupAt = localStorage.getItem("roleplay-last-backup-at");
-  if (lastBackupAt && $("backupStatus")) {
-    $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE",{
-      dateStyle:"medium", timeStyle:"short"
-    }).format(new Date(lastBackupAt))}`;
-  }
-
-  window.addEventListener("scroll", updateHeaderCompactState, {passive:true});
-  updateHeaderCompactState();
-
+  if (lastBackupAt) $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lastBackupAt))}`;
   setDate(todayISO());
-  if("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(()=>{});
+  switchPage("review");
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 }
-document.addEventListener("DOMContentLoaded",init);
+
+document.addEventListener("DOMContentLoaded", init);
