@@ -58,7 +58,7 @@
                   <div class="water-droplets" id="waterDroplets"></div>
                   <strong id="waterTotalDisplay">0,0 Liter</strong>
                 </div>
-                <button id="waterPlus" class="water-step-button gradient-action" type="button" aria-label="0,5 Liter hinzufügen">💧 +</button>
+                <button id="waterPlus" class="water-step-button gradient-action" type="button" aria-label="0,5 Liter hinzufügen">+</button>
               </div>
             </div>
             <div class="field-group">
@@ -118,19 +118,19 @@
           <div class="field-group sleep-quality-field">
             <div class="label-value-row">
               <label for="sleepQuality">Schlafqualität</label>
-              <strong id="sleepQualityLabel">Sehr erholsam</strong>
+              <strong id="sleepQualityLabel">–</strong>
             </div>
             <div class="sleep-meter" aria-hidden="true">
               <div id="sleepMeterFill" class="sleep-meter-fill"></div>
             </div>
             <div class="sleep-slider-row">
               <span aria-hidden="true">😴</span>
-              <input id="sleepQuality" type="range" min="0" max="5" step="1" value="0">
+              <input id="sleepQuality" type="range" min="0" max="6" step="1" value="3">
               <span aria-hidden="true">🥱</span>
             </div>
             <div class="sleep-legend-row">
               <small>Sehr erholsam</small>
-              <span id="sleepMeterPill" class="sleep-meter-pill">Sehr erholsam</span>
+              <span id="sleepMeterPill" class="sleep-meter-pill">–</span>
               <small>Kein Schlaf</small>
             </div>
           </div>
@@ -143,9 +143,9 @@
         <section class="card">
           <div class="section-title-row">
             <h2>Aktivitäten</h2>
-            <button id="addActivity" class="small-button plus-button" type="button"><span class="gradient-plus">＋</span><span>Aktivität</span></button>
+            <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">＋</span></button>
           </div>
-          <p class="section-hint">Per Halten und Ziehen kannst du die Reihenfolge deiner Aktivitäten anpassen.</p>
+          <p class="section-hint">Per Pfeilen oder Halten und Ziehen kannst du die Reihenfolge deiner Aktivitäten anpassen.</p>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 

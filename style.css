@@ -623,3 +623,160 @@ input[type="range"]::-moz-range-thumb {
   .water-display-wrap, .routine-item.clean, .delete-button.emoji-delete, .water-step-button:not(.gradient-action) { background:rgba(255,255,255,.05); }
   .water-drop.filled { filter:saturate(1.15) brightness(1.15); }
 }
+
+/* --- v2.3 polish / theme consistency --- */
+:root {
+  --app-radius: 22px;
+}
+html, body, button, input, select, textarea {
+  font-family: Futura, "Avenir Next", Avenir, "SF Pro Display", "SF Pro Text", Inter, system-ui, sans-serif;
+}
+.card, .field-group, input, select, textarea, .small-button, .secondary-button, .back-button, .date-button, .icon-button, .primary-button, .secondary-wide-button, .prayer-option, .activity-row, .routine-item, .water-display-wrap, .water-step-button, .routine-review-card, .prayer-card, .tri-state.tri-state-compact button, .ramadan-controls input, .ramadan-controls .small-button {
+  border-radius: 18px;
+}
+input, select, textarea,
+.prayer-card, .routine-review-card, .water-display-wrap, .routine-item.clean, .activity-row.legacy-activity,
+.prayer-option, .emoji-quick-picks button, .routine-item-menu, .ramadan-controls input, .ramadan-controls .small-button,
+.tri-state.tri-state-compact button, .delete-button, .move-button, .session-adjust, .session-icon-button,
+.session-context-button, .session-secondary-control {
+  background: var(--card);
+  color: var(--text);
+  border-color: var(--line);
+}
+textarea::placeholder, input::placeholder { color: var(--muted); }
+
+/* routine + prayer state cards */
+.routine-review-grid { grid-template-columns: 1fr; gap: 14px; }
+.routine-review-card { background: color-mix(in srgb, var(--card) 94%, transparent); border: 1px solid var(--line); }
+.routine-review-card strong { font-size: 22px; }
+.routine-review-card small { min-height: 0; font-size: 14px; }
+.routine-state-legend { display: none; }
+.tri-state.tri-state-compact { margin-top: 16px; }
+.tri-state.tri-state-compact button { min-height: 74px; border: 1px solid var(--line); background: color-mix(in srgb, var(--card) 96%, #f3f5fa 4%); }
+.tri-state.tri-state-compact button.active[data-state="done"],
+.tri-state.tri-state-compact button.active[data-state="missed"],
+.tri-state.tri-state-compact button.active[data-state=""] { background: color-mix(in srgb, var(--card) 98%, #f5f6fb 2%); }
+.tri-state.tri-state-compact button.active[data-state="done"] .status-circle.gradient { box-shadow: 0 10px 20px rgba(93,86,245,.25); }
+.status-circle.neutral { background: color-mix(in srgb, var(--card) 88%, #e5e8ef 12%); border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); }
+.status-circle.missed { background: color-mix(in srgb, var(--card) 94%, #fff 6%); color: #df4050; border: 1px solid rgba(223,64,80,.22); box-shadow: none; }
+.prayer-list { gap: 10px; }
+.prayer-card { background: color-mix(in srgb, var(--card) 97%, transparent); }
+.prayer-card[data-state="Normal"], .prayer-card[data-state="Gemeinschaft"], .prayer-card[data-state="Verspätet"], .prayer-card[data-state="Nachgeholt"], .prayer-card[data-state="Nicht gebetet"] { background: color-mix(in srgb, var(--card) 98%, transparent); }
+.prayer-state-button { background: transparent; border: 0; }
+.prayer-card strong { font-size: 11px; }
+.prayer-card small { font-size: 8px; min-height: 18px; }
+
+/* sleep */
+.sleep-meter { display: none; }
+.sleep-slider-row { grid-template-columns: 28px 1fr 28px; gap: 12px; }
+.sleep-slider-row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#38d4c3 0%, #53d38f 18%, #c6de5f 36%, #dfe5ef 50%, #f7b54a 68%, #f47c5f 84%, #df4050 100%);
+  outline: none;
+}
+.sleep-slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid rgba(107,92,251,.6); box-shadow: 0 4px 12px rgba(0,0,0,.16);
+}
+.sleep-slider-row input[type="range"]::-moz-range-thumb {
+  width: 24px; height: 24px; border-radius: 50%; background: #fff; border: 3px solid rgba(107,92,251,.6); box-shadow: 0 4px 12px rgba(0,0,0,.16);
+}
+.sleep-legend-row small { font-size: 11px; }
+.sleep-meter-pill { min-width: 60px; text-align: center; background: color-mix(in srgb, var(--card) 88%, #eff2f8 12%); }
+
+/* water */
+#waterPlus { min-width: 54px; padding: 0 14px; }
+#waterPlus::before { content: none; }
+.water-display-wrap { background: color-mix(in srgb, var(--card) 96%, transparent); }
+.water-step-button.gradient-action { color: #fff; }
+
+/* activity */
+#addActivity.plus-only { width: 46px; height: 46px; padding: 0; border-radius: 16px; }
+#addActivity.plus-only .gradient-plus { margin: 0; }
+.activity-row.legacy-activity { grid-template-columns: 1fr auto; background: color-mix(in srgb, var(--card) 97%, transparent); }
+.activity-actions.with-arrows { display: grid; grid-template-columns: repeat(3, 34px); gap: 6px; }
+.move-button, .delete-button { width: 34px; height: 34px; border: 1px solid var(--line); background: color-mix(in srgb, var(--card) 95%, transparent); color: var(--muted); border-radius: 12px; font-weight: 800; }
+.delete-button { color: var(--text); }
+.delete-button:hover, .move-button:hover { background: color-mix(in srgb, var(--card) 88%, #eef2f7 12%); }
+
+/* fasting + dream fields */
+.ramadan-box, .notes-card, .streak-card { background: transparent; }
+.ramadan-controls input { min-width: 82px; text-align: center; }
+.ramadan-controls .small-button { padding-inline: 16px; }
+.notes-card textarea, #dreams { background: color-mix(in srgb, var(--card) 98%, transparent); }
+
+/* stats top bar instead of circle */
+.week-summary { grid-template-columns: 1fr; gap: 16px; }
+.score-ring { position: relative; width: 100%; height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--card) 88%, #eef2f7 12%); display: block; overflow: hidden; }
+.score-ring::before { content: ""; position: absolute; inset: 0; width: var(--score); background: linear-gradient(90deg,#3c80fa,#7758ff,#d94fba); border-radius: inherit; }
+.score-ring > div { position: relative; display:flex; justify-content:space-between; align-items:center; padding: 24px 0 0; }
+.score-ring strong { font-size: 24px; }
+.score-ring span { color: var(--muted); font-size: 13px; }
+
+/* routines overview */
+.routine-cards { grid-template-columns: 1fr; gap: 16px; }
+.routine-hero { min-height: 200px; padding: 24px; }
+.routine-hero h2 { font-size: 30px; margin-bottom: 10px; }
+.routine-hero p { max-width: 240px; font-size: 16px; }
+.routine-hero-preview, .routine-hero-meta { display:none; }
+.routine-hero-top.simple { padding-right: 90px; }
+.routine-hero-play { width: 72px; height: 72px; font-size: 28px; right: 24px; bottom: 24px; display:grid; place-items:center; background:#fff; color:#111; }
+.routine-hero.morning::before { width: 150px; height: 150px; left: -20px; bottom: -80px; }
+.routine-hero.evening::before { width: 88px; height: 88px; right: 34px; bottom: 58px; }
+.bottom-add-routine { width: 100%; min-height: 54px; border: 0; background: linear-gradient(135deg,#3c80fa,#7758ff,#d94fba); color:#fff; font-weight: 820; display:flex; justify-content:center; align-items:center; gap:10px; }
+.bottom-add-routine .gradient-plus { background: none; color:#fff; -webkit-text-fill-color: unset; }
+
+/* routine detail */
+.routine-item.clean { grid-template-columns: 24px 58px 1fr 36px; background: color-mix(in srgb, var(--card) 97%, transparent); }
+.routine-emoji-bubble { width: 58px; height: 58px; border-radius: 18px; display:grid; place-items:center; background: color-mix(in srgb, var(--card) 90%, #eff3fb 10%); font-size: 30px; }
+.routine-item-menu { background: color-mix(in srgb, var(--card) 96%, transparent); }
+
+/* session adopts current mode */
+.routine-session-dialog, .routine-session-dialog::backdrop { background: var(--bg); color: var(--text); }
+.routine-session-dialog { background: var(--bg); color: var(--text); }
+.routine-session-dialog .session-icon-button,
+.routine-session-dialog .session-context-button,
+.routine-session-dialog .session-secondary-control { background: color-mix(in srgb, var(--card) 96%, transparent); color: var(--text); border: 1px solid var(--line); }
+.routine-session-dialog .session-routine-name,
+.routine-session-dialog .session-progress,
+.routine-session-dialog .session-next { color: var(--muted); }
+.routine-session-dialog .session-timer-circle { background: color-mix(in srgb, var(--card) 98%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
+.routine-session-dialog .session-adjust { background: color-mix(in srgb, var(--card) 96%, transparent); }
+.routine-session-dialog .session-adjust button { color: var(--muted); }
+.routine-session-dialog .session-context { background: color-mix(in srgb, var(--card) 96%, transparent); color: var(--text); border: 1px solid var(--line); }
+.routine-session-dialog .session-complete-control { background: linear-gradient(135deg,#3c80fa,#7758ff,#d94fba); color:#fff; }
+.routine-session-dialog .session-content h2 { font-size: clamp(28px, 7vw, 56px); }
+
+/* mobile tune */
+@media (max-width: 560px) {
+  .routine-hero h2 { font-size: 26px; }
+  .routine-hero p { font-size: 15px; }
+  .activity-actions.with-arrows { grid-template-columns: repeat(3, 30px); }
+  .move-button, .delete-button { width: 30px; height: 30px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .tri-state.tri-state-compact button,
+  .routine-review-card,
+  .prayer-card,
+  .water-display-wrap,
+  .routine-item.clean,
+  .activity-row.legacy-activity,
+  .prayer-option,
+  .ramadan-controls input,
+  .ramadan-controls .small-button,
+  textarea, input, select {
+    background: color-mix(in srgb, var(--card) 95%, transparent);
+  }
+  .tri-state.tri-state-compact button.active[data-state="done"],
+  .tri-state.tri-state-compact button.active[data-state="missed"],
+  .tri-state.tri-state-compact button.active[data-state=""] { background: color-mix(in srgb, var(--card) 92%, #11131a 8%); }
+  .sleep-slider-row input[type="range"]::-webkit-slider-thumb,
+  .sleep-slider-row input[type="range"]::-moz-range-thumb { background: #11131a; }
+}
+.activity-actions.with-arrows [data-move-activity] { display:block !important; }
+.activity-actions.with-arrows .delete-button { display:block !important; }

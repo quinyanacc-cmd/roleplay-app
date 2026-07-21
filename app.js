@@ -53,13 +53,14 @@ const EMOTIONS = [
 const SLEEP_LABELS = [
   "Sehr erholsam",
   "Erholsam",
-  "Solide",
+  "Okay",
+  "",
   "Unruhig",
   "Kaum Schlaf",
   "Kein Schlaf"
 ];
 
-const SLEEP_COLORS = ["#2ec4b6", "#54c878", "#f2c94c", "#f59e0b", "#ef6b56", "#df4050"];
+const SLEEP_COLORS = ["#38d4c3", "#53d38f", "#c6de5f", "#d9dee9", "#f7b54a", "#f47c5f", "#df4050"];
 
 const ALLAH_NAMES = [
 "الرَّحْمَن / Ar-Rahmān – Der Allerbarmer",
@@ -291,7 +292,7 @@ function emptyReview(date) {
     prayers: Object.fromEntries(PRAYERS.map(prayer => [prayer, ""])),
     ramadanDays: previous?.ramadanDays !== undefined ? Number(previous.ramadanDays) : -29,
     fastingCompleted: false,
-    sleepQualityScore: 0,
+    sleepQualityScore: "",
     dreams: "",
     activities: [],
     streaks: inheritedStreaks(previous),
@@ -302,7 +303,7 @@ function emptyReview(date) {
 }
 
 function legacySleepScore(value) {
-  return ({ "Sehr gut": 1, "Gut": 2, "Neutral": 3, "Schlecht": 4, "Sehr schlecht": 5 })[value] || 0;
+  return ({ "Sehr gut": 1, "Gut": 2, "Neutral": 2, "Schlecht": 4, "Sehr schlecht": 5 })[value] ?? "";
 }
 
 function normalizeReview(raw, date, hasStoredValue) {
@@ -316,7 +317,8 @@ function normalizeReview(raw, date, hasStoredValue) {
   })).filter(item => item.title) : [];
   merged.morningRoutineState = raw?.morningRoutineState || (raw?.morningRoutine ? "done" : "");
   merged.eveningRoutineState = raw?.eveningRoutineState || (raw?.eveningRoutine ? "done" : "");
-  merged.sleepQualityScore = Number(raw?.sleepQualityScore ?? legacySleepScore(raw?.sleepQuality)) || 0;
+  const normalizedSleep = raw?.sleepQualityScore ?? legacySleepScore(raw?.sleepQuality);
+  merged.sleepQualityScore = normalizedSleep === "" || normalizedSleep === undefined || normalizedSleep === null ? "" : Number(normalizedSleep);
   merged.routineProgress = {
     morning: { ...(raw?.routineProgress?.morning || {}) },
     evening: { ...(raw?.routineProgress?.evening || {}) }
@@ -345,7 +347,8 @@ function collectForm() {
     if ($(id)) currentData[id] = $(id).value;
   });
   currentData.ramadanDays = Number(currentData.ramadanDays || 0);
-  currentData.sleepQualityScore = Number($("sleepQuality")?.value || 0);
+  const sleepValue = Number($("sleepQuality")?.value ?? 3);
+  currentData.sleepQualityScore = sleepValue === 3 ? "" : sleepValue;
   currentData.mood = $("mood")?.value || "";
   currentData.role = $("dayRole")?.value || currentData.role;
   currentData.morningRoutine = currentData.morningRoutineState === "done";
@@ -399,7 +402,7 @@ function fillForm() {
   });
   $("dayRole").value = getRole(currentData.role).name;
   applyRolePickerStyle();
-  $("sleepQuality").value = Number(currentData.sleepQualityScore || 0);
+  $("sleepQuality").value = currentData.sleepQualityScore === "" || currentData.sleepQualityScore === undefined || currentData.sleepQualityScore === null ? 3 : Number(currentData.sleepQualityScore);
   $("mood").value = currentData.mood || "";
   updateSleepLabel();
   renderWaterControl();
@@ -560,12 +563,15 @@ function updateRamadanDisplay() {
 }
 
 function updateSleepLabel() {
-  const score = Number($("sleepQuality").value || 0);
-  const label = SLEEP_LABELS[score] || SLEEP_LABELS[0];
-  $("sleepQualityLabel").textContent = label;
-  $("sleepMeterPill").textContent = label;
-  $("sleepMeterFill").style.width = `${((score + 1) / SLEEP_LABELS.length) * 100}%`;
-  $("sleepMeterFill").style.background = SLEEP_COLORS[score] || SLEEP_COLORS[0];
+  const rawValue = Number($("sleepQuality")?.value ?? 3);
+  const label = rawValue === 3 ? "–" : (SLEEP_LABELS[rawValue] || "–");
+  if ($("sleepQualityLabel")) $("sleepQualityLabel").textContent = label;
+  if ($("sleepMeterPill")) $("sleepMeterPill").textContent = label;
+  if ($("sleepMeterFill")) {
+    const progress = rawValue === 3 ? 0 : (rawValue / 6) * 100;
+    $("sleepMeterFill").style.width = `${progress}%`;
+    $("sleepMeterFill").style.background = rawValue === 3 ? '#dfe5ef' : 'linear-gradient(90deg,#38d4c3,#53d38f,#c6de5f,#f7b54a,#f47c5f,#df4050)';
+  }
 }
 
 function renderActivities() {
@@ -579,14 +585,24 @@ function renderActivities() {
           <small>${escapeHTML(role.name)}</small>
         </div>
       </div>
-      <div class="activity-actions compact">
-        <button type="button" class="delete-button emoji-delete" data-delete-activity="${index}" aria-label="Löschen">🗑️</button>
+      <div class="activity-actions compact with-arrows">
+        <button type="button" class="move-button" data-move-activity="up" data-activity-control="${index}" aria-label="Nach oben">↑</button>
+        <button type="button" class="move-button" data-move-activity="down" data-activity-control="${index}" aria-label="Nach unten">↓</button>
+        <button type="button" class="delete-button" data-delete-activity="${index}" aria-label="Löschen">×</button>
       </div>
     </div>`;
   }).join("");
 
   document.querySelectorAll("[data-delete-activity]").forEach(button => button.addEventListener("click", () => {
     currentData.activities.splice(Number(button.dataset.deleteActivity), 1);
+    saveReview(true); renderActivities();
+  }));
+  document.querySelectorAll("[data-activity-control]").forEach(button => button.addEventListener("click", () => {
+    const index = Number(button.dataset.activityControl);
+    const direction = button.dataset.moveActivity;
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= currentData.activities.length) return;
+    [currentData.activities[index], currentData.activities[swapIndex]] = [currentData.activities[swapIndex], currentData.activities[index]];
     saveReview(true); renderActivities();
   }));
   document.querySelectorAll("[data-activity-index]").forEach(row => {
@@ -660,7 +676,7 @@ function reviewCompletion(data) {
   earned += data.morningRoutineState === "done" ? 1 : 0;
   earned += data.eveningRoutineState === "done" ? 1 : 0;
   earned += prayerScore;
-  earned += data.sleepQualityScore !== undefined && data.sleepQualityScore !== null ? 1 : 0;
+  earned += data.sleepQualityScore !== "" && data.sleepQualityScore !== undefined && data.sleepQualityScore !== null ? 1 : 0;
   earned += data.mood ? 1 : 0;
   earned += (data.gratitude1 || data.gratitude2 || data.allahName) ? 1 : 0;
   earned += (data.activities || []).length ? 1 : 0;
@@ -675,7 +691,7 @@ function renderStats() {
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
-  const sleepValues = reviews.map(item => Number(item.data.sleepQualityScore ?? 0));
+  const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
   const averageSleep = sleepValues.length ? (sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length).toFixed(1) : "–";
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
   const averageWater = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0) / 7000;
@@ -760,9 +776,10 @@ function renderStats() {
       <div class="visual-panel">
         <h3>Schlafwoche</h3>
         ${reviews.map(item => {
-          const score = 5 - Number(item.data.sleepQualityScore || 0);
+          const rawSleep = item.data.sleepQualityScore === "" || item.data.sleepQualityScore === undefined ? null : Number(item.data.sleepQualityScore);
+          const score = rawSleep === null ? 0 : Math.max(0, 6 - rawSleep);
           const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${(score/5)*100}%"></i></div><strong>${SLEEP_LABELS[Number(item.data.sleepQualityScore || 0)]}</strong></div>`;
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${rawSleep === null ? 0 : (score/6)*100}%"></i></div><strong>${rawSleep === null ? "–" : SLEEP_LABELS[rawSleep]}</strong></div>`;
         }).join("")}
       </div>
     </div>`;
@@ -914,30 +931,26 @@ function buildWeeklyPdf(reviews) {
 function weeklyPdfRows(reviews) {
   const value = getter => reviews.map(item => getter(item.data));
   const meals = data => [data.breakfast, data.lunch, data.dinner, data.snack].filter(Boolean).join(" / ") || "-";
-  const routineState = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
-  const prayer = (data, name) => prayerStateMeta(data.prayers?.[name] || "").label;
-  const activity = data => (data.activities || []).map(item => `${item.title} (${item.role})`).join(" / ") || "-";
-  const streak = (data, key) => `${Number(data.streaks?.[key]?.days || 0)} T.`;
+  const routineState = state => state === "done" ? "✓" : state === "missed" ? "×" : "○";
+  const prayer = (data, name) => prayerStateMeta(data.prayers?.[name] || "").short;
+  const activity = data => (data.activities || []).map(item => item.title).join(" / ") || "-";
+  const streak = data => STREAKS.map(s => `${s.label}: ${Number(data.streaks?.[s.key]?.days || 0)}`).join(" · ");
   return [
-    { label: "Mahlzeiten", values: value(meals), maxChars: 28, fontSize: 4.9 },
+    { label: "Rolle", values: value(data => data.role || "-"), maxChars: 16 },
+    { label: "Mahlzeiten", values: value(meals), maxChars: 22, fontSize: 4.8 },
     { label: "Wasser", values: value(data => `${(Number(data.water || 0) / 1000).toFixed(1)} L`) },
     { label: "Schritte", values: value(data => Number(data.steps || 0).toLocaleString("de-DE")) },
-    { label: "Schlaf", values: value(data => SLEEP_LABELS[Number(data.sleepQualityScore || 0)] || "-") },
-    { label: "Träume", values: value(data => data.dreams || "-"), maxChars: 26, fontSize: 4.8 },
-    { label: "Morgenroutine", values: value(data => routineState(data.morningRoutineState)) },
-    { label: "Abendroutine", values: value(data => routineState(data.eveningRoutineState)) },
-    ...PRAYERS.map(prayerName => ({ label: prayerName, values: value(data => prayer(data, prayerName)), maxChars: 12 })),
-    { label: "Fasten", values: value(data => data.fastingCompleted ? "Geschafft" : "-") },
+    { label: "Schlaf", values: value(data => data.sleepQualityScore === "" || data.sleepQualityScore === undefined ? "-" : (SLEEP_LABELS[Number(data.sleepQualityScore)] || "-")) },
+    { label: "Morgen", values: value(data => routineState(data.morningRoutineState)) },
+    { label: "Abend", values: value(data => routineState(data.eveningRoutineState)) },
+    { label: "Gebete", values: value(data => PRAYERS.map(name => `${name}: ${prayer(data, name)}`).join(" · ")), maxChars: 32, fontSize: 4.6 },
+    { label: "Fasten", values: value(data => data.fastingCompleted ? `✓ (${Number(data.ramadanDays || 0)})` : `${Number(data.ramadanDays || 0)} offen`) },
     { label: "Emotion", values: value(data => data.mood || "-") },
-    { label: "Dankbarkeit 1", values: value(data => data.gratitude1 || "-"), maxChars: 24, fontSize: 4.8 },
-    { label: "Dankbarkeit 2", values: value(data => data.gratitude2 || "-"), maxChars: 24, fontSize: 4.8 },
-    { label: "99 Namen", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 18, fontSize: 4.8 },
-    { label: "Aktivitäten", values: value(activity), maxChars: 28, fontSize: 4.8 },
-    { label: "Cannabis", values: value(data => streak(data, "cannabisFree")) },
-    { label: "Begierde", values: value(data => streak(data, "compulsionFree")) },
-    { label: "Alkohol", values: value(data => streak(data, "alcoholFree")) },
-    { label: "Rauchfrei", values: value(data => streak(data, "smokeFree")) },
-    { label: "Notiz", values: value(data => data.notes || "-"), maxChars: 28, fontSize: 4.8 }
+    { label: "Dankbarkeit", values: value(data => [data.gratitude1, data.gratitude2].filter(Boolean).join(" / ") || "-"), maxChars: 24, fontSize: 4.8 },
+    { label: "Allah", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 14, fontSize: 4.8 },
+    { label: "Aktivitäten", values: value(activity), maxChars: 24, fontSize: 4.8 },
+    { label: "Streaks", values: value(streak), maxChars: 26, fontSize: 4.6 },
+    { label: "Notiz", values: value(data => data.notes || "-"), maxChars: 24, fontSize: 4.8 }
   ];
 }
 
@@ -1397,16 +1410,14 @@ function saveRoutineFromForm(event) {
 }
 
 function resetAllStreaksOnce() {
-  if (localStorage.getItem("roleplay-streak-reset-v21")) return;
+  if (localStorage.getItem("roleplay-hard-reset-v23")) return;
+  const keysToRemove = [];
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (!key?.startsWith("roleplay-review-")) continue;
-    const raw = safeParse(localStorage.getItem(key));
-    if (!raw) continue;
-    raw.streaks = Object.fromEntries(STREAKS.map(streak => [streak.key, { days: 0, broken: false }]));
-    localStorage.setItem(key, JSON.stringify(raw));
+    if (key?.startsWith("roleplay-review-") || key === "roleplay-routines") keysToRemove.push(key);
   }
-  localStorage.setItem("roleplay-streak-reset-v21", "true");
+  keysToRemove.forEach(key => localStorage.removeItem(key));
+  localStorage.setItem("roleplay-hard-reset-v23", "true");
 }
 
 function bindEvents() {
