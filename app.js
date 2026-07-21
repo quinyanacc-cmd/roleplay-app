@@ -194,21 +194,25 @@ const DEFAULT_ROUTINES = {
     theme: "evening",
     autoNext: false,
     items: [
-      { id: "e-candle", emoji: "🕯️", title: "Kerze", minutes: 1, context: "Den Tag bewusst beenden und zur Ruhe kommen." },
-      { id: "e-clothes", emoji: "👕", title: "Kleidung vorbereiten", minutes: 3, context: "Kleidung für den nächsten Tag bereitlegen." },
-      { id: "e-hygiene", emoji: "🚿", title: "Hygiene", minutes: 8, context: "Duschen oder waschen, Zähne putzen und Körperpflege." },
-      { id: "e-cat", emoji: "🐈", title: "Katze versorgen", minutes: 3, context: "Futter, Wasser und Katzenbereich prüfen." },
-      { id: "e-tidy", emoji: "🧹", title: "Kurz aufräumen", minutes: 10, context: "Nur die wichtigsten Flächen und Dinge für morgen ordnen." },
-      { id: "e-review", emoji: "📓", title: "Tagesreview", minutes: 10, context: "Den Tag wahrheitsgemäß eintragen, ohne dich zu verurteilen." },
-      { id: "e-ibada", emoji: "🤲", title: "Ibāda", minutes: 15, context: "Ishā, Witr, Dhikr oder Qur'an entsprechend deiner Planung." },
-      { id: "e-phone", emoji: "📵", title: "Handy weglegen", minutes: 2, context: "Wecker stellen und das Handy außer Reichweite legen." },
-      { id: "e-bed", emoji: "🛌", title: "Schlaf vorbereiten", minutes: 8, context: "Zimmer abdunkeln, lüften und ruhig werden." },
-      { id: "e-lights", emoji: "🌙", title: "Licht aus", minutes: 1, context: "Den Tag abschließen und schlafen." }
+      { id: "e-candle-1", emoji: "🕯️", title: "Kerze", minutes: 2.5, context: "https://diegebetszeiten.de/koran/al-ihlas\n\nOh Allah, hilf mir, Deiner zu gedenken, Dir zu danken und Dir auf die beste Weise zu dienen" },
+      { id: "e-clothes", emoji: "👕", title: "Kleidung", minutes: 10, context: "Kleidung für den nächsten Tag vollständig bereitlegen." },
+      { id: "e-bathroom", emoji: "🧼", title: "Badezimmer", minutes: 5, context: "Waschen, Zähne putzen und dich ruhig auf die Nacht einstellen." },
+      { id: "e-kitchen", emoji: "🍵", title: "Küche", minutes: 10, context: "Küche kurz ordnen und alles für morgen sauber hinterlassen." },
+      { id: "e-plan", emoji: "🗓️", title: "Tag vorbereiten", minutes: 5, context: "Kurz den morgigen Tag gedanklich vorbereiten." },
+      { id: "e-weekplan", emoji: "📋", title: "Wochenplan", minutes: 10, context: "Plane bewusst und prüfe, was morgen wirklich wichtig ist." },
+      { id: "e-quizlet", emoji: "📰", title: "Quizlet", minutes: 5, context: "Nur eine kurze Wiederholung – Kontinuität zählt." },
+      { id: "e-english", emoji: "🔤", title: "Englisch", minutes: 10, context: "Lerneinheit abschließen oder kurz wiederholen." },
+      { id: "e-arabic", emoji: "📒", title: "Arabisch", minutes: 5, context: "Eine kurze Wiederholung oder ein kleiner Lernschritt reicht aus." },
+      { id: "e-candle-2", emoji: "🕯️", title: "Kerze", minutes: 2.5, context: "https://diegebetszeiten.de/koran/al-baqara/#255\n\nĀyat al-Kursī lesen und den Tag im Gedenken an Allah abschließen." }
     ]
   }
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
+const APP_VERSION = "2.5";
+const STORAGE_NAMESPACE = "roleplay-v25";
+const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
+const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
 const $ = id => document.getElementById(id);
 
 let selectedDate = todayISO();
@@ -243,7 +247,7 @@ function firstOfMonth(iso) {
   return `${iso.slice(0, 7)}-01`;
 }
 
-function storageKey(date) { return `roleplay-review-${date}`; }
+function storageKey(date) { return `${STORAGE_NAMESPACE}-review-${date}`; }
 function safeParse(text, fallback = null) { try { return JSON.parse(text); } catch { return fallback; } }
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 function escapeHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
@@ -447,6 +451,15 @@ function prayerStateIconHTML(value, size = "medium") {
   return `<span class="status-emoji ${size}">${meta.icon}</span>`;
 }
 
+function routineStateButtonHTML(value) {
+  const labels = {
+    "": "Offen",
+    done: "Erledigt",
+    missed: "Nicht erledigt"
+  };
+  return `${routineStateIconHTML(value, "small")}<span class="routine-state-button-label">${labels[value] || "Offen"}</span>`;
+}
+
 function routineStateIconHTML(value, size = "small") {
   if (value === "done") return statusCircle("✓", "gradient", size);
   if (value === "missed") return statusCircle("✕", "missed", size);
@@ -474,7 +487,8 @@ function updateRoutineStateButtons() {
     group.querySelectorAll("button").forEach(button => {
       const isActive = button.dataset.state === state;
       button.classList.toggle("active", isActive);
-      button.innerHTML = routineStateIconHTML(button.dataset.state, "small");
+      button.setAttribute("aria-pressed", String(isActive));
+      button.innerHTML = routineStateButtonHTML(button.dataset.state);
     });
   });
 }
@@ -822,14 +836,14 @@ function exportBackup() {
   saveReview(true);
   const payload = {
     app: "Roleplay",
-    version: "2.2",
+    version: APP_VERSION,
     schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     reviews: getAllReviews(),
     routines
   };
   downloadTextFile(`roleplay-backup-${todayISO()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
-  localStorage.setItem("roleplay-last-backup-at", new Date().toISOString());
+  localStorage.setItem(BACKUP_TIMESTAMP_KEY, new Date().toISOString());
   $("backupStatus").textContent = `Backup erstellt: ${payload.reviews.length} Tagesreviews und beide Routinen.`;
 }
 
@@ -1099,12 +1113,12 @@ function normalizeRoutines(value) {
 }
 
 function loadRoutines() {
-  const stored = safeParse(localStorage.getItem("roleplay-routines-v2"));
+  const stored = safeParse(localStorage.getItem(ROUTINES_STORAGE_KEY));
   return normalizeRoutines(stored);
 }
 
 function saveRoutines() {
-  localStorage.setItem("roleplay-routines-v2", JSON.stringify(routines));
+  localStorage.setItem(ROUTINES_STORAGE_KEY, JSON.stringify(routines));
 }
 
 function orderedRoutineKeys() {
@@ -1410,14 +1424,21 @@ function saveRoutineFromForm(event) {
 }
 
 function resetAllStreaksOnce() {
-  if (localStorage.getItem("roleplay-hard-reset-v23")) return;
+  if (localStorage.getItem("roleplay-hard-reset-v25")) return;
   const keysToRemove = [];
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key?.startsWith("roleplay-review-") || key === "roleplay-routines") keysToRemove.push(key);
+    if (
+      key?.startsWith("roleplay-review-") ||
+      key?.startsWith("roleplay-routines") ||
+      key?.startsWith("roleplay-v24") ||
+      key?.startsWith(STORAGE_NAMESPACE) ||
+      key === "roleplay-last-backup-at" ||
+      key === "roleplay-last-import-at"
+    ) keysToRemove.push(key);
   }
   keysToRemove.forEach(key => localStorage.removeItem(key));
-  localStorage.setItem("roleplay-hard-reset-v23", "true");
+  localStorage.setItem("roleplay-hard-reset-v25", "true");
 }
 
 function bindEvents() {
@@ -1509,7 +1530,7 @@ function init() {
   initOptions();
   routines = loadRoutines();
   bindEvents();
-  const lastBackupAt = localStorage.getItem("roleplay-last-backup-at");
+  const lastBackupAt = localStorage.getItem(BACKUP_TIMESTAMP_KEY);
   if (lastBackupAt) $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lastBackupAt))}`;
   setDate(todayISO());
   switchPage("review");

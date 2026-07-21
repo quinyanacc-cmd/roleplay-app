@@ -1,4 +1,4 @@
-const CACHE = "roleplay-v2-2";
+const CACHE = "roleplay-v2-5";
 const ASSETS = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest", "./logo.jpeg"];
 
 self.addEventListener("install", event => {
