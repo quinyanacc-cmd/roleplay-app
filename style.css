@@ -1500,3 +1500,473 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
     text-shadow: 0 2px 12px rgba(0,0,0,.32);
   }
 }
+
+
+/* --- v2.7 refinements --- */
+.bottom-add-routine {
+  min-height: 62px !important;
+  border-radius: 22px !important;
+  display: grid !important;
+  grid-template-columns: 34px 1fr !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0 22px !important;
+  text-align: center !important;
+  box-shadow: 0 16px 30px rgba(99, 84, 235, .18), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.bottom-add-routine .gradient-plus {
+  font-size: 28px !important;
+  transform: none !important;
+}
+.bottom-add-routine span:last-child {
+  white-space: nowrap;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: -.01em;
+}
+@media (max-width: 430px) {
+  .bottom-add-routine span:last-child { font-size: 15px; }
+}
+
+.routine-hero {
+  position: relative;
+  isolation: isolate;
+  box-shadow: 0 22px 40px rgba(34,41,76,.12), inset 0 1px 0 rgba(255,255,255,.22) !important;
+}
+.routine-hero::after {
+  z-index: 0;
+}
+.routine-hero > * {
+  position: relative;
+  z-index: 2;
+}
+.routine-hero-top.simple {
+  max-width: calc(100% - 112px);
+}
+.routine-hero.morning {
+  background:
+    radial-gradient(circle at 16% 20%, rgba(255,255,255,.22) 0 5px, transparent 6px),
+    radial-gradient(circle at 22% 26%, rgba(255,255,255,.18) 0 7px, transparent 8px),
+    radial-gradient(circle at 30% 18%, rgba(255,255,255,.14) 0 4px, transparent 5px),
+    linear-gradient(140deg, #ff7f98 0%, #ff9a6d 36%, #f9b86d 68%, #f2cf83 100%) !important;
+}
+.routine-hero.morning::before {
+  width: 156px !important;
+  height: 156px !important;
+  left: -24px !important;
+  bottom: -92px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 50% 50%, rgba(255,230,151,.95) 0 52%, rgba(255,225,132,.75) 53% 70%, transparent 71%) !important;
+  box-shadow: 0 0 40px rgba(255,215,129,.28);
+}
+.routine-hero.morning::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 26% 28%, rgba(255,255,255,.65) 0 22px, transparent 23px),
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,.60) 0 18px, transparent 19px),
+    radial-gradient(circle at 38% 31%, rgba(255,255,255,.58) 0 21px, transparent 22px),
+    radial-gradient(circle at 47% 70%, rgba(255,255,255,.18) 0 26px, transparent 27px),
+    radial-gradient(circle at 54% 76%, rgba(255,255,255,.15) 0 18px, transparent 19px),
+    linear-gradient(125deg, transparent 0 48%, rgba(255,255,255,.12) 49% 53%, transparent 54% 100%);
+  opacity: .42;
+}
+.routine-hero.morning .routine-thread {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(255,255,255,.22) 0 4px, transparent 5px),
+    radial-gradient(circle at 74% 28%, rgba(255,255,255,.18) 0 3px, transparent 4px),
+    linear-gradient(140deg, transparent 0 45%, rgba(255,255,255,.10) 46% 48%, transparent 49% 100%);
+  opacity: .85;
+}
+.routine-hero.evening {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(255,255,255,.90) 0 1.4px, transparent 1.9px),
+    radial-gradient(circle at 19% 27%, rgba(255,255,255,.76) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 28% 14%, rgba(255,255,255,.80) 0 1.4px, transparent 1.9px),
+    radial-gradient(circle at 34% 23%, rgba(255,255,255,.56) 0 1.6px, transparent 2.1px),
+    radial-gradient(circle at 72% 16%, rgba(255,255,255,.70) 0 1.5px, transparent 2px),
+    linear-gradient(145deg, #7367ef 0%, #4f43c7 50%, #24367f 100%) !important;
+}
+.routine-hero.evening::before {
+  width: 94px !important;
+  height: 94px !important;
+  right: 42px !important;
+  bottom: 60px !important;
+  left: auto !important;
+  border-radius: 50% !important;
+  background: rgba(247,241,216,.96) !important;
+  box-shadow: 28px 11px 0 0 rgba(52,60,151,.98), 0 0 30px rgba(245,236,204,.14);
+}
+.routine-hero.evening::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  bottom: -60px;
+  width: 236px;
+  height: 208px;
+  border-radius: 58px;
+  transform: rotate(28deg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)),
+    radial-gradient(circle at 28% 65%, rgba(255,255,255,.08) 0 24px, transparent 25px);
+  opacity: .9;
+}
+.routine-hero.evening .routine-thread {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 76% 28%, rgba(255,255,255,.28) 0 1.7px, transparent 2.2px),
+    radial-gradient(circle at 82% 22%, rgba(255,255,255,.22) 0 1.7px, transparent 2.2px),
+    linear-gradient(125deg, transparent 0 48%, rgba(255,255,255,.12) 49% 53%, transparent 54% 100%);
+  opacity: .86;
+}
+.routine-hero h2,
+.routine-hero p {
+  text-shadow: 0 1px 1px rgba(0,0,0,.06);
+}
+
+.tri-state.tri-state-compact button {
+  min-height: 88px !important;
+  border-width: 1.5px !important;
+  transition: transform .16s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+}
+.tri-state.tri-state-compact button.active {
+  transform: translateY(-1px);
+}
+.tri-state.tri-state-compact button.active[data-state=""] {
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(248,249,253,.96)) !important;
+  border-color: rgba(145,155,173,.42) !important;
+  box-shadow: 0 12px 22px rgba(120,128,146,.10) !important;
+}
+.tri-state.tri-state-compact button.active[data-state="done"] {
+  background: linear-gradient(180deg, rgba(114,98,255,.08), rgba(230,126,211,.10)) !important;
+  border-color: rgba(122,103,255,.42) !important;
+  box-shadow: 0 14px 24px rgba(114,98,255,.18) !important;
+}
+.tri-state.tri-state-compact button.active[data-state="missed"] {
+  background: linear-gradient(180deg, rgba(255,113,137,.10), rgba(255,230,233,.75)) !important;
+  border-color: rgba(240,99,119,.44) !important;
+  box-shadow: 0 14px 24px rgba(224,86,107,.16) !important;
+}
+.tri-state.tri-state-compact button.active[data-state="done"] .routine-state-button-label {
+  color: #4f46d9 !important;
+}
+.tri-state.tri-state-compact button.active[data-state="missed"] .routine-state-button-label {
+  color: #d94b63 !important;
+}
+
+.prayer-card {
+  border-width: 1.5px !important;
+  box-shadow: 0 8px 18px rgba(17,24,36,.04);
+}
+.prayer-card[data-state="Normal"] {
+  border-color: rgba(98,83,255,.42) !important;
+  background: linear-gradient(180deg, rgba(113,99,255,.08), rgba(223,129,222,.09)) !important;
+  box-shadow: 0 10px 20px rgba(113,99,255,.12);
+}
+.prayer-card[data-state="Gemeinschaft"] {
+  border-color: rgba(41,187,151,.46) !important;
+  background: linear-gradient(180deg, rgba(55,206,167,.12), rgba(220,255,245,.82)) !important;
+  box-shadow: 0 10px 20px rgba(40,174,140,.10);
+}
+.prayer-card[data-state="Verspätet"], .prayer-card[data-state="Nachgeholt"] {
+  border-color: rgba(236,170,54,.48) !important;
+  background: linear-gradient(180deg, rgba(248,194,90,.14), rgba(255,245,214,.88)) !important;
+  box-shadow: 0 10px 20px rgba(232,173,60,.10);
+}
+.prayer-card[data-state="Nicht gebetet"] {
+  border-color: rgba(224,92,113,.48) !important;
+  background: linear-gradient(180deg, rgba(255,122,144,.12), rgba(255,236,239,.88)) !important;
+  box-shadow: 0 10px 20px rgba(224,92,113,.10);
+}
+.prayer-card[data-state=""] {
+  background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(246,248,251,.98)) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .bottom-add-routine {
+    box-shadow: 0 18px 34px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  .tri-state.tri-state-compact button.active[data-state=""] {
+    background: linear-gradient(180deg, rgba(46,52,68,.96), rgba(28,34,46,.98)) !important;
+    border-color: rgba(160,171,191,.22) !important;
+  }
+  .tri-state.tri-state-compact button.active[data-state="done"] {
+    background: linear-gradient(180deg, rgba(83,70,183,.30), rgba(129,82,198,.20)) !important;
+    border-color: rgba(142,123,255,.44) !important;
+  }
+  .tri-state.tri-state-compact button.active[data-state="missed"] {
+    background: linear-gradient(180deg, rgba(128,44,62,.32), rgba(88,32,45,.20)) !important;
+    border-color: rgba(228,105,127,.42) !important;
+  }
+  .prayer-card[data-state="Normal"] {
+    background: linear-gradient(180deg, rgba(95,78,218,.28), rgba(66,48,126,.18)) !important;
+  }
+  .prayer-card[data-state="Gemeinschaft"] {
+    background: linear-gradient(180deg, rgba(33,122,102,.34), rgba(22,69,59,.22)) !important;
+  }
+  .prayer-card[data-state="Verspätet"], .prayer-card[data-state="Nachgeholt"] {
+    background: linear-gradient(180deg, rgba(142,100,29,.34), rgba(79,57,21,.20)) !important;
+  }
+  .prayer-card[data-state="Nicht gebetet"] {
+    background: linear-gradient(180deg, rgba(121,43,59,.34), rgba(71,28,37,.22)) !important;
+  }
+  .routine-hero.morning {
+    background:
+      radial-gradient(circle at 16% 20%, rgba(255,255,255,.10) 0 5px, transparent 6px),
+      radial-gradient(circle at 22% 26%, rgba(255,255,255,.10) 0 7px, transparent 8px),
+      linear-gradient(140deg, #d86f8b 0%, #c6755e 36%, #9e7544 68%, #967f52 100%) !important;
+  }
+  .routine-hero.evening {
+    background:
+      radial-gradient(circle at 14% 18%, rgba(255,255,255,.72) 0 1.4px, transparent 1.9px),
+      radial-gradient(circle at 19% 27%, rgba(255,255,255,.58) 0 1.5px, transparent 2px),
+      linear-gradient(145deg, #5c52cc 0%, #3d328f 50%, #182245 100%) !important;
+  }
+}
+
+/* --- v2.7 routine art, state emphasis and layout polish --- */
+#addRoutine.bottom-add-routine {
+  width: 100%;
+  min-height: 58px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 20px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  background: linear-gradient(135deg,#4d87ff 0%,#805dff 52%,#d853c2 100%);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 820;
+  letter-spacing: -.01em;
+  box-shadow: 0 14px 28px rgba(100,85,238,.23);
+  white-space: nowrap;
+}
+#addRoutine.bottom-add-routine .gradient-plus {
+  width: auto !important;
+  flex: 0 0 auto;
+  display: inline-grid !important;
+  place-items: center;
+  transform: none !important;
+  font-size: 25px;
+  line-height: 1;
+  color: #fff;
+  -webkit-text-fill-color: #fff;
+}
+#addRoutine.bottom-add-routine span:last-child {
+  display: inline-block;
+  width: auto;
+  white-space: nowrap;
+}
+
+/* Stronger, instantly readable routine states */
+.tri-state.tri-state-compact button {
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.tri-state.tri-state-compact button.active[data-state=""] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--card) 86%, #e8ebf2 14%), color-mix(in srgb, var(--card) 97%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--muted) 38%, var(--line)) !important;
+  box-shadow: 0 10px 22px rgba(45,51,65,.10) !important;
+  transform: translateY(-1px);
+}
+.tri-state.tri-state-compact button.active[data-state="done"] {
+  background: linear-gradient(145deg, rgba(91,103,255,.16), rgba(204,75,211,.14)) !important;
+  border-color: rgba(130,83,255,.58) !important;
+  box-shadow: 0 12px 28px rgba(112,79,242,.22) !important;
+  transform: translateY(-1px);
+}
+.tri-state.tri-state-compact button.active[data-state="missed"] {
+  background: linear-gradient(180deg, rgba(255,92,113,.16), rgba(223,64,80,.08)) !important;
+  border-color: rgba(223,64,80,.62) !important;
+  box-shadow: 0 12px 26px rgba(223,64,80,.17) !important;
+  transform: translateY(-1px);
+}
+.tri-state.tri-state-compact button.active[data-state="done"] .routine-state-button-label {
+  color: #6d4ee8 !important;
+}
+.tri-state.tri-state-compact button.active[data-state="missed"] .routine-state-button-label {
+  color: #d9384d !important;
+}
+
+/* Stronger prayer states */
+.prayer-card {
+  transition: transform .16s ease, border-color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.prayer-card[data-state="Normal"] {
+  background: linear-gradient(180deg, rgba(116,86,255,.16), rgba(193,73,210,.09)) !important;
+  border-color: rgba(123,84,255,.60) !important;
+  box-shadow: 0 10px 24px rgba(111,81,232,.16);
+  transform: translateY(-1px);
+}
+.prayer-card[data-state="Gemeinschaft"] {
+  background: linear-gradient(180deg, rgba(46,196,182,.18), rgba(46,196,182,.08)) !important;
+  border-color: rgba(26,167,153,.62) !important;
+  box-shadow: 0 10px 24px rgba(28,164,151,.14);
+  transform: translateY(-1px);
+}
+.prayer-card[data-state="Verspätet"],
+.prayer-card[data-state="Nachgeholt"] {
+  background: linear-gradient(180deg, rgba(242,177,55,.18), rgba(242,177,55,.08)) !important;
+  border-color: rgba(228,157,26,.68) !important;
+  box-shadow: 0 10px 24px rgba(220,151,29,.14);
+  transform: translateY(-1px);
+}
+.prayer-card[data-state="Nicht gebetet"] {
+  background: linear-gradient(180deg, rgba(255,88,108,.17), rgba(223,64,80,.08)) !important;
+  border-color: rgba(223,64,80,.66) !important;
+  box-shadow: 0 10px 24px rgba(223,64,80,.15);
+  transform: translateY(-1px);
+}
+.prayer-card[data-state="Normal"] small { color: #6548d9 !important; font-weight: 760; }
+.prayer-card[data-state="Gemeinschaft"] small { color: #168e82 !important; font-weight: 760; }
+.prayer-card[data-state="Verspätet"] small,
+.prayer-card[data-state="Nachgeholt"] small { color: #b87505 !important; font-weight: 760; }
+.prayer-card[data-state="Nicht gebetet"] small { color: #d93a4f !important; font-weight: 760; }
+
+/* More deliberate routine artwork */
+.routine-hero {
+  min-height: 238px;
+  border-radius: 30px;
+  box-shadow: 0 22px 44px rgba(34,40,67,.18);
+}
+.routine-hero .routine-thread {
+  opacity: 1;
+  pointer-events: none;
+}
+.routine-hero.morning {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.08), transparent 42%),
+    linear-gradient(145deg,#ff718b 0%,#ff9470 43%,#f4bd6b 100%) !important;
+}
+.routine-hero.morning::before {
+  content: "";
+  position: absolute;
+  left: -26px;
+  bottom: -94px;
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe59d 0 38%, rgba(255,220,125,.88) 39% 58%, rgba(255,224,146,.28) 59% 70%, transparent 71%);
+  box-shadow: 0 0 42px rgba(255,226,137,.38);
+}
+.routine-hero.morning .routine-thread {
+  background:
+    radial-gradient(ellipse at 20% 31%, rgba(255,255,255,.40) 0 8%, transparent 8.5%),
+    radial-gradient(ellipse at 30% 27%, rgba(255,255,255,.36) 0 10%, transparent 10.5%),
+    radial-gradient(ellipse at 40% 32%, rgba(255,255,255,.34) 0 8%, transparent 8.5%),
+    radial-gradient(circle at 72% 19%, rgba(255,255,255,.55) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 27%, rgba(255,255,255,.35) 0 3px, transparent 4px),
+    linear-gradient(122deg, transparent 0 53%, rgba(255,255,255,.10) 54% 66%, transparent 67% 100%);
+}
+.routine-hero.morning::after {
+  content: "";
+  position: absolute;
+  right: -62px;
+  bottom: -84px;
+  width: 250px;
+  height: 210px;
+  border-radius: 56px;
+  transform: rotate(26deg);
+  background: linear-gradient(135deg, rgba(255,255,255,.11), rgba(255,255,255,.02));
+}
+.routine-hero.evening {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.05), transparent 40%),
+    linear-gradient(145deg,#7656e5 0%,#4e40b7 52%,#23377d 100%) !important;
+}
+.routine-hero.evening::before {
+  content: "";
+  position: absolute;
+  right: 46px;
+  bottom: 54px;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 36%, #fff7ce 0 54%, #efe7c7 55% 100%);
+  box-shadow: 0 0 34px rgba(255,245,194,.20), 28px 8px 0 3px rgba(50,53,145,.96);
+}
+.routine-hero.evening .routine-thread {
+  background:
+    radial-gradient(circle at 15% 17%, rgba(255,255,255,.92) 0 2px, transparent 3px),
+    radial-gradient(circle at 22% 27%, rgba(255,255,255,.72) 0 2px, transparent 3px),
+    radial-gradient(circle at 31% 15%, rgba(255,255,255,.82) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 44% 25%, rgba(255,255,255,.60) 0 2px, transparent 3px),
+    radial-gradient(circle at 67% 18%, rgba(255,255,255,.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 26%, rgba(255,255,255,.66) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 14%, rgba(255,255,255,.50) 0 1.5px, transparent 2.5px),
+    linear-gradient(125deg, transparent 0 54%, rgba(255,255,255,.09) 55% 68%, transparent 69% 100%);
+}
+.routine-hero.evening::after {
+  content: "";
+  position: absolute;
+  right: -56px;
+  bottom: -82px;
+  width: 250px;
+  height: 210px;
+  border-radius: 56px;
+  transform: rotate(27deg);
+  background: linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.015));
+}
+.routine-hero-play {
+  width: 78px;
+  height: 78px;
+  right: 24px;
+  bottom: 24px;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 14px 30px rgba(20,24,44,.20);
+}
+.routine-hero-play::before {
+  inset: -8px;
+  border-color: rgba(255,255,255,.42);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tri-state.tri-state-compact button.active[data-state="done"] {
+    background: linear-gradient(145deg, rgba(114,93,255,.24), rgba(193,73,210,.16)) !important;
+  }
+  .tri-state.tri-state-compact button.active[data-state="missed"] {
+    background: linear-gradient(180deg, rgba(255,88,108,.20), rgba(223,64,80,.11)) !important;
+  }
+  .prayer-card[data-state="Normal"] {
+    background: linear-gradient(180deg, rgba(116,86,255,.22), rgba(193,73,210,.12)) !important;
+  }
+  .prayer-card[data-state="Gemeinschaft"] {
+    background: linear-gradient(180deg, rgba(46,196,182,.22), rgba(46,196,182,.10)) !important;
+  }
+  .prayer-card[data-state="Verspätet"],
+  .prayer-card[data-state="Nachgeholt"] {
+    background: linear-gradient(180deg, rgba(242,177,55,.22), rgba(242,177,55,.10)) !important;
+  }
+  .prayer-card[data-state="Nicht gebetet"] {
+    background: linear-gradient(180deg, rgba(255,88,108,.22), rgba(223,64,80,.11)) !important;
+  }
+  .routine-hero.morning {
+    background: linear-gradient(145deg,#db667d 0%,#c97561 45%,#9f7345 100%) !important;
+  }
+  .routine-hero.evening {
+    background: linear-gradient(145deg,#5944c4 0%,#362f89 52%,#18244f 100%) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  #addRoutine.bottom-add-routine {
+    min-height: 56px;
+    font-size: 16px;
+    padding-inline: 18px;
+  }
+  .routine-hero {
+    min-height: 226px;
+  }
+  .routine-hero h2 {
+    font-size: 27px;
+  }
+  .routine-hero p {
+    font-size: 15px;
+    max-width: 225px;
+  }
+}

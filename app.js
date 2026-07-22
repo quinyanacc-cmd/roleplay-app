@@ -209,7 +209,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "2.5";
+const APP_VERSION = "2.7";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -259,7 +259,7 @@ function getRole(name) {
 
 function defaultRoleForDate(date) {
   const weekday = new Date(`${date}T12:00:00`).getDay();
-  const names = ["Familienmensch", "Yannick", "Vitalist", "Unternehmer", "Absolvent", "Muslim", "Wirt"];
+  const names = ["Familienmensch", "Yannick", "Vitalist", "Absolvent", "Unternehmer", "Muslim", "Wirt"];
   return names[weekday];
 }
 
@@ -701,41 +701,51 @@ function reviewCompletion(data) {
 function renderStats() {
   if (!currentData) return;
   const dates = weekDates();
-  const reviews = dates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
+  const selectedIndex = Math.max(0, dates.indexOf(selectedDate));
+  const visibleDates = dates.slice(0, selectedIndex + 1);
+  const reviews = visibleDates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
+  const elapsedDays = Math.max(1, reviews.length);
+  const prayerTarget = elapsedDays * 5;
+  const routineTarget = elapsedDays * 2;
+
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
   const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
-  const averageSleep = sleepValues.length ? (sleepValues.reduce((a, b) => a + b, 0) / sleepValues.length).toFixed(1) : "–";
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
-  const averageWater = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0) / 7000;
+  const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
+  const averageWater = totalWaterMl / elapsedDays / 1000;
   const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
-  const weeklyScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / 7);
+  const weeklyScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
   const storedDays = reviews.filter(item => item.stored).length;
   const bestDay = [...reviews].sort((a, b) => reviewCompletion(b.data) - reviewCompletion(a.data))[0];
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
   const topMood = Object.entries(moodCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || "–";
   const bestDayName = bestDay ? new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${bestDay.date}T12:00:00`)) : "–";
+  const sleepLogged = sleepValues.length;
+  const lastSleepValue = sleepValues.length ? sleepValues[sleepValues.length - 1] : null;
+  const lastSleepLabel = lastSleepValue === null ? "–" : (SLEEP_LABELS[lastSleepValue] || "–");
+  const activityCount = reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0);
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
     <div class="week-summary">
       <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Wochenfokus</span></div></div>
       <div class="week-summary-copy">
-        <strong>${storedDays}/7 Tage reflektiert</strong>
-        <p>${weeklyScore >= 75 ? "Starke Woche: viel Struktur, gute Routinen und klare Gebetsdisziplin." : weeklyScore >= 45 ? "Gute Basis. Unten siehst du farbige Wochenverläufe für Gebet, Routinen und Versorgung." : "Die Woche ist ein Spiegel, kein Urteil. Nutze die Übersicht als Orientierung für morgen."}</p>
+        <strong>${storedDays}/${elapsedDays} Tage reflektiert</strong>
+        <p>${weeklyScore >= 75 ? "Starker Verlauf bis heute: viel Struktur, gute Routinen und klare Gebetsdisziplin." : weeklyScore >= 45 ? "Gute Basis bis heute. Unten siehst du die Entwicklung vom Wochenstart bis zum ausgewählten Tag." : "Diese Übersicht zeigt nur den bisherigen Wochenverlauf bis zum ausgewählten Tag – als Orientierung, nicht als Urteil."}</p>
       </div>
     </div>
     <div class="stats-metrics colorful-metrics">
-      ${statTile(`${prayerCount}/35`, "Gebete")}
+      ${statTile(`${prayerCount}/${prayerTarget}`, "Gebete")}
       ${statTile(String(mosqueCount), "Moschee")}
-      ${statTile(`${routineDone}/14`, "Routinen")}
-      ${statTile(`${averageSleep}/5`, "Ø Schlaf")}
+      ${statTile(`${routineDone}/${routineTarget}`, "Routinen")}
+      ${statTile(`${sleepLogged}/${elapsedDays}`, "Schlaf erfasst")}
       ${statTile(totalSteps.toLocaleString("de-DE"), "Schritte")}
-      ${statTile(`${averageWater.toFixed(1)} L`, "Wasser / Tag")}
+      ${statTile(`${averageWater.toFixed(1).replace('.', ',')} L`, "Wasser / Tag")}
       ${statTile(String(fastDays), "Fastentage")}
-      ${statTile(String(reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0)), "Aktivitäten")}
+      ${statTile(String(activityCount), "Aktivitäten")}
     </div>
     <div class="insight-grid">
       <div class="insight-card role-highlight" style="--role-soft:rgba(74,140,255,.12);--role-text:#245ca5;">
@@ -746,12 +756,12 @@ function renderStats() {
       <div class="insight-card">
         <span class="insight-label">Häufigste Emotion</span>
         <strong>${escapeHTML(topMood)}</strong>
-        <small>Achtsamkeits-Tendenz dieser Woche</small>
+        <small>Achtsamkeits-Tendenz bis heute</small>
       </div>
       <div class="insight-card">
-        <span class="insight-label">Wochentrend</span>
-        <strong>${routineDone >= 8 ? "Stabil" : routineDone >= 4 ? "Im Aufbau" : "Neu sortieren"}</strong>
-        <small>${routineDone}/14 Routinen · ${fastDays} Fastentage</small>
+        <span class="insight-label">Schlaf heute / zuletzt</span>
+        <strong>${escapeHTML(lastSleepLabel)}</strong>
+        <small>${sleepLogged}/${elapsedDays} Tage dokumentiert</small>
       </div>
     </div>
     <div class="day-performance">
@@ -784,7 +794,7 @@ function renderStats() {
         ${reviews.map(item => {
           const liters = Number(item.data.water || 0) / 1000;
           const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${Math.min(100, (liters / 3) * 100)}%"></i></div><strong>${liters.toFixed(1)}L</strong></div>`;
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${Math.min(100, (liters / 3) * 100)}%"></i></div><strong>${liters.toFixed(1).replace('.', ',')}L</strong></div>`;
         }).join("")}
       </div>
       <div class="visual-panel">
@@ -808,8 +818,8 @@ function getAllReviews() {
   const reviews = [];
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (!key?.startsWith("roleplay-review-")) continue;
-    const date = key.replace("roleplay-review-", "");
+    if (!key?.startsWith(`${STORAGE_NAMESPACE}-review-`)) continue;
+    const date = key.replace(`${STORAGE_NAMESPACE}-review-`, "");
     const raw = safeParse(localStorage.getItem(key));
     if (raw) reviews.push({ date, data: normalizeReview(raw, date, true) });
   }
