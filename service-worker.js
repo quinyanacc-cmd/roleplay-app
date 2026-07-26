@@ -1,5 +1,14 @@
-const CACHE = "roleplay-v2-7";
-const ASSETS = ["./", "./index.html", "./style.css", "./app.js", "./manifest.webmanifest", "./logo.jpeg"];
+const CACHE = "roleplay-v2-9";
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./app.js",
+  "./manifest.webmanifest",
+  "./logo.jpeg",
+  "./morning-header.png",
+  "./evening-header.png"
+];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -16,4 +25,13 @@ self.addEventListener("fetch", event => {
     caches.open(CACHE).then(cache => cache.put(event.request, copy));
     return response;
   }).catch(() => caches.match(event.request)));
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: "window", includeUncontrolled: true }).then(openClients => {
+    const existing = openClients[0];
+    if (existing) return existing.focus();
+    return clients.openWindow("./index.html");
+  }));
 });

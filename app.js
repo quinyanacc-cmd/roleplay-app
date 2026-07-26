@@ -209,10 +209,13 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "2.8";
+const APP_VERSION = "2.9";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
+const ROUTINE_SESSION_STORAGE_KEY = `${STORAGE_NAMESPACE}-active-routine-session`;
+const STREAK_CREDENTIAL_KEY = `${STORAGE_NAMESPACE}-streak-biometric-credential`;
+const ROUTINE_STATE_ORDER = ["", "done", "missed"];
 const $ = id => document.getElementById(id);
 
 let selectedDate = todayISO();
@@ -225,6 +228,7 @@ let activityDragIndex = null;
 let routineDragIndex = null;
 let routineSession = null;
 let autoSaveTimer = null;
+let streaksUnlocked = false;
 
 function todayISO() {
   const d = new Date();
@@ -251,6 +255,36 @@ function storageKey(date) { return `${STORAGE_NAMESPACE}-review-${date}`; }
 function safeParse(text, fallback = null) { try { return JSON.parse(text); } catch { return fallback; } }
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 function escapeHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+
+function linkifyText(value = "") {
+  const escaped = escapeHTML(value);
+  return escaped
+    .replace(/(https?:\/\/[^\s<]+)/gi, url => {
+      const clean = url.replace(/[),.;!?]+$/, "");
+      const suffix = url.slice(clean.length);
+      return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${suffix}`;
+    })
+    .replace(/\n/g, "<br>");
+}
+
+function bytesToBase64Url(bytes) {
+  let binary = "";
+  new Uint8Array(bytes).forEach(byte => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlToBytes(value) {
+  const padLength = (4 - (value.length % 4)) % 4;
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(padLength);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, char => char.charCodeAt(0));
+}
+
+function randomBytes(length = 32) {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
 
 function getRole(name) {
   const normalized = name === "Ich-Person" ? "Yannick" : name;
@@ -482,15 +516,26 @@ function renderWaterControl() {
 }
 
 function updateRoutineStateButtons() {
-  document.querySelectorAll("[data-routine-state]").forEach(group => {
-    const state = group.dataset.routineState === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
-    group.querySelectorAll("button").forEach(button => {
-      const isActive = button.dataset.state === state;
-      button.classList.toggle("active", isActive);
-      button.setAttribute("aria-pressed", String(isActive));
-      button.innerHTML = routineStateButtonHTML(button.dataset.state);
-    });
+  document.querySelectorAll("[data-routine-cycle]").forEach(button => {
+    const key = button.dataset.routineCycle;
+    const state = key === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
+    const label = state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
+    button.dataset.state = state;
+    button.classList.toggle("is-done", state === "done");
+    button.classList.toggle("is-missed", state === "missed");
+    button.innerHTML = `${routineStateIconHTML(state, "small")}<span>${label}</span>`;
+    button.setAttribute("aria-label", `${key === "morning" ? "Morgenroutine" : "Abendroutine"}: ${label}. Antippen zum Ändern.`);
   });
+}
+
+function cycleRoutineState(key) {
+  const current = key === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
+  const index = ROUTINE_STATE_ORDER.indexOf(current);
+  const next = ROUTINE_STATE_ORDER[(index + 1) % ROUTINE_STATE_ORDER.length];
+  if (key === "morning") currentData.morningRoutineState = next;
+  else currentData.eveningRoutineState = next;
+  updateRoutineStateButtons();
+  saveReview(true);
 }
 
 function renderPrayers() {
@@ -641,12 +686,15 @@ function moveArrayItem(array, index, delta) {
 }
 
 function renderStreaks() {
-  $("streakList").innerHTML = STREAKS.map(streak => {
+  const list = $("streakList");
+  if (!list || !currentData) return;
+  list.innerHTML = STREAKS.map(streak => {
     const state = currentData.streaks?.[streak.key] || { days: 0, broken: false };
-    return `<div class="streak-card ${state.broken ? "streak-broken" : ""}">
+    const isActive = !state.broken && Number(state.days || 0) > 0;
+    return `<div class="streak-card ${state.broken ? "streak-broken" : ""} ${isActive ? "streak-active" : ""}">
       <div class="streak-card-head">
         <strong>${escapeHTML(streak.label)}</strong>
-        <span class="streak-status">${state.broken ? "Unterbrochen" : "Aktiv"}</span>
+        <span class="streak-status">${state.broken ? "Unterbrochen" : isActive ? "Aktiv" : "Offen"}</span>
       </div>
       <div class="streak-input-wrap">
         <input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${streak.key}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage">
@@ -698,79 +746,107 @@ function reviewCompletion(data) {
   return Math.round((earned / 16) * 100);
 }
 
+function buildWeeklyTrendChart(labels, currentValues, previousValues) {
+  const width = 640;
+  const height = 230;
+  const padX = 46;
+  const padTop = 20;
+  const padBottom = 38;
+  const chartW = width - padX * 2;
+  const chartH = height - padTop - padBottom;
+  const xFor = index => labels.length <= 1 ? padX + chartW / 2 : padX + (index / (labels.length - 1)) * chartW;
+  const yFor = value => padTop + chartH - (clamp(Number(value || 0), 0, 100) / 100) * chartH;
+  const pathFor = values => {
+    let path = "";
+    let drawing = false;
+    values.forEach((value, index) => {
+      if (value === null || value === undefined) { drawing = false; return; }
+      path += `${drawing ? "L" : "M"}${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)} `;
+      drawing = true;
+    });
+    return path.trim();
+  };
+  const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass}" cx="${xFor(index)}" cy="${yFor(value)}" r="5"></circle>`).join("");
+  const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-10}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
+  const xLabels = labels.map((label, index) => `<text x="${xFor(index)}" y="${height-10}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
+  return `<div class="trend-panel">
+    <div class="trend-panel-head"><div><h3>Erfüllungsquote</h3><small>Aktuelle Woche im Vergleich zur Vorwoche</small></div><div class="trend-legend"><span class="current">Diese Woche</span><span class="previous">Vorwoche</span></div></div>
+    <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf der Erfüllungsquote">
+      <g class="trend-grid">${grid}</g>
+      <path class="trend-line previous" d="${pathFor(previousValues)}"></path>
+      <path class="trend-line current" d="${pathFor(currentValues)}"></path>
+      <g class="trend-dots">${dots(previousValues, "previous")}${dots(currentValues, "current")}</g>
+      <g class="trend-x-labels">${xLabels}</g>
+    </svg></div>
+  </div>`;
+}
+
 function renderStats() {
   if (!currentData) return;
   const dates = weekDates();
   const selectedIndex = Math.max(0, dates.indexOf(selectedDate));
   const visibleDates = dates.slice(0, selectedIndex + 1);
   const reviews = visibleDates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
+  const previousReviews = visibleDates.map(date => {
+    const previousDate = addDays(date, -7);
+    return { date: previousDate, data: loadReview(previousDate), stored: Boolean(localStorage.getItem(storageKey(previousDate))) };
+  });
   const elapsedDays = Math.max(1, reviews.length);
   const prayerTarget = elapsedDays * 5;
   const routineTarget = elapsedDays * 2;
-
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
   const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
   const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
-  const averageWater = totalWaterMl / elapsedDays / 1000;
+  const activityCount = reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0);
   const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
   const weeklyScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
   const storedDays = reviews.filter(item => item.stored).length;
-  const bestDay = [...reviews].sort((a, b) => reviewCompletion(b.data) - reviewCompletion(a.data))[0];
+  const routineRate = Math.round((routineDone / routineTarget) * 100);
+  const prayerRate = Math.round((prayerCount / prayerTarget) * 100);
+  const averageRoutines = routineDone / elapsedDays;
+  const averageSteps = Math.round(totalSteps / elapsedDays);
+  const averageWater = totalWaterMl / elapsedDays / 1000;
+  const averageActivities = activityCount / elapsedDays;
+  const previousHasData = previousReviews.some(item => item.stored);
+  const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays) : null;
+  const scoreDelta = previousScore === null ? null : weeklyScore - previousScore;
+  const currentScores = reviews.map(item => reviewCompletion(item.data));
+  const previousScores = previousReviews.map(item => item.stored ? reviewCompletion(item.data) : null);
+  const labels = reviews.map(item => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", ""));
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
   const topMood = Object.entries(moodCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || "–";
-  const bestDayName = bestDay ? new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${bestDay.date}T12:00:00`)) : "–";
-  const sleepLogged = sleepValues.length;
   const lastSleepValue = sleepValues.length ? sleepValues[sleepValues.length - 1] : null;
   const lastSleepLabel = lastSleepValue === null ? "–" : (SLEEP_LABELS[lastSleepValue] || "–");
-  const activityCount = reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0);
+  const deltaText = scoreDelta === null ? "Keine Vergleichsdaten" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta} Prozentpunkte`;
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
     <div class="week-summary">
-      <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Wochenfokus</span></div></div>
+      <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Erfüllung</span></div></div>
       <div class="week-summary-copy">
         <strong>${storedDays}/${elapsedDays} Tage reflektiert</strong>
-        <p>${weeklyScore >= 75 ? "Starker Verlauf bis heute: viel Struktur, gute Routinen und klare Gebetsdisziplin." : weeklyScore >= 45 ? "Gute Basis bis heute. Unten siehst du die Entwicklung vom Wochenstart bis zum ausgewählten Tag." : "Diese Übersicht zeigt nur den bisherigen Wochenverlauf bis zum ausgewählten Tag – als Orientierung, nicht als Urteil."}</p>
+        <p>${scoreDelta === null ? "Für einen Wochenvergleich fehlen noch Daten aus der Vorwoche." : scoreDelta >= 0 ? `Gegenüber der Vorwoche liegst du aktuell ${scoreDelta} Prozentpunkte höher.` : `Gegenüber der Vorwoche liegst du aktuell ${Math.abs(scoreDelta)} Prozentpunkte niedriger.`}</p>
       </div>
     </div>
     <div class="stats-metrics colorful-metrics">
-      ${statTile(`${prayerCount}/${prayerTarget}`, "Gebete")}
-      ${statTile(String(mosqueCount), "Moschee")}
-      ${statTile(`${routineDone}/${routineTarget}`, "Routinen")}
-      ${statTile(`${sleepLogged}/${elapsedDays}`, "Schlaf erfasst")}
-      ${statTile(totalSteps.toLocaleString("de-DE"), "Schritte")}
+      ${statTile(`${routineRate}%`, "Routinen erfüllt")}
+      ${statTile(averageRoutines.toFixed(1).replace(".", ","), "Routinen / Tag")}
+      ${statTile(`${prayerRate}%`, "Gebetsquote")}
+      ${statTile(scoreDelta === null ? "–" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta}`, "Pkt. zur Vorwoche")}
+      ${statTile(averageSteps.toLocaleString("de-DE"), "Schritte / Tag")}
       ${statTile(`${averageWater.toFixed(1).replace('.', ',')} L`, "Wasser / Tag")}
-      ${statTile(String(fastDays), "Fastentage")}
-      ${statTile(String(activityCount), "Aktivitäten")}
+      ${statTile(averageActivities.toFixed(1).replace(".", ","), "Aktivitäten / Tag")}
+      ${statTile(String(mosqueCount), "Gemeinschaftsgebete")}
     </div>
-    <div class="insight-grid">
-      <div class="insight-card role-highlight" style="--role-soft:rgba(74,140,255,.12);--role-text:#245ca5;">
-        <span class="insight-label">Bester Tag</span>
-        <strong>${bestDayName}</strong>
-        <small>${bestDay ? `${reviewCompletion(bestDay.data)}% Fokus · ${formatLongDate(bestDay.date)}` : "–"}</small>
-      </div>
-      <div class="insight-card">
-        <span class="insight-label">Häufigste Emotion</span>
-        <strong>${escapeHTML(topMood)}</strong>
-        <small>Achtsamkeits-Tendenz bis heute</small>
-      </div>
-      <div class="insight-card">
-        <span class="insight-label">Schlaf heute / zuletzt</span>
-        <strong>${escapeHTML(lastSleepLabel)}</strong>
-        <small>${sleepLogged}/${elapsedDays} Tage dokumentiert</small>
-      </div>
-    </div>
-    <div class="day-performance">
-      ${reviews.map(item => {
-        const role = getRole(item.data.role);
-        const score = reviewCompletion(item.data);
-        const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-        return `<div class="day-performance-row"><span class="day-label">${day}</span><div class="day-bar" style="--day-color:${role.color}"><span style="width:${score}%"></span></div><span class="day-score">${score}%</span></div>`;
-      }).join("")}
+    ${buildWeeklyTrendChart(labels, currentScores, previousScores)}
+    <div class="insight-grid compact-insights">
+      <div class="insight-card"><span class="insight-label">Entwicklung</span><strong>${escapeHTML(deltaText)}</strong><small>Durchschnittliche Tageserfüllung</small></div>
+      <div class="insight-card"><span class="insight-label">Häufigste Emotion</span><strong>${escapeHTML(topMood)}</strong><small>Achtsamkeits-Tendenz</small></div>
+      <div class="insight-card"><span class="insight-label">Schlaf zuletzt</span><strong>${escapeHTML(lastSleepLabel)}</strong><small>${sleepValues.length}/${elapsedDays} Tage dokumentiert</small></div>
     </div>
     <div class="weekly-visual-grid">
       <div class="visual-panel">
@@ -798,13 +874,10 @@ function renderStats() {
         }).join("")}
       </div>
       <div class="visual-panel">
-        <h3>Schlafwoche</h3>
-        ${reviews.map(item => {
-          const rawSleep = item.data.sleepQualityScore === "" || item.data.sleepQualityScore === undefined ? null : Number(item.data.sleepQualityScore);
-          const score = rawSleep === null ? 0 : Math.max(0, 6 - rawSleep);
-          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${rawSleep === null ? 0 : (score/6)*100}%"></i></div><strong>${rawSleep === null ? "–" : SLEEP_LABELS[rawSleep]}</strong></div>`;
-        }).join("")}
+        <h3>Fasten & Aktivität</h3>
+        <div class="summary-pair"><span>Fastentage</span><strong>${fastDays}</strong></div>
+        <div class="summary-pair"><span>Aktivitäten gesamt</span><strong>${activityCount}</strong></div>
+        <div class="summary-pair"><span>Routinen gesamt</span><strong>${routineDone}/${routineTarget}</strong></div>
       </div>
     </div>`;
 }
@@ -913,7 +986,7 @@ function buildWeeklyPdf(reviews) {
   const line = (x1, top1, x2, top2, hex, lw = 0.6) => pdfStrokeLine(commands, x1, H - top1, x2, H - top2, hex, lw);
   const weekdayLabel = date => new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${date}T12:00:00`));
 
-  pdfFillRect(commands, 0, 0, W, H, "F4F6FB");
+  pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
   textAt("ROLEPLAY", margin, 18, 10, true, "758093");
   textAt("Wochenplan", margin, 34, 22, true, "17181C");
   textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 162, 39, 10, false, "6B7382");
@@ -1302,23 +1375,38 @@ function closeRoutineDetail() {
 function renderRoutineDetail(key) {
   const routine = routines[key];
   const progress = routineProgress(key);
+  const progressPercent = progress.total ? Math.round((progress.resolved / progress.total) * 100) : 0;
+  const progressMap = currentData.routineProgress?.[key] || {};
+  const completedMinutes = routine.items.filter(item => progressMap[item.id] === "done").reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+  const remainingMinutes = routine.items.filter(item => !["done", "skipped"].includes(progressMap[item.id])).reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   $("routineDetailEyebrow").textContent = key === "morning" ? "MORGEN" : key === "evening" ? "ABEND" : "FOKUS";
   $("routineDetailTitle").textContent = routine.title;
   $("routineDetailMeta").textContent = `${routine.items.length} Schritte · ${routineMinutes(routine)} Minuten`;
+  $("routineDetailProgress").innerHTML = `<div class="routine-progress-head"><strong>${progress.done}/${progress.total} erledigt</strong><span>${progressPercent}%</span></div><div class="routine-progress-track"><i style="width:${progressPercent}%"></i></div><small>ca. ${completedMinutes} Min. erledigt · ${remainingMinutes} Min. offen</small>`;
   $("routineItemList").innerHTML = routine.items.map((item, index) => {
-    const state = currentData.routineProgress?.[key]?.[item.id] || "";
-    return `<div class="routine-item clean" draggable="true" data-routine-index="${index}">
+    const state = progressMap[item.id] || "";
+    const stateLabel = state === "done" ? " · erledigt" : state === "skipped" ? " · übersprungen" : "";
+    return `<div class="routine-item clean ${state ? `is-${state}` : ""}" draggable="true" data-routine-index="${index}">
       <span class="routine-number">${index + 1}</span>
       <span class="routine-emoji-bubble">${escapeHTML(item.emoji)}</span>
       <div class="routine-item-copy">
         <strong>${escapeHTML(item.title)}</strong>
-        <small>${item.minutes} Min.${state === "done" ? " · erledigt" : state === "skipped" ? " · übersprungen" : progress.done ? "" : ""}</small>
+        <small>${item.minutes} Min.${stateLabel}${item.context ? " · Kontext" : ""}</small>
+      </div>
+      <div class="routine-sort-controls" aria-label="Reihenfolge ändern">
+        <button type="button" data-move-routine-item="up" data-routine-control="${index}" aria-label="Nach oben" ${index === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" data-move-routine-item="down" data-routine-control="${index}" aria-label="Nach unten" ${index === routine.items.length - 1 ? "disabled" : ""}>↓</button>
       </div>
       <button type="button" class="routine-item-menu" data-edit-routine-item="${escapeHTML(item.id)}" aria-label="Bearbeiten">⋯</button>
     </div>`;
   }).join("");
 
   document.querySelectorAll("[data-edit-routine-item]").forEach(button => button.addEventListener("click", () => openRoutineItemDialog(button.dataset.editRoutineItem)));
+  document.querySelectorAll("[data-routine-control]").forEach(button => button.addEventListener("click", () => {
+    const index = Number(button.dataset.routineControl);
+    moveArrayItem(routine.items, index, button.dataset.moveRoutineItem === "up" ? -1 : 1);
+    saveRoutines(); renderRoutineDetail(key); renderRoutineCards();
+  }));
   document.querySelectorAll("[data-routine-index]").forEach(row => {
     row.addEventListener("dragstart", () => { routineDragIndex = Number(row.dataset.routineIndex); row.classList.add("dragging"); });
     row.addEventListener("dragend", () => { routineDragIndex = null; row.classList.remove("dragging"); });
@@ -1387,7 +1475,10 @@ function startRoutine(key) {
     currentData.routineProgress[key] = {};
     index = 0;
   }
-  routineSession = { key, index, remaining: routine.items[index].minutes * 60, running: true, interval: null, contextOpen: true };
+  const remaining = Math.round(routine.items[index].minutes * 60);
+  routineSession = { key, index, remaining, running: true, endAt: Date.now() + remaining * 1000, interval: null, contextOpen: true, expiredNotified: false };
+  persistRoutineSession();
+  requestTimerNotificationPermission();
   $("routineSessionDialog").showModal();
   renderRoutineSession();
   startSessionInterval();
@@ -1399,8 +1490,10 @@ function currentSessionItem() {
 
 function renderRoutineSession() {
   if (!routineSession) return;
+  syncRoutineSessionClock();
   const routine = routines[routineSession.key];
   const item = currentSessionItem();
+  if (!routine || !item) return;
   $("routineSessionDialog").dataset.theme = routine.theme || "focus";
   $("sessionRoutineName").textContent = routine.title;
   $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${routine.items.length}`;
@@ -1410,7 +1503,7 @@ function renderRoutineSession() {
   $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
   $("sessionContextToggle").hidden = true;
   $("sessionContext").hidden = !item.context;
-  $("sessionContext").textContent = item.context || "";
+  $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
   const next = routine.items[routineSession.index + 1];
   $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
 }
@@ -1443,23 +1536,103 @@ function playTimerDoneTone() {
   }
 }
 
+function persistRoutineSession() {
+  if (!routineSession) {
+    localStorage.removeItem(ROUTINE_SESSION_STORAGE_KEY);
+    return;
+  }
+  const { interval, ...serializable } = routineSession;
+  localStorage.setItem(ROUTINE_SESSION_STORAGE_KEY, JSON.stringify(serializable));
+}
+
+function syncRoutineSessionClock() {
+  if (!routineSession?.running || !routineSession.endAt) return;
+  const nextRemaining = Math.max(0, Math.ceil((routineSession.endAt - Date.now()) / 1000));
+  routineSession.remaining = nextRemaining;
+  if (nextRemaining <= 0) {
+    routineSession.running = false;
+    routineSession.endAt = null;
+    if (!routineSession.expiredNotified) {
+      routineSession.expiredNotified = true;
+      playTimerDoneTone();
+      notifyTimerDone();
+    }
+    persistRoutineSession();
+  }
+}
+
 function startSessionInterval() {
   clearInterval(routineSession?.interval);
   if (!routineSession) return;
   routineSession.interval = setInterval(() => {
-    if (!routineSession?.running) return;
-    routineSession.remaining -= 1;
-    if (routineSession.remaining <= 0) {
-      routineSession.remaining = 0;
-      routineSession.running = false;
-      playTimerDoneTone();
-    }
+    if (!routineSession) return;
+    syncRoutineSessionClock();
     renderRoutineSession();
-  }, 1000);
+  }, 500);
+}
+
+function toggleRoutineSessionRunning() {
+  if (!routineSession) return;
+  syncRoutineSessionClock();
+  if (routineSession.running) {
+    routineSession.running = false;
+    routineSession.endAt = null;
+  } else if (routineSession.remaining > 0) {
+    routineSession.running = true;
+    routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+    routineSession.expiredNotified = false;
+    requestTimerNotificationPermission();
+  }
+  persistRoutineSession();
+  renderRoutineSession();
+}
+
+function adjustRoutineSessionMinutes(deltaMinutes) {
+  if (!routineSession) return;
+  syncRoutineSessionClock();
+  routineSession.remaining = Math.max(0, routineSession.remaining + deltaMinutes * 60);
+  if (routineSession.running) routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+  routineSession.expiredNotified = false;
+  persistRoutineSession();
+  renderRoutineSession();
+}
+
+async function requestTimerNotificationPermission() {
+  if (!("Notification" in window) || Notification.permission !== "default") return;
+  try { await Notification.requestPermission(); } catch (error) { console.warn("Benachrichtigungen konnten nicht angefragt werden", error); }
+}
+
+function notifyTimerDone() {
+  if (!("Notification" in window) || Notification.permission !== "granted" || !routineSession) return;
+  const routine = routines[routineSession.key];
+  const item = currentSessionItem();
+  const title = `${routine?.title || "Routine"}: Zeit abgelaufen`;
+  const options = { body: item ? `${item.title} ist beendet.` : "Der Timer ist abgelaufen.", icon: "./logo.jpeg", badge: "./logo.jpeg", tag: "roleplay-routine-timer", renotify: true };
+  if (navigator.serviceWorker?.ready) {
+    navigator.serviceWorker.ready.then(registration => registration.showNotification(title, options)).catch(() => {
+      try { new Notification(title, options); } catch {}
+    });
+  } else {
+    try { new Notification(title, options); } catch {}
+  }
+}
+
+function restoreRoutineSession() {
+  const stored = safeParse(localStorage.getItem(ROUTINE_SESSION_STORAGE_KEY));
+  if (!stored || !routines?.[stored.key] || !routines[stored.key].items?.[stored.index]) {
+    localStorage.removeItem(ROUTINE_SESSION_STORAGE_KEY);
+    return;
+  }
+  routineSession = { ...stored, interval: null, remaining: Math.max(0, Number(stored.remaining || 0)), running: Boolean(stored.running), endAt: stored.endAt ? Number(stored.endAt) : null };
+  syncRoutineSessionClock();
+  if (!$("routineSessionDialog").open) $("routineSessionDialog").showModal();
+  renderRoutineSession();
+  startSessionInterval();
 }
 
 function completeSessionItem(status) {
   if (!routineSession) return;
+  syncRoutineSessionClock();
   const key = routineSession.key;
   const routine = routines[key];
   const item = currentSessionItem();
@@ -1475,31 +1648,107 @@ function completeSessionItem(status) {
     return;
   }
   routineSession.index = nextIndex;
-  routineSession.remaining = routine.items[nextIndex].minutes * 60;
+  routineSession.remaining = Math.round(routine.items[nextIndex].minutes * 60);
   routineSession.running = true;
+  routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+  routineSession.expiredNotified = false;
   routineSession.contextOpen = false;
   saveReview(true);
+  persistRoutineSession();
   renderRoutineSession();
 }
 
 function closeRoutineSession() {
   if (routineSession?.interval) clearInterval(routineSession.interval);
   routineSession = null;
+  localStorage.removeItem(ROUTINE_SESSION_STORAGE_KEY);
   if ($("routineSessionDialog").open) $("routineSessionDialog").close();
   updateRoutineStateButtons();
   renderRoutineCards();
   if (activeRoutineKey) renderRoutineDetail(activeRoutineKey);
 }
 
-function switchPage(page) {
-  const review = page === "review";
-  $("reviewPage").classList.toggle("active", review);
-  $("routinesPage").classList.toggle("active", !review);
-  $("pageTitle").textContent = review ? "Tagesreview" : "Routinen";
-  $("rolePickerWrap").hidden = !review;
-  $("dateNavigation").hidden = !review;
+function biometricAccessSupported() {
+  return Boolean(window.isSecureContext && window.PublicKeyCredential && navigator.credentials && window.crypto?.subtle);
+}
+
+function configureStreakPrivacyDialog() {
+  const biometricButton = $("streakBiometricButton");
+  const credential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
+  biometricButton.hidden = !biometricAccessSupported();
+  biometricButton.textContent = credential ? "Mit Face ID öffnen" : "Face ID einrichten";
+  $("streakPrivacyStatus").textContent = "";
+}
+
+function requestStreakAccess() {
+  configureStreakPrivacyDialog();
+  if (!$("streakPrivacyDialog").open) $("streakPrivacyDialog").showModal();
+}
+
+function grantStreakAccess() {
+  streaksUnlocked = true;
+  if ($("streakPrivacyDialog").open) $("streakPrivacyDialog").close();
+  switchPage("streaks", { skipGuard: true });
+}
+
+async function useStreakBiometricAccess() {
+  const status = $("streakPrivacyStatus");
+  const button = $("streakBiometricButton");
+  if (!biometricAccessSupported()) return;
+  button.disabled = true;
+  status.textContent = "Face ID wird vorbereitet …";
+  try {
+    const storedCredential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
+    if (!storedCredential) {
+      const credential = await navigator.credentials.create({ publicKey: {
+        challenge: randomBytes(32),
+        rp: { name: "Roleplay" },
+        user: { id: randomBytes(16), name: "roleplay-local-user", displayName: "Roleplay" },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: "platform", residentKey: "preferred", userVerification: "required" },
+        timeout: 60000,
+        attestation: "none"
+      }});
+      if (!credential) throw new Error("Keine Gerätebiometrie eingerichtet.");
+      localStorage.setItem(STREAK_CREDENTIAL_KEY, bytesToBase64Url(credential.rawId));
+      status.textContent = "Face ID wurde eingerichtet.";
+      grantStreakAccess();
+      return;
+    }
+    const assertion = await navigator.credentials.get({ publicKey: {
+      challenge: randomBytes(32),
+      allowCredentials: [{ type: "public-key", id: base64UrlToBytes(storedCredential), transports: ["internal"] }],
+      userVerification: "required",
+      timeout: 60000
+    }});
+    if (!assertion) throw new Error("Entsperrung abgebrochen.");
+    grantStreakAccess();
+  } catch (error) {
+    console.warn("Biometrische Entsperrung fehlgeschlagen", error);
+    status.textContent = "Face ID war nicht verfügbar oder wurde abgebrochen. Du kannst den Bereich weiterhin manuell öffnen.";
+  } finally {
+    button.disabled = false;
+    const credential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
+    button.textContent = credential ? "Mit Face ID öffnen" : "Face ID einrichten";
+  }
+}
+
+function switchPage(page, options = {}) {
+  if (page === "streaks" && !streaksUnlocked && !options.skipGuard) {
+    requestStreakAccess();
+    return;
+  }
+  const titles = { review: "Tagesreflexion", routines: "Routinen", streaks: "Streaks" };
+  $("reviewPage").classList.toggle("active", page === "review");
+  $("routinesPage").classList.toggle("active", page === "routines");
+  $("streaksPage").classList.toggle("active", page === "streaks");
+  $("pageTitle").textContent = titles[page] || "Roleplay";
+  $("rolePickerWrap").hidden = page !== "review";
+  $("dateNavigation").hidden = page === "routines";
   document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
-  if (!review) { renderRoutineCards();  }
+  if (page === "routines") renderRoutineCards();
+  if (page === "streaks") renderStreaks();
+  if (page !== "streaks") streaksUnlocked = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1595,11 +1844,10 @@ function bindEvents() {
     $("ramadanDays").value = currentData.ramadanDays;
     updateRamadanDisplay(); saveReview(true); propagateRamadanForward(selectedDate);
   });
-  document.querySelectorAll("[data-routine-state] button").forEach(button => button.addEventListener("click", () => {
-    const key = button.closest("[data-routine-state]").dataset.routineState;
-    if (key === "morning") currentData.morningRoutineState = button.dataset.state;
-    else currentData.eveningRoutineState = button.dataset.state;
-    updateRoutineStateButtons(); saveReview(true);
+  document.querySelectorAll("[data-routine-cycle]").forEach(button => button.addEventListener("click", () => cycleRoutineState(button.dataset.routineCycle)));
+  document.querySelectorAll("[data-review-open-routine]").forEach(button => button.addEventListener("click", () => {
+    switchPage("routines");
+    openRoutineDetail(button.dataset.reviewOpenRoutine);
   }));
 
   $("addActivity").addEventListener("click", () => { $("activityTitle").value = ""; $("activityDialog").showModal(); setTimeout(() => $("activityTitle").focus(), 50); });
@@ -1621,6 +1869,10 @@ function bindEvents() {
   });
 
   document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => switchPage(button.dataset.page)));
+  $("cancelStreakAccess").addEventListener("click", () => $("streakPrivacyDialog").close());
+  $("confirmStreakAccess").addEventListener("click", grantStreakAccess);
+  $("streakBiometricButton").addEventListener("click", useStreakBiometricAccess);
+  $("streakPrivacyDialog").addEventListener("cancel", event => { event.preventDefault(); $("streakPrivacyDialog").close(); });
   $("openRoutines").addEventListener("click", () => switchPage("routines"));
   $("backToRoutineOverview").addEventListener("click", closeRoutineDetail);
   $("startRoutineDetail").addEventListener("click", () => startRoutine(activeRoutineKey));
@@ -1635,14 +1887,21 @@ function bindEvents() {
 
   $("closeRoutineSession").addEventListener("click", closeRoutineSession);
   $("routineSessionDialog").addEventListener("cancel", event => { event.preventDefault(); closeRoutineSession(); });
-  $("sessionPause").addEventListener("click", () => { routineSession.running = !routineSession.running; renderRoutineSession(); });
+  $("sessionPause").addEventListener("click", toggleRoutineSessionRunning);
   $("sessionComplete").addEventListener("click", () => completeSessionItem("done"));
   $("sessionSkip").addEventListener("click", () => completeSessionItem("skipped"));
-  $("sessionMinus").addEventListener("click", () => { routineSession.remaining = Math.max(0, routineSession.remaining - 60); renderRoutineSession(); });
-  $("sessionPlus").addEventListener("click", () => { routineSession.remaining += 60; renderRoutineSession(); });
+  $("sessionMinus").addEventListener("click", () => adjustRoutineSessionMinutes(-1));
+  $("sessionPlus").addEventListener("click", () => adjustRoutineSessionMinutes(1));
   $("sessionContextToggle").addEventListener("click", () => {});
 
   window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && routineSession) { syncRoutineSessionClock(); renderRoutineSession(); }
+    persistRoutineSession();
+  });
+  window.addEventListener("focus", () => { if (routineSession) { syncRoutineSessionClock(); renderRoutineSession(); } });
+  window.addEventListener("pageshow", () => { if (routineSession) { syncRoutineSessionClock(); renderRoutineSession(); } });
+  window.addEventListener("pagehide", persistRoutineSession);
 }
 
 function init() {
@@ -1654,6 +1913,7 @@ function init() {
   if (lastBackupAt) $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lastBackupAt))}`;
   setDate(todayISO());
   switchPage("review");
+  restoreRoutineSession();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 }
 

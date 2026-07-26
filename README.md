@@ -1,27 +1,26 @@
-# Roleplay 2.0
+# Roleplay 2.9
 
-Diese Version erweitert die bisherige lokale Tagesreview-App um eine vollständige Routinen-Seite und einen echten Wochenplan-PDF-Export.
+Version 2.9 baut auf dem Datenmodell von Version 2.8 auf. Der lokale Speicher-Namespace bleibt bewusst unverändert, damit bestehende Tagesreflexionen und Routinen erhalten bleiben. Vor dem Aktualisieren ist trotzdem ein Backup empfehlenswert.
 
-## Neu in dieser Version
+## Neuerungen
 
-- Kalenderübersicht mit farbiger Markierung vorhandener Einträge nach Tagesrolle
-- Tagesrolle direkt rechts neben „Tagesreview“ auswählbar
-- Rollenfarben: Yannick blau, Vitalist dunkelblau, Absolvent orange, Unternehmer gelb, Muslim türkis, Wirt weinrot, Familienmensch hellgrün
-- Drei Zustände für Morgen- und Abendroutine: offen, erledigt, nicht erledigt
-- Gebete horizontal mit sechs auswählbaren Zuständen
-- Schlafqualität als Regler zwischen 😴 und 🥱
-- Emotions-Dropdown bei Achtsamkeit
-- Größere Tagesnotiz für tagebuchartige Einträge
-- Aktivitäten ohne Minutenangabe, mit Abbrechen, Rollenwahl und manueller Sortierung
-- Streak „Zwang“ in „Begierde“ umbenannt; aktive Streaks werden grün dargestellt und am Folgetag automatisch erhöht
-- Fastentage-Stand wird auf neue Folgetage übernommen
-- deutlich erweiterte Wochenstatistik mit Wochenfokus, Tagesleistung, Gebeten, Routinen, Schlaf, Wasser, Schritten und Rollenverteilung
-- tatsächlicher PDF-Dateiexport als A4-Wochenplan im Querformat
-- neue Routinen-Seite links in der Navigation
-- Morgen- und Abendroutine mit anpassbaren Schritten, freien Emojis, Kontexten, Sortierung, Timer, Pause, Überspringen und automatischem Weitergehen
+- Neue Emoji-Navigation: 📝 Tagesreflexion, 🌅 Routinen und 🔥 Streaks
+- Streaks auf einer eigenen, vorgeschalteten Datenschutzseite
+- Optionaler Zugriff per Face ID beziehungsweise Gerätebiometrie, sofern die App über HTTPS beziehungsweise als iPhone-Web-App läuft und WebAuthn unterstützt wird
+- Morgen- und Abendroutine als kompakte Bildkarten in der Tagesreflexion
+- Routine-Status als schneller Zyklus: Offen → Erledigt → Nicht erledigt
+- Kompaktere Routinenansicht mit Fortschritt, Restzeit und Sortierpfeilen
+- Anklickbare Weblinks innerhalb des Routine-Kontexts
+- Timer auf Zeitstempelbasis: läuft beim Wechsel in den Hintergrund korrekt weiter und wird nach einem Neustart wiederhergestellt
+- Bestmögliche lokale Timer-Benachrichtigung, sofern iOS beziehungsweise der Browser dies zulässt
+- Vollständig überarbeitete Wochenstatistik mit Erfüllungsquote, Routinen pro Tag, Vorwochenvergleich und Liniendiagramm
+- Aktive Streaks werden grün, unterbrochene Streaks rot hervorgehoben
+- Verbesserter Dark Mode für Gebetsauswahl, Dialoge, Aktivitäten, Rückkehr- und Sortierbuttons
+- Kleinerer Plus-Button bei Aktivitäten
+- Wochenplan-PDF mit weißem Seitenhintergrund
 
-## Nutzung
+## Installation
 
-Die App ist weiterhin vollständig lokal. Öffne `index.html` über einen kleinen Webserver oder lade den Ordner auf einen Webspace. Für die Installation auf dem iPhone anschließend in Safari „Zum Home-Bildschirm“ wählen.
+Den Ordner auf den bisherigen Webspace beziehungsweise das bisherige GitHub-Pages-Projekt hochladen und die vorhandenen Dateien ersetzen. Danach die Web-App auf dem iPhone einmal vollständig schließen und neu öffnen. Falls weiterhin die alte Oberfläche erscheint, Safari beziehungsweise die installierte Web-App neu laden, damit der Service-Worker-Cache `roleplay-v2-9` aktiv wird.
 
-Vor einem Versionswechsel empfiehlt sich in der bisherigen App ein Backup. Bestehende Tagesreviews aus Version 1.7 werden beim Laden automatisch in das neue Datenmodell übernommen.
+Alle Daten bleiben lokal im Browser gespeichert. Die Datenschutzabfrage vor der Streak-Seite verhindert versehentliches Öffnen, stellt jedoch keine Verschlüsselung der lokalen Daten dar.

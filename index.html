@@ -18,7 +18,7 @@
       <div class="header-title-row">
         <div>
           <p class="eyebrow">ROLEPLAY</p>
-          <h1 id="pageTitle">Tagesreview</h1>
+          <h1 id="pageTitle">Tagesreflexion</h1>
         </div>
         <label class="role-picker-wrap" id="rolePickerWrap">
           <span class="sr-only">Tagesrolle auswählen</span>
@@ -34,7 +34,7 @@
     </header>
 
     <main>
-      <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
+      <section id="reviewPage" class="app-page active" aria-label="Tagesreflexion">
         <section class="card">
           <h2>Vitalität</h2>
 
@@ -68,32 +68,24 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card routine-review-section">
           <div class="section-title-row">
             <h2>Routinen</h2>
-            <button id="openRoutines" class="text-button" type="button">Routinen öffnen</button>
+            <button id="openRoutines" class="text-button" type="button">Öffnen</button>
           </div>
           <div class="routine-review-grid">
-            <div class="routine-review-card">
-              <strong>Morgenroutine</strong>
-              <small>Heute Morgen bewusst gestalten</small>
-              <div class="tri-state tri-state-compact" data-routine-state="morning" role="group" aria-label="Status Morgenroutine">
-                <button type="button" data-state="" aria-label="Noch offen"></button>
-                <button type="button" data-state="done" aria-label="Erledigt"></button>
-                <button type="button" data-state="missed" aria-label="Nicht erledigt"></button>
-              </div>
-              <div class="routine-state-legend"><span>Offen</span><span>Erledigt</span><span>Nicht erledigt</span></div>
-            </div>
-            <div class="routine-review-card">
-              <strong>Abendroutine</strong>
-              <small>Den Tag ruhig und sauber abschließen</small>
-              <div class="tri-state tri-state-compact" data-routine-state="evening" role="group" aria-label="Status Abendroutine">
-                <button type="button" data-state="" aria-label="Noch offen"></button>
-                <button type="button" data-state="done" aria-label="Erledigt"></button>
-                <button type="button" data-state="missed" aria-label="Nicht erledigt"></button>
-              </div>
-              <div class="routine-state-legend"><span>Offen</span><span>Erledigt</span><span>Nicht erledigt</span></div>
-            </div>
+            <article class="routine-review-card routine-review-image morning">
+              <button class="routine-review-open" type="button" data-review-open-routine="morning" aria-label="Morgenroutine öffnen">
+                <span class="routine-review-copy"><strong>Morgenroutine</strong><small>Heute Morgen</small></span>
+              </button>
+              <button class="routine-cycle-button" type="button" data-routine-cycle="morning" aria-label="Status Morgenroutine ändern"></button>
+            </article>
+            <article class="routine-review-card routine-review-image evening">
+              <button class="routine-review-open" type="button" data-review-open-routine="evening" aria-label="Abendroutine öffnen">
+                <span class="routine-review-copy"><strong>Abendroutine</strong><small>Heute Abend</small></span>
+              </button>
+              <button class="routine-cycle-button" type="button" data-routine-cycle="evening" aria-label="Status Abendroutine ändern"></button>
+            </article>
           </div>
         </section>
 
@@ -150,11 +142,6 @@
         </section>
 
         <section class="card">
-          <h2>Streaks</h2>
-          <div id="streakList" class="stack streak-list"></div>
-        </section>
-
-        <section class="card">
           <h2>Achtsamkeit</h2>
           <div class="field-group">
             <label for="mood">Wie fühlst du dich?</label>
@@ -181,7 +168,7 @@
           <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
         </section>
 
-        <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
+        <button id="saveButton" class="primary-button" type="button">Tagesreflexion speichern</button>
 
         <section class="card stats-card">
           <div class="section-title-row">
@@ -224,21 +211,32 @@
             </div>
             <button id="startRoutineDetail" class="round-play-button" type="button" aria-label="Routine starten">▶</button>
           </div>
+          <div id="routineDetailProgress" class="routine-detail-progress"></div>
 
           <div id="routineItemList" class="routine-item-list"></div>
           <button id="addRoutineItem" class="secondary-wide-button plus-button wide" type="button"><span>Schritt hinzufügen</span></button>
         </div>
       </section>
+
+      <section id="streaksPage" class="app-page" aria-label="Streaks">
+        <section class="card streaks-intro-card">
+          <p class="eyebrow">GESCHÜTZTER BEREICH</p>
+          <h2>Streaks</h2>
+          <p class="section-hint">Deine persönlichen Serien werden ausschließlich lokal auf diesem Gerät gespeichert.</p>
+        </section>
+        <div id="streakList" class="stack streak-list streaks-page-list"></div>
+      </section>
     </main>
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
-      <button class="nav-button" data-page="routines" type="button">
-        <span class="nav-symbol">◫</span>
-        <span>Routinen</span>
+      <button class="nav-button active" data-page="review" type="button" aria-label="Tagesreflexion" title="Tagesreflexion">
+        <span class="nav-symbol" aria-hidden="true">📝</span>
       </button>
-      <button class="nav-button active" data-page="review" type="button">
-        <span class="nav-symbol">✓</span>
-        <span>Tagesreflexion</span>
+      <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
+        <span class="nav-symbol" aria-hidden="true">🌅</span>
+      </button>
+      <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
+        <span class="nav-symbol" aria-hidden="true">🔥</span>
       </button>
     </nav>
   </div>
@@ -348,6 +346,19 @@
         <button id="sessionSkip" class="session-secondary-control" type="button" aria-label="Schritt überspringen">›|</button>
       </div>
       <p id="sessionNext" class="session-next"></p>
+    </div>
+  </dialog>
+
+
+  <dialog id="streakPrivacyDialog" class="form-dialog privacy-dialog">
+    <div class="privacy-dialog-icon" aria-hidden="true">🔥</div>
+    <h3>Geschützten Bereich öffnen?</h3>
+    <p>Diese Seite enthält persönliche Streak-Daten. Die Abfrage schützt vor versehentlichem Einblick; die lokal gespeicherten Daten selbst werden dadurch nicht verschlüsselt.</p>
+    <button id="streakBiometricButton" type="button" class="primary-button biometric-button" hidden>Mit Face ID öffnen</button>
+    <p id="streakPrivacyStatus" class="privacy-dialog-status" aria-live="polite"></p>
+    <div class="dialog-actions privacy-actions">
+      <button id="cancelStreakAccess" type="button" class="secondary-button">Abbrechen</button>
+      <button id="confirmStreakAccess" type="button" class="primary-button compact">Öffnen</button>
     </div>
   </dialog>
 

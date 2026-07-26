@@ -1,7 +1,7 @@
 {
   "name": "Roleplay",
   "short_name": "Roleplay",
-  "description": "Tagesreview, Wochenstatistik und geführte Routinen",
+  "description": "Tagesreflexion, geschützte Streaks, Wochenstatistik und geführte Routinen",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f9",
