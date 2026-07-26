@@ -231,12 +231,11 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.1";
+const APP_VERSION = "3.2";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
 const ROUTINE_SESSION_STORAGE_KEY = `${STORAGE_NAMESPACE}-active-routine-session`;
-const STREAK_CREDENTIAL_KEY = `${STORAGE_NAMESPACE}-streak-biometric-credential`;
 const ROUTINE_STATE_ORDER = ["", "done", "missed"];
 const $ = id => document.getElementById(id);
 
@@ -751,66 +750,99 @@ function weekDates(reference = selectedDate) {
   });
 }
 
-function prayerStateWeight(state) {
-  const weights = {
-    "Gemeinschaft": 1.15,
-    "Normal": 1,
-    "Verspätet": 0.7,
-    "Nachgeholt": 0.4,
-    "Nicht gebetet": 0,
-    "": 0
+function prayerStatePoints(state) {
+  const points = {
+    "Gemeinschaft": 22,
+    "Normal": 20,
+    "Verspätet": 15,
+    "Nachgeholt": 8,
+    "Nicht gebetet": 0
   };
-  return weights[state || ""] ?? 0;
+  return Object.prototype.hasOwnProperty.call(points, state) ? points[state] : null;
 }
 
-function prayerPerformance(data) {
-  const total = PRAYERS.reduce((sum, prayer) => sum + prayerStateWeight(data.prayers?.[prayer] || ""), 0);
-  return (total / PRAYERS.length) * 100;
+function prayerStateWeight(state) {
+  const points = prayerStatePoints(state);
+  return points === null ? 0 : points / 20;
 }
 
-function reviewCompletion(data) {
-  const prayerShare = prayerPerformance(data) * 0.8;
-  const routineDone = [data.morningRoutineState, data.eveningRoutineState].filter(state => state === "done").length;
-  const routineShare = (routineDone / 2) * 20;
-  return Math.round(clamp(prayerShare + routineShare, 0, 120));
+function prayerPerformance(data, date = selectedDate) {
+  const values = PRAYERS.map(prayer => prayerStatePoints(data.prayers?.[prayer] || ""));
+  const isToday = date === todayISO();
+  const resolved = values.filter(value => value !== null);
+  const denominator = isToday ? resolved.length : PRAYERS.length;
+  if (!denominator) return 0;
+  const total = values.reduce((sum, value) => sum + (value ?? 0), 0);
+  return (total / (denominator * 20)) * 100;
+}
+
+function reviewCompletion(data, date = selectedDate) {
+  // Gebete bilden 80 Prozent der Erfolgsquote. Fünf pünktliche Gebete
+  // ergeben 80 Prozent; Moschee kann die Quote über 100 Prozent heben.
+  const prayerShare = prayerPerformance(data, date) * 0.8;
+  const routinePoints = [data.morningRoutineState, data.eveningRoutineState]
+    .filter(state => state === "done").length * 10;
+  return Math.round(clamp(prayerShare + routinePoints, 0, 108));
 }
 
 function buildWeeklyTrendChart(labels, currentValues, previousValues, options = {}) {
   const title = options.title || "Erfolgsquote";
   const subtitle = options.subtitle || "Aktuelle Woche im Vergleich zur Vorwoche";
   const target = Number.isFinite(options.target) ? options.target : null;
-  const maxValue = Number.isFinite(options.maxValue) ? options.maxValue : 120;
-  const width = 360;
-  const height = 220;
-  const padX = 40;
-  const padTop = 16;
-  const padBottom = 32;
+  const maxValue = Number.isFinite(options.maxValue) ? options.maxValue : 110;
+  const todayIndex = Number.isInteger(options.todayIndex) ? options.todayIndex : -1;
+  const width = 420;
+  const height = 224;
+  const padX = 35;
+  const padTop = 18;
+  const padBottom = 34;
   const chartW = width - padX * 2;
   const chartH = height - padTop - padBottom;
   const xFor = index => labels.length <= 1 ? padX + chartW / 2 : padX + (index / (labels.length - 1)) * chartW;
   const yFor = value => padTop + chartH - (clamp(Number(value || 0), 0, maxValue) / maxValue) * chartH;
-  const pathFor = values => {
-    let path = "";
-    let drawing = false;
+
+  const smoothPathFor = values => {
+    const segments = [];
+    let current = [];
     values.forEach((value, index) => {
-      if (value === null || value === undefined) { drawing = false; return; }
-      path += `${drawing ? "L" : "M"}${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)} `;
-      drawing = true;
+      if (value === null || value === undefined) {
+        if (current.length) segments.push(current);
+        current = [];
+      } else {
+        current.push({ x: xFor(index), y: yFor(value) });
+      }
     });
-    return path.trim();
+    if (current.length) segments.push(current);
+    return segments.map(points => {
+      if (points.length === 1) return `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      let path = `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let index = 1; index < points.length; index += 1) {
+        const previous = points[index - 1];
+        const point = points[index];
+        const midpoint = (previous.x + point.x) / 2;
+        path += ` C${midpoint.toFixed(1)} ${previous.y.toFixed(1)}, ${midpoint.toFixed(1)} ${point.y.toFixed(1)}, ${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
+      }
+      return path;
+    }).join(" ");
   };
-  const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass}" cx="${xFor(index)}" cy="${yFor(value)}" r="4.5"></circle>`).join("");
-  const ticks = [0, 20, 40, 60, 80, 100, 120].filter(value => value <= maxValue);
-  const grid = ticks.map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-8}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
-  const xLabels = labels.map((label, index) => `<text x="${xFor(index)}" y="${height-9}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
-  const targetLine = target === null ? "" : `<line class="trend-target-line" x1="${padX}" y1="${yFor(target)}" x2="${width-padX}" y2="${yFor(target)}"></line><text class="trend-target-label" x="${width-padX}" y="${yFor(target)-7}" text-anchor="end">Ziel ${target}%</text>`;
+
+  const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass} ${index === todayIndex ? 'today' : ''}" cx="${xFor(index)}" cy="${yFor(value)}" r="${index === todayIndex ? 5.5 : 4.3}"></circle>`).join("");
+  const ticks = [0, 20, 40, 60, 80, 100].filter(value => value <= maxValue);
+  if (maxValue > 100) ticks.push(maxValue);
+  const grid = ticks.map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-7}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
+  const xLabels = labels.map((label, index) => `<text class="${index === todayIndex ? 'today' : ''}" x="${xFor(index)}" y="${height-9}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
+  const targetLine = target === null ? "" : `<line class="trend-target-line" x1="${padX}" y1="${yFor(target)}" x2="${width-padX}" y2="${yFor(target)}"></line><text class="trend-target-label" x="${padX+4}" y="${yFor(target)-7}" text-anchor="start">Ziel ${target}%</text>`;
+  const todayBandWidth = labels.length > 1 ? chartW / (labels.length - 1) * 0.64 : 40;
+  const todayBand = todayIndex < 0 ? "" : `<rect class="trend-today-band" x="${xFor(todayIndex) - todayBandWidth/2}" y="${padTop}" width="${todayBandWidth}" height="${chartH}" rx="10"></rect>`;
+
   return `<div class="trend-panel top-priority-panel">
     <div class="trend-panel-head"><div><h3>${escapeHTML(title)}</h3><small>${escapeHTML(subtitle)}</small></div><div class="trend-legend"><span class="current">Diese Woche</span><span class="previous">Vorwoche</span>${target === null ? "" : '<span class="target">Zielgrenze</span>'}</div></div>
     <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Verlauf der ${escapeHTML(title)}">
+      ${todayBand}
       <g class="trend-grid">${grid}</g>
       ${targetLine}
-      <path class="trend-line previous" d="${pathFor(previousValues)}"></path>
-      <path class="trend-line current" d="${pathFor(currentValues)}"></path>
+      <path class="trend-line previous" d="${smoothPathFor(previousValues)}"></path>
+      <path class="trend-line current" d="${smoothPathFor(currentValues)}"></path>
       <g class="trend-dots">${dots(previousValues, "previous")}${dots(currentValues, "current")}</g>
       <g class="trend-x-labels">${xLabels}</g>
     </svg></div>
@@ -831,25 +863,25 @@ function renderStats() {
   const prayerTarget = elapsedDays * 5;
   const routineTarget = elapsedDays * 2;
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => prayerStateWeight(item.data.prayers?.[prayer] || "") > 0).length, 0);
-  const weightedPrayerTotal = reviews.reduce((sum, item) => sum + PRAYERS.reduce((daySum, prayer) => daySum + prayerStateWeight(item.data.prayers?.[prayer] || ""), 0), 0);
+  const weightedPrayerTotal = reviews.reduce((sum, item) => sum + prayerPerformance(item.data, item.date), 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
   const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
   const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
   const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
-  const successScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
+  const successScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data, item.date), 0) / elapsedDays);
   const storedDays = reviews.filter(item => item.stored).length;
   const routineRate = Math.round((routineDone / routineTarget) * 100);
-  const prayerRate = Math.round((weightedPrayerTotal / prayerTarget) * 100);
+  const prayerRate = Math.round(weightedPrayerTotal / elapsedDays);
   const averageRoutines = routineDone / elapsedDays;
   const averageSteps = Math.round(totalSteps / elapsedDays);
   const averageWater = totalWaterMl / elapsedDays / 1000;
   const previousHasData = previousReviews.some(item => item.stored);
-  const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays) : null;
+  const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data, item.date), 0) / elapsedDays) : null;
   const scoreDelta = previousScore === null ? null : successScore - previousScore;
-  const currentScores = dates.map(date => date <= selectedDate ? reviewCompletion(loadReview(date)) : null);
-  const previousScores = dates.map(date => { const previousDate = addDays(date, -7); return localStorage.getItem(storageKey(previousDate)) ? reviewCompletion(loadReview(previousDate)) : null; });
+  const currentScores = dates.map(date => date <= selectedDate ? reviewCompletion(loadReview(date), date) : null);
+  const previousScores = dates.map(date => { const previousDate = addDays(date, -7); return localStorage.getItem(storageKey(previousDate)) ? reviewCompletion(loadReview(previousDate), previousDate) : null; });
   const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
@@ -860,7 +892,7 @@ function renderStats() {
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
-    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete (80 %) und Routinen (20 %) · Moschee zählt stärker, verspätet und nachgeholt abgestuft", target: 80, maxValue: 120 })}
+    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete 80 %, Routinen 20 % · Moschee wird zusätzlich belohnt", target: 80, maxValue: 110, todayIndex: dates.indexOf(todayISO()) })}
     <div class="week-summary success-summary">
       <div class="score-ring" style="--score:${Math.min(100, successScore)}%"><div><strong>${successScore}%</strong><span>Erfolg</span></div></div>
       <div class="week-summary-copy">
@@ -908,7 +940,7 @@ function renderStats() {
           return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${Math.min(100, (liters / 3) * 100)}%"></i></div><strong>${liters.toFixed(1).replace('.', ',')}L</strong></div>`;
         }).join("")}
       </div>
-      <div class="visual-panel">
+      <div class="visual-panel overview-panel">
         <h3>Überblick</h3>
         <div class="summary-pair"><span>Fastentage</span><strong>${fastDays}</strong></div>
         <div class="summary-pair"><span>Routinen gesamt</span><strong>${routineDone}/${routineTarget}</strong></div>
@@ -1013,7 +1045,7 @@ function exportWeeklyPdf() {
 
 function buildWeeklyPdf(reviews) {
   const W = 1260, H = 842;
-  const margin = 14, gap = 6;
+  const margin = 10, gap = 5;
   const commands = [];
   const rect = (x, top, width, height, hex) => pdfFillRect(commands, x, H - top - height, width, height, hex);
   const stroke = (x, top, width, height, hex, lw = 0.7) => pdfStrokeRect(commands, x, H - top - height, width, height, hex, lw);
@@ -1022,40 +1054,40 @@ function buildWeeklyPdf(reviews) {
   const weekdayLabel = date => new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${date}T12:00:00`));
 
   pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
-  textAt("ROLEPLAY", margin, 12, 8.5, true, "758093");
-  textAt("Wochenplan", margin, 25, 19, true, "17181C");
-  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 145, 30, 8.5, false, "6B7382");
+  textAt("ROLEPLAY", margin, 8, 7.2, true, "758093");
+  textAt("Wochenplan", margin, 19, 16, true, "17181C");
+  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 126, 22, 7.4, false, "6B7382");
 
-  const cardsTop = 54;
+  const cardsTop = 42;
   const cardW = (W - margin * 2 - gap * 6) / 7;
-  const cardH = H - cardsTop - 12;
+  const cardH = H - cardsTop - 8;
 
   reviews.forEach((item, index) => {
     const role = getRole(item.data.role);
     const data = item.data;
     const x = margin + index * (cardW + gap);
-    const headerH = 48;
-    const bodyPad = 6;
-    const sectionGap = 5;
+    const headerH = 40;
+    const bodyPad = 5;
+    const sectionGap = 4;
     const innerX = x + bodyPad;
     const innerW = cardW - bodyPad * 2;
 
     rect(x, cardsTop, cardW, cardH, "FFFFFF");
     stroke(x, cardsTop, cardW, cardH, "DCE2EC", 0.8);
     rect(x, cardsTop, cardW, headerH, role.color.replace('#',''));
-    textAt(role.name, x + 8, cardsTop + 7, 9.2, true, pdfContrast(role.color));
-    textAt(weekdayLabel(item.date), x + 8, cardsTop + 21, 7, true, pdfContrast(role.color));
-    textAt(formatLongDate(item.date), x + 8, cardsTop + 33, 6, false, pdfContrast(role.color));
+    textAt(role.name, x + 7, cardsTop + 5, 8, true, pdfContrast(role.color));
+    textAt(weekdayLabel(item.date), x + 7, cardsTop + 16, 6.2, true, pdfContrast(role.color));
+    textAt(formatLongDate(item.date), x + 7, cardsTop + 27, 5.4, false, pdfContrast(role.color));
 
-    let cursorTop = cardsTop + headerH + 7;
+    let cursorTop = cardsTop + headerH + 5;
     const routineLabel = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
     const prayerLine = name => {
       const state = data.prayers?.[name] || "";
       return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
     };
     const meal = (label, value) => `${label}: ${value || "-"}`;
-    const compactWrap = value => pdfWrapText(value || "-", 26, 2);
-    const noteLines = pdfWrapText(data.notes || "-", 26, 12);
+    const compactWrap = value => pdfWrapText(value || "-", 28, 3);
+    const noteLines = pdfWrapText(data.notes || "-", 28, 34);
     const reflexionLines = [
       ...compactWrap(`Gefühl: ${data.mood || '-'}`),
       ...compactWrap(`Träume: ${data.dreams || '-'}`),
@@ -1064,7 +1096,7 @@ function buildWeeklyPdf(reviews) {
       ...noteLines.map((value, noteIndex) => `${noteIndex === 0 ? 'Notiz: ' : ''}${value}`)
     ];
     const activityLines = (data.activities || []).length
-      ? (data.activities || []).slice(0, 12).flatMap(entry => pdfWrapText(`- ${entry.title}`, 26, 2))
+      ? (data.activities || []).slice(0, 22).flatMap(entry => pdfWrapText(`- ${entry.title}`, 28, 2))
       : ["- Keine Aktivitäten"];
     const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
 
@@ -1079,7 +1111,7 @@ function buildWeeklyPdf(reviews) {
           `Getrunken: ${(Number(data.water || 0) / 1000).toFixed(1).replace('.', ',')} L`,
           `Schritte: ${data.steps ? Number(data.steps).toLocaleString('de-DE') : '-'}`
         ],
-        height: 104
+        height: 70
       },
       {
         title: "Routinen",
@@ -1089,40 +1121,40 @@ function buildWeeklyPdf(reviews) {
           `Schlaf: ${data.sleepQualityScore === '' || data.sleepQualityScore === undefined ? '-' : (SLEEP_LABELS[Number(data.sleepQualityScore)] || '-')}`,
           `Fasten: ${data.fastingCompleted ? 'Geschafft' : `${Number(data.ramadanDays || 0)} offen`}`
         ],
-        height: 64
+        height: 50
       },
       {
         title: "Gebete",
         lines: PRAYERS.map(prayerLine),
-        height: 88
+        height: 57
       },
       {
         title: "Reflexion",
         lines: reflexionLines,
-        height: 190
+        height: 319
       },
       {
         title: "Aktivitäten",
         lines: activityLines,
-        height: 135
+        height: 170
       },
       {
         title: "Streaks",
         lines: streakLines,
-        height: 62
+        height: 55
       }
     ];
 
     sections.forEach(section => {
       rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
       stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.55);
-      textAt(section.title, innerX + 7, cursorTop + 6, 8, true, "1E2330");
-      line(innerX + 7, cursorTop + 18, innerX + innerW - 7, cursorTop + 18, "EDF1F6", 0.4);
-      let lineTop = cursorTop + 24;
-      const lineHeight = 8.2;
-      const maxLines = Math.floor((section.height - 29) / lineHeight);
+      textAt(section.title, innerX + 6, cursorTop + 5, 6.7, true, "1E2330");
+      line(innerX + 6, cursorTop + 15, innerX + innerW - 6, cursorTop + 15, "EDF1F6", 0.35);
+      let lineTop = cursorTop + 19;
+      const lineHeight = 7.0;
+      const maxLines = Math.floor((section.height - 23) / lineHeight);
       section.lines.slice(0, maxLines).forEach(lineText => {
-        textAt(pdfFit(lineText, 30), innerX + 7, lineTop, 6.15, false, "404757");
+        textAt(pdfFit(lineText, 32), innerX + 6, lineTop, 5.65, false, "404757");
         lineTop += lineHeight;
       });
       cursorTop += section.height + sectionGap;
