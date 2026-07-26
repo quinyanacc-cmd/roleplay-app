@@ -1,8 +1,8 @@
 # Roleplay App 3.2
 
-Version 3.3 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
+Version 3.3.1 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
-## Neu in Version 3.3
+## Neu in Version 3.3.1
 
 - Intelligente Erfolgsquote mit differenzierter Gebetsqualität:
   - Gemeinschaftsgebet: 22 Punkte
