@@ -231,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.2";
+const APP_VERSION = "3.3";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1086,8 +1086,8 @@ function buildWeeklyPdf(reviews) {
       return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
     };
     const meal = (label, value) => `${label}: ${value || "-"}`;
-    const compactWrap = value => pdfWrapText(value || "-", 28, 3);
-    const noteLines = pdfWrapText(data.notes || "-", 28, 34);
+    const compactWrap = value => pdfWrapText(value || "-", 31, 4);
+    const noteLines = pdfWrapText(data.notes || "-", 34, 42);
     const reflexionLines = [
       ...compactWrap(`Gefühl: ${data.mood || '-'}`),
       ...compactWrap(`Träume: ${data.dreams || '-'}`),
@@ -1096,7 +1096,7 @@ function buildWeeklyPdf(reviews) {
       ...noteLines.map((value, noteIndex) => `${noteIndex === 0 ? 'Notiz: ' : ''}${value}`)
     ];
     const activityLines = (data.activities || []).length
-      ? (data.activities || []).slice(0, 22).flatMap(entry => pdfWrapText(`- ${entry.title}`, 28, 2))
+      ? (data.activities || []).slice(0, 18).flatMap(entry => pdfWrapText(`- ${entry.title}`, 34, 2))
       : ["- Keine Aktivitäten"];
     const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
 
@@ -1131,12 +1131,22 @@ function buildWeeklyPdf(reviews) {
       {
         title: "Reflexion",
         lines: reflexionLines,
-        height: 319
+        height: 374,
+        lineHeight: 6.45,
+        fontSize: 5.45,
+        fitChars: 36,
+        padX: 5,
+        contentTop: 18
       },
       {
         title: "Aktivitäten",
         lines: activityLines,
-        height: 170
+        height: 115,
+        lineHeight: 6.45,
+        fontSize: 5.45,
+        fitChars: 36,
+        padX: 5,
+        contentTop: 18
       },
       {
         title: "Streaks",
@@ -1148,13 +1158,17 @@ function buildWeeklyPdf(reviews) {
     sections.forEach(section => {
       rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
       stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.55);
-      textAt(section.title, innerX + 6, cursorTop + 5, 6.7, true, "1E2330");
-      line(innerX + 6, cursorTop + 15, innerX + innerW - 6, cursorTop + 15, "EDF1F6", 0.35);
-      let lineTop = cursorTop + 19;
-      const lineHeight = 7.0;
-      const maxLines = Math.floor((section.height - 23) / lineHeight);
+      const padX = section.padX ?? 6;
+      const contentTop = section.contentTop ?? 19;
+      const lineHeight = section.lineHeight ?? 7.0;
+      const fontSize = section.fontSize ?? 5.65;
+      const fitChars = section.fitChars ?? 32;
+      textAt(section.title, innerX + padX, cursorTop + 5, 6.7, true, "1E2330");
+      line(innerX + padX, cursorTop + 15, innerX + innerW - padX, cursorTop + 15, "EDF1F6", 0.35);
+      let lineTop = cursorTop + contentTop;
+      const maxLines = Math.floor((section.height - (contentTop + 4)) / lineHeight);
       section.lines.slice(0, maxLines).forEach(lineText => {
-        textAt(pdfFit(lineText, 32), innerX + 6, lineTop, 5.65, false, "404757");
+        textAt(pdfFit(lineText, fitChars), innerX + padX, lineTop, fontSize, false, "404757");
         lineTop += lineHeight;
       });
       cursorTop += section.height + sectionGap;
@@ -1750,8 +1764,8 @@ function switchPage(page, options = {}) {
   $("routinesPage").classList.toggle("active", page === "routines");
   $("streaksPage").classList.toggle("active", page === "streaks");
   $("pageTitle").textContent = titles[page] || "Roleplay";
-  $("rolePickerWrap").hidden = page !== "review";
-  $("dateNavigation").hidden = page === "routines";
+  $("rolePickerWrap").hidden = false;
+  $("dateNavigation").hidden = false;
   document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
   if (page === "routines") renderRoutineCards();
   if (page === "streaks") renderStreaks();

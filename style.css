@@ -3039,3 +3039,161 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 19%, transparent), 0 8px 22px rgba(0,0,0,.16);
   }
 }
+
+
+/* --- v3.3 final polish --- */
+/* Header controls remain visible on all pages and the role picker gets more room. */
+.role-picker-wrap {
+  flex: 0 1 265px;
+  width: min(100%, 265px);
+}
+.role-picker {
+  width: 100%;
+  max-width: none;
+  min-height: 42px;
+  padding: 9px 34px 9px 14px;
+  font-size: 14px;
+  border-radius: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.date-nav {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 10px;
+}
+.icon-button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  text-align: center;
+}
+.date-nav .icon-button {
+  font-size: 26px;
+}
+.date-button {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 0 12px;
+}
+.page-lead,
+#streaksPage .streaks-page-lead {
+  margin: 3px 3px 16px !important;
+  color: var(--muted);
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+  max-width: 680px;
+}
+
+/* Refined emoji navigation with a smaller active glass tile and indicator dot. */
+.bottom-nav {
+  min-height: 62px !important;
+  padding: 8px 14px calc(8px + env(safe-area-inset-bottom)) !important;
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+}
+.bottom-nav .nav-button {
+  position: relative !important;
+  min-height: 46px !important;
+  padding: 6px 0 !important;
+  border-radius: 18px !important;
+  isolation: isolate;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.bottom-nav .nav-button::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 40px;
+  border-radius: 16px;
+  transform: translate(-50%, -50%) scale(.92);
+  opacity: 0;
+  background: rgba(255,255,255,.38);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22), 0 10px 20px rgba(24,31,48,.10);
+  backdrop-filter: blur(16px) saturate(1.16);
+  -webkit-backdrop-filter: blur(16px) saturate(1.16);
+  transition: opacity .2s ease, transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.bottom-nav .nav-button::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateX(-50%) scale(.82);
+  opacity: 0;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.bottom-nav .nav-button.active::before {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  background: color-mix(in srgb, var(--accent) 13%, rgba(255,255,255,.42));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, rgba(255,255,255,.18)), 0 10px 24px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.bottom-nav .nav-button.active::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+.bottom-nav .nav-button .nav-symbol {
+  font-size: 24px !important;
+  transition: transform .2s ease, filter .2s ease !important;
+}
+.bottom-nav .nav-button.active .nav-symbol {
+  transform: translateY(-1px) scale(1.1) !important;
+  filter: drop-shadow(0 5px 7px color-mix(in srgb, var(--accent) 22%, transparent));
+}
+
+@media (max-width: 560px) {
+  .header-title-row {
+    gap: 10px;
+  }
+  .role-picker-wrap {
+    flex-basis: 210px;
+    width: min(100%, 210px);
+  }
+  .role-picker {
+    min-height: 40px;
+    font-size: 13px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--header-role) 36%, rgba(10,14,22,.97)) 0%,
+        color-mix(in srgb, var(--header-role) 18%, rgba(10,14,22,.95)) 100%),
+      linear-gradient(180deg, transparent, color-mix(in srgb, var(--header-role) 11%, transparent));
+    border-bottom-color: rgba(255,255,255,.06);
+    box-shadow: 0 14px 34px rgba(0,0,0,.18);
+  }
+  .app-header .icon-button,
+  .app-header .date-button,
+  .role-picker {
+    background: color-mix(in srgb, var(--header-role) 14%, rgba(16,20,31,.84));
+    border-color: color-mix(in srgb, var(--header-role) 22%, rgba(255,255,255,.08));
+    color: var(--header-role-text);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 8px 18px rgba(0,0,0,.18);
+  }
+  .bottom-nav {
+    background: rgba(11,15,24,.9) !important;
+    border-top-color: rgba(255,255,255,.06);
+  }
+  .bottom-nav .nav-button::before {
+    background: rgba(255,255,255,.06);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 12px 24px rgba(0,0,0,.22);
+  }
+  .bottom-nav .nav-button.active::before {
+    background: color-mix(in srgb, var(--accent) 16%, rgba(255,255,255,.07));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,.09)), 0 10px 24px rgba(0,0,0,.25);
+  }
+}
