@@ -1,26 +1,27 @@
-# Roleplay 2.9
+# Roleplay App 3.0
 
-Version 2.9 baut auf dem Datenmodell von Version 2.8 auf. Der lokale Speicher-Namespace bleibt bewusst unverändert, damit bestehende Tagesreflexionen und Routinen erhalten bleiben. Vor dem Aktualisieren ist trotzdem ein Backup empfehlenswert.
+Version 3.0 baut auf Version 2.9 auf und behält den bisherigen lokalen Datenspeicher bei. Vor dem Austausch der Dateien sollte dennoch ein Backup aus der App gespeichert werden.
 
-## Neuerungen
+## Neu in Version 3.0
 
-- Neue Emoji-Navigation: 📝 Tagesreflexion, 🌅 Routinen und 🔥 Streaks
-- Streaks auf einer eigenen, vorgeschalteten Datenschutzseite
-- Optionaler Zugriff per Face ID beziehungsweise Gerätebiometrie, sofern die App über HTTPS beziehungsweise als iPhone-Web-App läuft und WebAuthn unterstützt wird
-- Morgen- und Abendroutine als kompakte Bildkarten in der Tagesreflexion
-- Routine-Status als schneller Zyklus: Offen → Erledigt → Nicht erledigt
-- Kompaktere Routinenansicht mit Fortschritt, Restzeit und Sortierpfeilen
-- Anklickbare Weblinks innerhalb des Routine-Kontexts
-- Timer auf Zeitstempelbasis: läuft beim Wechsel in den Hintergrund korrekt weiter und wird nach einem Neustart wiederhergestellt
-- Bestmögliche lokale Timer-Benachrichtigung, sofern iOS beziehungsweise der Browser dies zulässt
-- Vollständig überarbeitete Wochenstatistik mit Erfüllungsquote, Routinen pro Tag, Vorwochenvergleich und Liniendiagramm
-- Aktive Streaks werden grün, unterbrochene Streaks rot hervorgehoben
-- Verbesserter Dark Mode für Gebetsauswahl, Dialoge, Aktivitäten, Rückkehr- und Sortierbuttons
-- Kleinerer Plus-Button bei Aktivitäten
-- Wochenplan-PDF mit weißem Seitenhintergrund
+- Emoji-Navigation: 📝 Tagesreflexion, 🌅 Routinen und 🔥 Streaks
+- Morgen- und Abendroutine als bebilderte Karten in der Tagesreflexion
+- direkter Statuszyklus: Offen → Erledigt → Nicht erledigt
+- kompaktere Routinenansicht mit Fortschritt, Zeitübersicht und Sortierung per Pfeilen sowie Drag-and-drop
+- Links in Routine-Kontexten werden anklickbar
+- Timer wird über einen Endzeitpunkt berechnet und läuft dadurch beim Wechseln in den Hintergrund korrekt weiter
+- Benachrichtigung nach Timerende, soweit Browser, installierte Web-App und iOS dies erlauben
+- eigener geschützter Streak-Bereich mit Bestätigungsdialog und optionaler Gerätebiometrie/Face ID über WebAuthn
+- aktive Streaks grün, unterbrochene Streaks rot hervorgehoben
+- Wochenstatistik mit Erfüllungsquote, Durchschnittswerten, Vorwochenvergleich und Verlaufsgrafik
+- Wochenplan-PDF mit weißem Hintergrund
+- umfassende Optimierung des Dark Mode, insbesondere Gebetsauswahl, Aktivitäten, Routinen und Dialoge
 
-## Installation
+## Installation beziehungsweise Aktualisierung
 
-Den Ordner auf den bisherigen Webspace beziehungsweise das bisherige GitHub-Pages-Projekt hochladen und die vorhandenen Dateien ersetzen. Danach die Web-App auf dem iPhone einmal vollständig schließen und neu öffnen. Falls weiterhin die alte Oberfläche erscheint, Safari beziehungsweise die installierte Web-App neu laden, damit der Service-Worker-Cache `roleplay-v2-9` aktiv wird.
+1. In der bisherigen App zunächst ein Backup speichern.
+2. Den Inhalt dieses Ordners auf dem bisherigen Webspace beziehungsweise Hosting ersetzen.
+3. Die App einmal vollständig schließen und neu öffnen. Bei hartnäckigem Cache die Web-App vom Home-Bildschirm entfernen und erneut über Safari hinzufügen.
+4. Das zuvor gespeicherte Backup nur dann importieren, wenn die bisherigen Einträge nicht automatisch erscheinen.
 
-Alle Daten bleiben lokal im Browser gespeichert. Die Datenschutzabfrage vor der Streak-Seite verhindert versehentliches Öffnen, stellt jedoch keine Verschlüsselung der lokalen Daten dar.
+Die Daten bleiben vollständig lokal im Browser beziehungsweise in der installierten Web-App. Die Datenschutzabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die zugrunde liegenden lokalen Daten jedoch nicht.

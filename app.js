@@ -41,13 +41,35 @@ const EMOTIONS = [
   { value: "Unsicher", label: "😕 Unsicher" },
   { value: "Besorgt", label: "😟 Besorgt" },
   { value: "Traurig", label: "😔 Traurig" },
+  { value: "Ängstlich", label: "😰 Ängstlich" },
   { value: "Ärgerlich", label: "😠 Ärgerlich" },
+  { value: "Wütend", label: "😡 Wütend" },
   { value: "Überfordert", label: "😫 Überfordert" },
-  { value: "Erschöpft", label: "🥱 Erschöpft" },
-  { value: "Leer", label: "🫥 Leer" },
   { value: "Gestresst", label: "😵‍💫 Gestresst" },
+  { value: "Erschöpft", label: "🥱 Erschöpft" },
+  { value: "Müde", label: "😴 Müde" },
+  { value: "Leer", label: "🫥 Leer" },
+  { value: "Hungrig", label: "🍽️ Hungrig" },
+  { value: "Durstig", label: "🥤 Durstig" },
+  { value: "Krank", label: "🤒 Krank" },
+  { value: "Schmerzen", label: "🤕 Schmerzen" },
+  { value: "Begehrlich", label: "❤️‍🔥 Große Begierde" },
+  { value: "Versucht", label: "🧲 Versuchung" },
+  { value: "Einsam", label: "🥺 Einsam" },
+  { value: "Verbunden", label: "🤝 Verbunden" },
+  { value: "Scham", label: "🫣 Scham" },
+  { value: "Reue", label: "🥀 Reue" },
+  { value: "Schuldig", label: "😞 Schuldig" },
+  { value: "Überreizt", label: "🤯 Überreizt" },
+  { value: "Unruhig", label: "😬 Unruhig" },
+  { value: "Sehnsüchtig", label: "🌙 Sehnsüchtig" },
+  { value: "Zuversichtlich", label: "✨ Zuversichtlich" },
   { value: "Stolz", label: "😌 Stolz" },
-  { value: "Verbunden", label: "🤝 Verbunden" }
+  { value: "Inspiriert", label: "💡 Inspiriert" },
+  { value: "Klar", label: "🧭 Klar" },
+  { value: "Geerdet", label: "🌿 Geerdet" },
+  { value: "Friedlich", label: "🕊️ Friedlich" },
+  { value: "Erleichtert", label: "😮‍💨 Erleichtert" }
 ];
 
 const SLEEP_LABELS = [
@@ -209,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "2.9";
+const APP_VERSION = "3.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -503,9 +525,14 @@ function routineStateIconHTML(value, size = "small") {
 function renderWaterControl() {
   const waterMl = Number(currentData?.water || 0);
   if ($("water")) $("water").value = String(waterMl);
-  if ($("waterTotalDisplay")) $("waterTotalDisplay").textContent = `${(waterMl / 1000).toFixed(1).replace(".", ",")} Liter`;
+  if ($("waterTotalDisplay")) {
+    const liters = (waterMl / 1000).toFixed(1).replace(".", ",");
+    const glasses = Math.round(waterMl / 250);
+    const progressToGoal = Math.round(Math.min(100, (waterMl / 2500) * 100));
+    $("waterTotalDisplay").innerHTML = `<span class="water-total-main">${liters} Liter</span><small class="water-total-hint">${glasses} Gläser · ${progressToGoal}% vom 2,5-Liter-Ziel</small>`;
+  }
   if ($("waterDroplets")) {
-    const count = Math.max(1, Math.min(8, Math.round(waterMl / 500) || 1));
+    const count = 8;
     const filled = Math.min(8, Math.round(waterMl / 500));
     $("waterDroplets").innerHTML = Array.from({length: count}, (_, index) => `<button type="button" class="water-drop ${index < filled ? 'filled' : ''}" data-water-direct="${(index + 1) * 500}" aria-label="${(index + 1) * 0.5} Liter">💧</button>`).join("");
     document.querySelectorAll("[data-water-direct]").forEach(button => button.addEventListener("click", () => {
@@ -730,23 +757,17 @@ function weekDates(reference = selectedDate) {
 }
 
 function reviewCompletion(data) {
-  const prayerScore = PRAYERS.filter(prayer => data.prayers?.[prayer] && data.prayers[prayer] !== "Nicht gebetet").length;
-  let earned = 0;
-  earned += [data.breakfast, data.lunch, data.dinner, data.snack].some(Boolean) ? 1 : 0;
-  earned += Number(data.water || 0) >= 2000 ? 1 : 0;
-  earned += Number(data.steps || 0) >= 5000 ? 1 : 0;
-  earned += data.morningRoutineState === "done" ? 1 : 0;
-  earned += data.eveningRoutineState === "done" ? 1 : 0;
-  earned += prayerScore;
-  earned += data.sleepQualityScore !== "" && data.sleepQualityScore !== undefined && data.sleepQualityScore !== null ? 1 : 0;
-  earned += data.mood ? 1 : 0;
-  earned += (data.gratitude1 || data.gratitude2 || data.allahName) ? 1 : 0;
-  earned += (data.activities || []).length ? 1 : 0;
-  earned += data.notes ? 1 : 0;
-  return Math.round((earned / 16) * 100);
+  const prayerDone = PRAYERS.filter(prayer => data.prayers?.[prayer] && data.prayers[prayer] !== "Nicht gebetet").length;
+  const routineDone = [data.morningRoutineState, data.eveningRoutineState].filter(state => state === "done").length;
+  const prayerShare = (prayerDone / 5) * 80;
+  const routineShare = (routineDone / 2) * 20;
+  return Math.round(clamp(prayerShare + routineShare, 0, 100));
 }
 
-function buildWeeklyTrendChart(labels, currentValues, previousValues) {
+function buildWeeklyTrendChart(labels, currentValues, previousValues, options = {}) {
+  const title = options.title || "Erfolgsquote";
+  const subtitle = options.subtitle || "Aktuelle Woche im Vergleich zur Vorwoche";
+  const target = Number.isFinite(options.target) ? options.target : null;
   const width = 640;
   const height = 230;
   const padX = 46;
@@ -769,10 +790,12 @@ function buildWeeklyTrendChart(labels, currentValues, previousValues) {
   const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass}" cx="${xFor(index)}" cy="${yFor(value)}" r="5"></circle>`).join("");
   const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-10}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
   const xLabels = labels.map((label, index) => `<text x="${xFor(index)}" y="${height-10}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
-  return `<div class="trend-panel">
-    <div class="trend-panel-head"><div><h3>Erfüllungsquote</h3><small>Aktuelle Woche im Vergleich zur Vorwoche</small></div><div class="trend-legend"><span class="current">Diese Woche</span><span class="previous">Vorwoche</span></div></div>
-    <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf der Erfüllungsquote">
+  const targetLine = target === null ? "" : `<line class="trend-target-line" x1="${padX}" y1="${yFor(target)}" x2="${width-padX}" y2="${yFor(target)}"></line><text class="trend-target-label" x="${width-padX}" y="${yFor(target)-8}" text-anchor="end">Ziel ${target}%</text>`;
+  return `<div class="trend-panel top-priority-panel">
+    <div class="trend-panel-head"><div><h3>${escapeHTML(title)}</h3><small>${escapeHTML(subtitle)}</small></div><div class="trend-legend"><span class="current">Diese Woche</span><span class="previous">Vorwoche</span>${target === null ? "" : '<span class="target">Zielgrenze</span>'}</div></div>
+    <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf der ${escapeHTML(title)}">
       <g class="trend-grid">${grid}</g>
+      ${targetLine}
       <path class="trend-line previous" d="${pathFor(previousValues)}"></path>
       <path class="trend-line current" d="${pathFor(currentValues)}"></path>
       <g class="trend-dots">${dots(previousValues, "previous")}${dots(currentValues, "current")}</g>
@@ -800,19 +823,17 @@ function renderStats() {
   const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
   const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
-  const activityCount = reviews.reduce((sum, item) => sum + (item.data.activities || []).length, 0);
   const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
-  const weeklyScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
+  const successScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
   const storedDays = reviews.filter(item => item.stored).length;
   const routineRate = Math.round((routineDone / routineTarget) * 100);
   const prayerRate = Math.round((prayerCount / prayerTarget) * 100);
   const averageRoutines = routineDone / elapsedDays;
   const averageSteps = Math.round(totalSteps / elapsedDays);
   const averageWater = totalWaterMl / elapsedDays / 1000;
-  const averageActivities = activityCount / elapsedDays;
   const previousHasData = previousReviews.some(item => item.stored);
   const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays) : null;
-  const scoreDelta = previousScore === null ? null : weeklyScore - previousScore;
+  const scoreDelta = previousScore === null ? null : successScore - previousScore;
   const currentScores = reviews.map(item => reviewCompletion(item.data));
   const previousScores = previousReviews.map(item => item.stored ? reviewCompletion(item.data) : null);
   const labels = reviews.map(item => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", ""));
@@ -825,26 +846,26 @@ function renderStats() {
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
-    <div class="week-summary">
-      <div class="score-ring" style="--score:${weeklyScore}%"><div><strong>${weeklyScore}%</strong><span>Erfüllung</span></div></div>
+    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete (80 %) und Routinen (20 %) · aktuelle Woche im Vergleich zur Vorwoche", target: 80 })}
+    <div class="week-summary success-summary">
+      <div class="score-ring" style="--score:${successScore}%"><div><strong>${successScore}%</strong><span>Erfolg</span></div></div>
       <div class="week-summary-copy">
         <strong>${storedDays}/${elapsedDays} Tage reflektiert</strong>
-        <p>${scoreDelta === null ? "Für einen Wochenvergleich fehlen noch Daten aus der Vorwoche." : scoreDelta >= 0 ? `Gegenüber der Vorwoche liegst du aktuell ${scoreDelta} Prozentpunkte höher.` : `Gegenüber der Vorwoche liegst du aktuell ${Math.abs(scoreDelta)} Prozentpunkte niedriger.`}</p>
+        <p>${scoreDelta === null ? "Für einen Wochenvergleich fehlen noch Daten aus der Vorwoche." : scoreDelta >= 0 ? `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${scoreDelta} Prozentpunkte höher.` : `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${Math.abs(scoreDelta)} Prozentpunkte niedriger.`}</p>
       </div>
     </div>
     <div class="stats-metrics colorful-metrics">
-      ${statTile(`${routineRate}%`, "Routinen erfüllt")}
-      ${statTile(averageRoutines.toFixed(1).replace(".", ","), "Routinen / Tag")}
-      ${statTile(`${prayerRate}%`, "Gebetsquote")}
+      ${statTile(`${successScore}%`, "Erfolgsquote")}
       ${statTile(scoreDelta === null ? "–" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta}`, "Pkt. zur Vorwoche")}
-      ${statTile(averageSteps.toLocaleString("de-DE"), "Schritte / Tag")}
+      ${statTile(`${prayerRate}%`, "Gebetsquote")}
+      ${statTile(`${routineRate}%`, "Routinenquote")}
+      ${statTile(averageRoutines.toFixed(1).replace(".", ","), "Routinen / Tag")}
       ${statTile(`${averageWater.toFixed(1).replace('.', ',')} L`, "Wasser / Tag")}
-      ${statTile(averageActivities.toFixed(1).replace(".", ","), "Aktivitäten / Tag")}
+      ${statTile(averageSteps.toLocaleString("de-DE"), "Schritte / Tag")}
       ${statTile(String(mosqueCount), "Gemeinschaftsgebete")}
     </div>
-    ${buildWeeklyTrendChart(labels, currentScores, previousScores)}
     <div class="insight-grid compact-insights">
-      <div class="insight-card"><span class="insight-label">Entwicklung</span><strong>${escapeHTML(deltaText)}</strong><small>Durchschnittliche Tageserfüllung</small></div>
+      <div class="insight-card"><span class="insight-label">Entwicklung</span><strong>${escapeHTML(deltaText)}</strong><small>Gewichteter Wochenschnitt</small></div>
       <div class="insight-card"><span class="insight-label">Häufigste Emotion</span><strong>${escapeHTML(topMood)}</strong><small>Achtsamkeits-Tendenz</small></div>
       <div class="insight-card"><span class="insight-label">Schlaf zuletzt</span><strong>${escapeHTML(lastSleepLabel)}</strong><small>${sleepValues.length}/${elapsedDays} Tage dokumentiert</small></div>
     </div>
@@ -874,10 +895,10 @@ function renderStats() {
         }).join("")}
       </div>
       <div class="visual-panel">
-        <h3>Fasten & Aktivität</h3>
+        <h3>Überblick</h3>
         <div class="summary-pair"><span>Fastentage</span><strong>${fastDays}</strong></div>
-        <div class="summary-pair"><span>Aktivitäten gesamt</span><strong>${activityCount}</strong></div>
         <div class="summary-pair"><span>Routinen gesamt</span><strong>${routineDone}/${routineTarget}</strong></div>
+        <div class="summary-pair"><span>Gebete gesamt</span><strong>${prayerCount}/${prayerTarget}</strong></div>
       </div>
     </div>`;
 }

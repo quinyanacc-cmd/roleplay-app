@@ -1,12 +1,17 @@
 {
   "name": "Roleplay",
   "short_name": "Roleplay",
-  "description": "Tagesreflexion, geschützte Streaks, Wochenstatistik und geführte Routinen",
+  "description": "Tagesreflexion, geführte Routinen, geschützte Streaks und Wochenstatistik",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f9",
   "theme_color": "#f4f5f9",
   "icons": [
-    { "src": "logo.jpeg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+    {
+      "src": "logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
   ]
 }
