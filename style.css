@@ -2786,3 +2786,74 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
     background: linear-gradient(180deg, rgba(7, 12, 24, .08) 6%, rgba(7, 12, 24, .52) 100%) !important;
   }
 }
+
+
+/* --- v3.1 fine tuning --- */
+/* Restore the compact water control from v2.9 */
+.water-tracker { display: flex !important; align-items: center !important; gap: 10px !important; }
+.water-display-wrap {
+  flex: 1 !important;
+  min-height: 56px !important;
+  padding: 10px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+.water-droplets { display: flex !important; gap: 4px !important; flex-wrap: wrap !important; }
+.water-drop { font-size: 20px !important; opacity: .22 !important; transform: none !important; filter: none !important; }
+.water-drop.filled { opacity: 1 !important; filter: saturate(1.15) !important; }
+#waterTotalDisplay { display: block !important; line-height: 1.2 !important; }
+#waterPlus, #waterMinus { min-width: 46px !important; width: auto !important; height: 46px !important; border-radius: 16px !important; }
+
+/* Prayer status text gets a little more breathing room */
+.prayer-card-compact { padding-bottom: 10px !important; }
+.prayer-card-compact small {
+  margin-top: 9px !important;
+  min-height: 18px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  line-height: 1.15 !important;
+}
+
+/* Emoji navigation must remain visible in both modes */
+.bottom-nav .nav-button .nav-symbol {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+  color: initial !important;
+  -webkit-text-fill-color: initial !important;
+}
+
+/* Seven weekdays without horizontal swiping */
+.trend-chart-scroll {
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+.trend-chart {
+  min-width: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+}
+.trend-grid text,
+.trend-x-labels text { font-size: 9px !important; }
+
+/* Streak day unit aligned inside the number field */
+.streak-input-wrap { position: relative !important; }
+.streak-unit {
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  color: var(--muted) !important;
+}
+.streak-days-large { padding-right: 70px !important; }
+
+/* Face ID was intentionally removed; keep the confirmation gate clean */
+.privacy-dialog-status,
+.biometric-button { display: none !important; }

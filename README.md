@@ -1,8 +1,14 @@
-# Roleplay App 3.0
+# Roleplay App 3.1
 
-Version 3.0 baut auf Version 2.9 auf und behält den bisherigen lokalen Datenspeicher bei. Vor dem Austausch der Dateien sollte dennoch ein Backup aus der App gespeichert werden.
+Version 3.1 baut auf Version 3.0 auf und behält den bisherigen lokalen Datenspeicher bei. Vor dem Austausch der Dateien sollte dennoch ein Backup aus der App gespeichert werden.
 
-## Neu in Version 3.0
+## Neu in Version 3.1
+
+- Erfolgsquote mit abgestufter Gebetsbewertung: Moschee > pünktlich > verspätet > nachgeholt > nicht gebetet
+- alle sieben Wochentage ohne horizontales Wischen im Diagramm
+- Wasseranzeige wieder im kompakten vorherigen Layout
+- PDF-Bereiche neu gewichtet: mehr Platz für Reflexion und Aktivitäten
+- Streak-Zugang wieder als einfache Bestätigung ohne Face ID
 
 - Emoji-Navigation: 📝 Tagesreflexion, 🌅 Routinen und 🔥 Streaks
 - Morgen- und Abendroutine als bebilderte Karten in der Tagesreflexion
@@ -11,7 +17,7 @@ Version 3.0 baut auf Version 2.9 auf und behält den bisherigen lokalen Datenspe
 - Links in Routine-Kontexten werden anklickbar
 - Timer wird über einen Endzeitpunkt berechnet und läuft dadurch beim Wechseln in den Hintergrund korrekt weiter
 - Benachrichtigung nach Timerende, soweit Browser, installierte Web-App und iOS dies erlauben
-- eigener geschützter Streak-Bereich mit Bestätigungsdialog und optionaler Gerätebiometrie/Face ID über WebAuthn
+- eigener geschützter Streak-Bereich mit Bestätigungsdialog vor dem Öffnen
 - aktive Streaks grün, unterbrochene Streaks rot hervorgehoben
 - Wochenstatistik mit Erfüllungsquote, Durchschnittswerten, Vorwochenvergleich und Verlaufsgrafik
 - Wochenplan-PDF mit weißem Hintergrund

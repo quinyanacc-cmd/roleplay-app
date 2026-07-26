@@ -50,7 +50,6 @@ const EMOTIONS = [
   { value: "Müde", label: "😴 Müde" },
   { value: "Leer", label: "🫥 Leer" },
   { value: "Hungrig", label: "🍽️ Hungrig" },
-  { value: "Durstig", label: "🥤 Durstig" },
   { value: "Krank", label: "🤒 Krank" },
   { value: "Schmerzen", label: "🤕 Schmerzen" },
   { value: "Begehrlich", label: "❤️‍🔥 Große Begierde" },
@@ -69,6 +68,7 @@ const EMOTIONS = [
   { value: "Klar", label: "🧭 Klar" },
   { value: "Geerdet", label: "🌿 Geerdet" },
   { value: "Friedlich", label: "🕊️ Friedlich" },
+  { value: "Gottesfürchtig", label: "🤲 Gottesfürchtig" },
   { value: "Erleichtert", label: "😮‍💨 Erleichtert" }
 ];
 
@@ -231,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.0";
+const APP_VERSION = "3.1";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -525,14 +525,9 @@ function routineStateIconHTML(value, size = "small") {
 function renderWaterControl() {
   const waterMl = Number(currentData?.water || 0);
   if ($("water")) $("water").value = String(waterMl);
-  if ($("waterTotalDisplay")) {
-    const liters = (waterMl / 1000).toFixed(1).replace(".", ",");
-    const glasses = Math.round(waterMl / 250);
-    const progressToGoal = Math.round(Math.min(100, (waterMl / 2500) * 100));
-    $("waterTotalDisplay").innerHTML = `<span class="water-total-main">${liters} Liter</span><small class="water-total-hint">${glasses} Gläser · ${progressToGoal}% vom 2,5-Liter-Ziel</small>`;
-  }
+  if ($("waterTotalDisplay")) $("waterTotalDisplay").textContent = `${(waterMl / 1000).toFixed(1).replace(".", ",")} Liter`;
   if ($("waterDroplets")) {
-    const count = 8;
+    const count = Math.max(1, Math.min(8, Math.round(waterMl / 500) || 1));
     const filled = Math.min(8, Math.round(waterMl / 500));
     $("waterDroplets").innerHTML = Array.from({length: count}, (_, index) => `<button type="button" class="water-drop ${index < filled ? 'filled' : ''}" data-water-direct="${(index + 1) * 500}" aria-label="${(index + 1) * 0.5} Liter">💧</button>`).join("");
     document.querySelectorAll("[data-water-direct]").forEach(button => button.addEventListener("click", () => {
@@ -756,27 +751,44 @@ function weekDates(reference = selectedDate) {
   });
 }
 
+function prayerStateWeight(state) {
+  const weights = {
+    "Gemeinschaft": 1.15,
+    "Normal": 1,
+    "Verspätet": 0.7,
+    "Nachgeholt": 0.4,
+    "Nicht gebetet": 0,
+    "": 0
+  };
+  return weights[state || ""] ?? 0;
+}
+
+function prayerPerformance(data) {
+  const total = PRAYERS.reduce((sum, prayer) => sum + prayerStateWeight(data.prayers?.[prayer] || ""), 0);
+  return (total / PRAYERS.length) * 100;
+}
+
 function reviewCompletion(data) {
-  const prayerDone = PRAYERS.filter(prayer => data.prayers?.[prayer] && data.prayers[prayer] !== "Nicht gebetet").length;
+  const prayerShare = prayerPerformance(data) * 0.8;
   const routineDone = [data.morningRoutineState, data.eveningRoutineState].filter(state => state === "done").length;
-  const prayerShare = (prayerDone / 5) * 80;
   const routineShare = (routineDone / 2) * 20;
-  return Math.round(clamp(prayerShare + routineShare, 0, 100));
+  return Math.round(clamp(prayerShare + routineShare, 0, 120));
 }
 
 function buildWeeklyTrendChart(labels, currentValues, previousValues, options = {}) {
   const title = options.title || "Erfolgsquote";
   const subtitle = options.subtitle || "Aktuelle Woche im Vergleich zur Vorwoche";
   const target = Number.isFinite(options.target) ? options.target : null;
-  const width = 640;
-  const height = 230;
-  const padX = 46;
-  const padTop = 20;
-  const padBottom = 38;
+  const maxValue = Number.isFinite(options.maxValue) ? options.maxValue : 120;
+  const width = 360;
+  const height = 220;
+  const padX = 40;
+  const padTop = 16;
+  const padBottom = 32;
   const chartW = width - padX * 2;
   const chartH = height - padTop - padBottom;
   const xFor = index => labels.length <= 1 ? padX + chartW / 2 : padX + (index / (labels.length - 1)) * chartW;
-  const yFor = value => padTop + chartH - (clamp(Number(value || 0), 0, 100) / 100) * chartH;
+  const yFor = value => padTop + chartH - (clamp(Number(value || 0), 0, maxValue) / maxValue) * chartH;
   const pathFor = values => {
     let path = "";
     let drawing = false;
@@ -787,13 +799,14 @@ function buildWeeklyTrendChart(labels, currentValues, previousValues, options = 
     });
     return path.trim();
   };
-  const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass}" cx="${xFor(index)}" cy="${yFor(value)}" r="5"></circle>`).join("");
-  const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-10}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
-  const xLabels = labels.map((label, index) => `<text x="${xFor(index)}" y="${height-10}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
-  const targetLine = target === null ? "" : `<line class="trend-target-line" x1="${padX}" y1="${yFor(target)}" x2="${width-padX}" y2="${yFor(target)}"></line><text class="trend-target-label" x="${width-padX}" y="${yFor(target)-8}" text-anchor="end">Ziel ${target}%</text>`;
+  const dots = (values, cssClass) => values.map((value, index) => value === null || value === undefined ? "" : `<circle class="${cssClass}" cx="${xFor(index)}" cy="${yFor(value)}" r="4.5"></circle>`).join("");
+  const ticks = [0, 20, 40, 60, 80, 100, 120].filter(value => value <= maxValue);
+  const grid = ticks.map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-8}" y="${yFor(value)+4}" text-anchor="end">${value}%</text></g>`).join("");
+  const xLabels = labels.map((label, index) => `<text x="${xFor(index)}" y="${height-9}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
+  const targetLine = target === null ? "" : `<line class="trend-target-line" x1="${padX}" y1="${yFor(target)}" x2="${width-padX}" y2="${yFor(target)}"></line><text class="trend-target-label" x="${width-padX}" y="${yFor(target)-7}" text-anchor="end">Ziel ${target}%</text>`;
   return `<div class="trend-panel top-priority-panel">
     <div class="trend-panel-head"><div><h3>${escapeHTML(title)}</h3><small>${escapeHTML(subtitle)}</small></div><div class="trend-legend"><span class="current">Diese Woche</span><span class="previous">Vorwoche</span>${target === null ? "" : '<span class="target">Zielgrenze</span>'}</div></div>
-    <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf der ${escapeHTML(title)}">
+    <div class="trend-chart-scroll"><svg class="trend-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Verlauf der ${escapeHTML(title)}">
       <g class="trend-grid">${grid}</g>
       ${targetLine}
       <path class="trend-line previous" d="${pathFor(previousValues)}"></path>
@@ -817,7 +830,8 @@ function renderStats() {
   const elapsedDays = Math.max(1, reviews.length);
   const prayerTarget = elapsedDays * 5;
   const routineTarget = elapsedDays * 2;
-  const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length, 0);
+  const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => prayerStateWeight(item.data.prayers?.[prayer] || "") > 0).length, 0);
+  const weightedPrayerTotal = reviews.reduce((sum, item) => sum + PRAYERS.reduce((daySum, prayer) => daySum + prayerStateWeight(item.data.prayers?.[prayer] || ""), 0), 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
   const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
@@ -827,16 +841,16 @@ function renderStats() {
   const successScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays);
   const storedDays = reviews.filter(item => item.stored).length;
   const routineRate = Math.round((routineDone / routineTarget) * 100);
-  const prayerRate = Math.round((prayerCount / prayerTarget) * 100);
+  const prayerRate = Math.round((weightedPrayerTotal / prayerTarget) * 100);
   const averageRoutines = routineDone / elapsedDays;
   const averageSteps = Math.round(totalSteps / elapsedDays);
   const averageWater = totalWaterMl / elapsedDays / 1000;
   const previousHasData = previousReviews.some(item => item.stored);
   const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data), 0) / elapsedDays) : null;
   const scoreDelta = previousScore === null ? null : successScore - previousScore;
-  const currentScores = reviews.map(item => reviewCompletion(item.data));
-  const previousScores = previousReviews.map(item => item.stored ? reviewCompletion(item.data) : null);
-  const labels = reviews.map(item => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", ""));
+  const currentScores = dates.map(date => date <= selectedDate ? reviewCompletion(loadReview(date)) : null);
+  const previousScores = dates.map(date => { const previousDate = addDays(date, -7); return localStorage.getItem(storageKey(previousDate)) ? reviewCompletion(loadReview(previousDate)) : null; });
+  const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
   const topMood = Object.entries(moodCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || "–";
@@ -846,9 +860,9 @@ function renderStats() {
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
-    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete (80 %) und Routinen (20 %) · aktuelle Woche im Vergleich zur Vorwoche", target: 80 })}
+    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete (80 %) und Routinen (20 %) · Moschee zählt stärker, verspätet und nachgeholt abgestuft", target: 80, maxValue: 120 })}
     <div class="week-summary success-summary">
-      <div class="score-ring" style="--score:${successScore}%"><div><strong>${successScore}%</strong><span>Erfolg</span></div></div>
+      <div class="score-ring" style="--score:${Math.min(100, successScore)}%"><div><strong>${successScore}%</strong><span>Erfolg</span></div></div>
       <div class="week-summary-copy">
         <strong>${storedDays}/${elapsedDays} Tage reflektiert</strong>
         <p>${scoreDelta === null ? "Für einen Wochenvergleich fehlen noch Daten aus der Vorwoche." : scoreDelta >= 0 ? `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${scoreDelta} Prozentpunkte höher.` : `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${Math.abs(scoreDelta)} Prozentpunkte niedriger.`}</p>
@@ -857,7 +871,7 @@ function renderStats() {
     <div class="stats-metrics colorful-metrics">
       ${statTile(`${successScore}%`, "Erfolgsquote")}
       ${statTile(scoreDelta === null ? "–" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta}`, "Pkt. zur Vorwoche")}
-      ${statTile(`${prayerRate}%`, "Gebetsquote")}
+      ${statTile(`${prayerRate}%`, "Gebetsleistung")}
       ${statTile(`${routineRate}%`, "Routinenquote")}
       ${statTile(averageRoutines.toFixed(1).replace(".", ","), "Routinen / Tag")}
       ${statTile(`${averageWater.toFixed(1).replace('.', ',')} L`, "Wasser / Tag")}
@@ -873,7 +887,7 @@ function renderStats() {
       <div class="visual-panel">
         <h3>Gebetswoche</h3>
         ${reviews.map(item => {
-          const prayed = PRAYERS.filter(prayer => item.data.prayers?.[prayer] && item.data.prayers[prayer] !== "Nicht gebetet").length;
+          const prayed = PRAYERS.filter(prayer => prayerStateWeight(item.data.prayers?.[prayer] || "") > 0).length;
           const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
           return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${(prayed/5)*100}%"></i></div><strong>${prayed}/5</strong></div>`;
         }).join("")}
@@ -999,7 +1013,7 @@ function exportWeeklyPdf() {
 
 function buildWeeklyPdf(reviews) {
   const W = 1260, H = 842;
-  const margin = 24, gap = 10;
+  const margin = 14, gap = 6;
   const commands = [];
   const rect = (x, top, width, height, hex) => pdfFillRect(commands, x, H - top - height, width, height, hex);
   const stroke = (x, top, width, height, hex, lw = 0.7) => pdfStrokeRect(commands, x, H - top - height, width, height, hex, lw);
@@ -1008,73 +1022,64 @@ function buildWeeklyPdf(reviews) {
   const weekdayLabel = date => new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${date}T12:00:00`));
 
   pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
-  textAt("ROLEPLAY", margin, 18, 10, true, "758093");
-  textAt("Wochenplan", margin, 34, 22, true, "17181C");
-  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 162, 39, 10, false, "6B7382");
-  textAt("Ubersicht deiner Woche im App-Layout", W - 270, 34, 9, false, "7A8393");
+  textAt("ROLEPLAY", margin, 12, 8.5, true, "758093");
+  textAt("Wochenplan", margin, 25, 19, true, "17181C");
+  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 145, 30, 8.5, false, "6B7382");
 
-  const cardsTop = 72;
+  const cardsTop = 54;
   const cardW = (W - margin * 2 - gap * 6) / 7;
-  const cardH = H - cardsTop - margin;
-
-  const sectionBase = [
-    { title: "Vitalitat", height: 138 },
-    { title: "Routinen", height: 78 },
-    { title: "Gebete", height: 118 },
-    { title: "Reflexion", height: 126 },
-    { title: "Aktivitaten", height: 78 },
-    { title: "Streaks", height: 78 }
-  ];
+  const cardH = H - cardsTop - 12;
 
   reviews.forEach((item, index) => {
     const role = getRole(item.data.role);
     const data = item.data;
     const x = margin + index * (cardW + gap);
-    const headerH = 62;
-    const bodyPad = 8;
-    const sectionGap = 6;
+    const headerH = 48;
+    const bodyPad = 6;
+    const sectionGap = 5;
     const innerX = x + bodyPad;
     const innerW = cardW - bodyPad * 2;
 
     rect(x, cardsTop, cardW, cardH, "FFFFFF");
-    stroke(x, cardsTop, cardW, cardH, "DCE2EC", 0.9);
+    stroke(x, cardsTop, cardW, cardH, "DCE2EC", 0.8);
     rect(x, cardsTop, cardW, headerH, role.color.replace('#',''));
-    textAt(role.name, x + 10, cardsTop + 10, 11, true, pdfContrast(role.color));
-    textAt(weekdayLabel(item.date), x + 10, cardsTop + 27, 8, true, pdfContrast(role.color));
-    textAt(formatLongDate(item.date), x + 10, cardsTop + 40, 7, false, pdfContrast(role.color));
+    textAt(role.name, x + 8, cardsTop + 7, 9.2, true, pdfContrast(role.color));
+    textAt(weekdayLabel(item.date), x + 8, cardsTop + 21, 7, true, pdfContrast(role.color));
+    textAt(formatLongDate(item.date), x + 8, cardsTop + 33, 6, false, pdfContrast(role.color));
 
-    let cursorTop = cardsTop + headerH + 10;
+    let cursorTop = cardsTop + headerH + 7;
     const routineLabel = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
     const prayerLine = name => {
       const state = data.prayers?.[name] || "";
       return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
     };
     const meal = (label, value) => `${label}: ${value || "-"}`;
-    const cleanLines = value => pdfWrapText(value || "-", 24, 3);
-    const activityLines = (data.activities || []).length
-      ? (data.activities || []).slice(0, 4).flatMap(entry => pdfWrapText(`- ${entry.title}`, 24, 1))
-      : ["- Keine Aktivitaten"];
-    const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
-    const reflexionText = [
-      `Gefuhl: ${data.mood || '-'}`,
-      `Traume: ${data.dreams || '-'}`,
-      `Dankbar: ${[data.gratitude1, data.gratitude2].filter(Boolean).join(' / ') || '-'}`,
-      `Allah: ${latinAllahName(data.allahName) || '-'}`,
-      `Notiz: ${data.notes || '-'}`
+    const compactWrap = value => pdfWrapText(value || "-", 26, 2);
+    const noteLines = pdfWrapText(data.notes || "-", 26, 12);
+    const reflexionLines = [
+      ...compactWrap(`Gefühl: ${data.mood || '-'}`),
+      ...compactWrap(`Träume: ${data.dreams || '-'}`),
+      ...compactWrap(`Dankbar: ${[data.gratitude1, data.gratitude2].filter(Boolean).join(' / ') || '-'}`),
+      ...compactWrap(`Allah: ${latinAllahName(data.allahName) || '-'}`),
+      ...noteLines.map((value, noteIndex) => `${noteIndex === 0 ? 'Notiz: ' : ''}${value}`)
     ];
+    const activityLines = (data.activities || []).length
+      ? (data.activities || []).slice(0, 12).flatMap(entry => pdfWrapText(`- ${entry.title}`, 26, 2))
+      : ["- Keine Aktivitäten"];
+    const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
 
     const sections = [
       {
-        title: "Vitalitat",
+        title: "Vitalität",
         lines: [
-          meal("Fruhstuck", data.breakfast),
+          meal("Frühstück", data.breakfast),
           meal("Mittag", data.lunch),
           meal("Abend", data.dinner),
           meal("Snack", data.snack),
           `Getrunken: ${(Number(data.water || 0) / 1000).toFixed(1).replace('.', ',')} L`,
           `Schritte: ${data.steps ? Number(data.steps).toLocaleString('de-DE') : '-'}`
         ],
-        height: 138
+        height: 104
       },
       {
         title: "Routinen",
@@ -1084,40 +1089,41 @@ function buildWeeklyPdf(reviews) {
           `Schlaf: ${data.sleepQualityScore === '' || data.sleepQualityScore === undefined ? '-' : (SLEEP_LABELS[Number(data.sleepQualityScore)] || '-')}`,
           `Fasten: ${data.fastingCompleted ? 'Geschafft' : `${Number(data.ramadanDays || 0)} offen`}`
         ],
-        height: 78
+        height: 64
       },
       {
         title: "Gebete",
         lines: PRAYERS.map(prayerLine),
-        height: 118
+        height: 88
       },
       {
         title: "Reflexion",
-        lines: reflexionText.flatMap(lineText => cleanLines(lineText)),
-        height: 126
+        lines: reflexionLines,
+        height: 190
       },
       {
-        title: "Aktivitaten",
+        title: "Aktivitäten",
         lines: activityLines,
-        height: 78
+        height: 135
       },
       {
         title: "Streaks",
         lines: streakLines,
-        height: 78
+        height: 62
       }
     ];
 
     sections.forEach(section => {
       rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
-      stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.6);
-      textAt(section.title, innerX + 8, cursorTop + 8, 8.6, true, "1E2330");
-      line(innerX + 8, cursorTop + 20, innerX + innerW - 8, cursorTop + 20, "EDF1F6", 0.45);
-      let lineTop = cursorTop + 28;
-      const maxLines = Math.floor((section.height - 34) / 9.4);
+      stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.55);
+      textAt(section.title, innerX + 7, cursorTop + 6, 8, true, "1E2330");
+      line(innerX + 7, cursorTop + 18, innerX + innerW - 7, cursorTop + 18, "EDF1F6", 0.4);
+      let lineTop = cursorTop + 24;
+      const lineHeight = 8.2;
+      const maxLines = Math.floor((section.height - 29) / lineHeight);
       section.lines.slice(0, maxLines).forEach(lineText => {
-        textAt(pdfFit(lineText, 28), innerX + 8, lineTop, 6.6, false, "404757");
-        lineTop += 9.4;
+        textAt(pdfFit(lineText, 30), innerX + 7, lineTop, 6.15, false, "404757");
+        lineTop += lineHeight;
       });
       cursorTop += section.height + sectionGap;
     });
@@ -1125,7 +1131,6 @@ function buildWeeklyPdf(reviews) {
 
   return assemblePdf(commands.join("\n"), W, H);
 }
-
 function pdfWrapText(value, maxChars = 24, maxLines = 3) {
   const clean = pdfPlainText(value).replace(/\s+/g, ' ').trim();
   if (!clean) return ["-"];
@@ -1151,8 +1156,9 @@ function pdfPlainText(value) {
   return String(value ?? "")
     .replace(/[–—]/g, "-")
     .replace(/[ʿ‘’]/g, "'")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[āĀ]/g, "a")
+    .replace(/[īĪ]/g, "i")
+    .replace(/[ūŪ]/g, "u")
     .replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
 }
 
@@ -1196,8 +1202,9 @@ function pdfSafeText(value) {
   return String(value ?? "")
     .replace(/[–—]/g, "-")
     .replace(/[ʿ‘’]/g, "'")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[āĀ]/g, "a")
+    .replace(/[īĪ]/g, "i")
+    .replace(/[ūŪ]/g, "u")
     .replace(/[^\x20-\x7E\xA0-\xFF]/g, "")
     .replace(/\\/g, "\\\\")
     .replace(/\(/g, "\\(")
@@ -1689,69 +1696,16 @@ function closeRoutineSession() {
   if (activeRoutineKey) renderRoutineDetail(activeRoutineKey);
 }
 
-function biometricAccessSupported() {
-  return Boolean(window.isSecureContext && window.PublicKeyCredential && navigator.credentials && window.crypto?.subtle);
-}
-
-function configureStreakPrivacyDialog() {
-  const biometricButton = $("streakBiometricButton");
-  const credential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
-  biometricButton.hidden = !biometricAccessSupported();
-  biometricButton.textContent = credential ? "Mit Face ID öffnen" : "Face ID einrichten";
-  $("streakPrivacyStatus").textContent = "";
-}
-
 function requestStreakAccess() {
-  configureStreakPrivacyDialog();
-  if (!$("streakPrivacyDialog").open) $("streakPrivacyDialog").showModal();
+  const dialog = $("streakPrivacyDialog");
+  if (dialog && !dialog.open) dialog.showModal();
 }
 
 function grantStreakAccess() {
   streaksUnlocked = true;
-  if ($("streakPrivacyDialog").open) $("streakPrivacyDialog").close();
+  const dialog = $("streakPrivacyDialog");
+  if (dialog?.open) dialog.close();
   switchPage("streaks", { skipGuard: true });
-}
-
-async function useStreakBiometricAccess() {
-  const status = $("streakPrivacyStatus");
-  const button = $("streakBiometricButton");
-  if (!biometricAccessSupported()) return;
-  button.disabled = true;
-  status.textContent = "Face ID wird vorbereitet …";
-  try {
-    const storedCredential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
-    if (!storedCredential) {
-      const credential = await navigator.credentials.create({ publicKey: {
-        challenge: randomBytes(32),
-        rp: { name: "Roleplay" },
-        user: { id: randomBytes(16), name: "roleplay-local-user", displayName: "Roleplay" },
-        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-        authenticatorSelection: { authenticatorAttachment: "platform", residentKey: "preferred", userVerification: "required" },
-        timeout: 60000,
-        attestation: "none"
-      }});
-      if (!credential) throw new Error("Keine Gerätebiometrie eingerichtet.");
-      localStorage.setItem(STREAK_CREDENTIAL_KEY, bytesToBase64Url(credential.rawId));
-      status.textContent = "Face ID wurde eingerichtet.";
-      grantStreakAccess();
-      return;
-    }
-    const assertion = await navigator.credentials.get({ publicKey: {
-      challenge: randomBytes(32),
-      allowCredentials: [{ type: "public-key", id: base64UrlToBytes(storedCredential), transports: ["internal"] }],
-      userVerification: "required",
-      timeout: 60000
-    }});
-    if (!assertion) throw new Error("Entsperrung abgebrochen.");
-    grantStreakAccess();
-  } catch (error) {
-    console.warn("Biometrische Entsperrung fehlgeschlagen", error);
-    status.textContent = "Face ID war nicht verfügbar oder wurde abgebrochen. Du kannst den Bereich weiterhin manuell öffnen.";
-  } finally {
-    button.disabled = false;
-    const credential = localStorage.getItem(STREAK_CREDENTIAL_KEY);
-    button.textContent = credential ? "Mit Face ID öffnen" : "Face ID einrichten";
-  }
 }
 
 function switchPage(page, options = {}) {
@@ -1892,7 +1846,6 @@ function bindEvents() {
   document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => switchPage(button.dataset.page)));
   $("cancelStreakAccess").addEventListener("click", () => $("streakPrivacyDialog").close());
   $("confirmStreakAccess").addEventListener("click", grantStreakAccess);
-  $("streakBiometricButton").addEventListener("click", useStreakBiometricAccess);
   $("streakPrivacyDialog").addEventListener("cancel", event => { event.preventDefault(); $("streakPrivacyDialog").close(); });
   $("openRoutines").addEventListener("click", () => switchPage("routines"));
   $("backToRoutineOverview").addEventListener("click", closeRoutineDetail);
