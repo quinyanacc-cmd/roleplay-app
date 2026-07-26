@@ -3305,3 +3305,30 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
 .bottom-nav .nav-button.active {
   filter: drop-shadow(0 0 12px rgba(138,102,255,.14));
 }
+
+
+/* --- v3.4 --- */
+/* In dark mode the header returns to a clean, softly role-coloured surface. */
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    background:
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--header-role) 58%, #b7c3c8) 0%,
+        color-mix(in srgb, var(--header-role) 42%, #89959f) 100%) !important;
+    color: var(--header-role-text) !important;
+    border-bottom-color: rgba(255,255,255,.10) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.18) !important;
+  }
+  .app-header .eyebrow,
+  .app-header h1 {
+    color: var(--header-role-text) !important;
+  }
+  .app-header .icon-button,
+  .app-header .date-button,
+  .role-picker {
+    background: rgba(16,20,31,.90) !important;
+    color: #f4f6fb !important;
+    border-color: rgba(255,255,255,.10) !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.035), 0 8px 18px rgba(0,0,0,.17) !important;
+  }
+}

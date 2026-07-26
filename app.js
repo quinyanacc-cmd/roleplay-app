@@ -231,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.3.1";
+const APP_VERSION = "3.4";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -893,13 +893,6 @@ function renderStats() {
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
     ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete 80 %, Routinen 20 % · Moschee wird zusätzlich belohnt", target: 80, maxValue: 110, todayIndex: dates.indexOf(todayISO()) })}
-    <div class="week-summary success-summary">
-      <div class="score-ring" style="--score:${Math.min(100, successScore)}%"><div><strong>${successScore}%</strong><span>Erfolg</span></div></div>
-      <div class="week-summary-copy">
-        <strong>${storedDays}/${elapsedDays} Tage reflektiert</strong>
-        <p>${scoreDelta === null ? "Für einen Wochenvergleich fehlen noch Daten aus der Vorwoche." : scoreDelta >= 0 ? `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${scoreDelta} Prozentpunkte höher.` : `Gegenüber der Vorwoche liegt deine Erfolgsquote aktuell ${Math.abs(scoreDelta)} Prozentpunkte niedriger.`}</p>
-      </div>
-    </div>
     <div class="stats-metrics colorful-metrics">
       ${statTile(`${successScore}%`, "Erfolgsquote")}
       ${statTile(scoreDelta === null ? "–" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta}`, "Pkt. zur Vorwoche")}
@@ -1086,8 +1079,8 @@ function buildWeeklyPdf(reviews) {
       return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
     };
     const meal = (label, value) => `${label}: ${value || "-"}`;
-    const compactWrap = value => pdfWrapText(value || "-", 31, 4);
-    const noteLines = pdfWrapText(data.notes || "-", 34, 42);
+    const compactWrap = value => pdfWrapText(value || "-", 31, 5);
+    const noteLines = pdfWrapText(data.notes || "-", 31, 55);
     const reflexionLines = [
       ...compactWrap(`Gefühl: ${data.mood || '-'}`),
       ...compactWrap(`Träume: ${data.dreams || '-'}`),
@@ -1096,7 +1089,7 @@ function buildWeeklyPdf(reviews) {
       ...noteLines.map((value, noteIndex) => `${noteIndex === 0 ? 'Notiz: ' : ''}${value}`)
     ];
     const activityLines = (data.activities || []).length
-      ? (data.activities || []).slice(0, 18).flatMap(entry => pdfWrapText(`- ${entry.title}`, 34, 2))
+      ? (data.activities || []).slice(0, 18).flatMap(entry => pdfWrapText(`- ${entry.title}`, 31, 3))
       : ["- Keine Aktivitäten"];
     const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
 
@@ -1132,20 +1125,20 @@ function buildWeeklyPdf(reviews) {
         title: "Reflexion",
         lines: reflexionLines,
         height: 374,
-        lineHeight: 6.45,
-        fontSize: 5.45,
-        fitChars: 36,
-        padX: 5,
+        lineHeight: 7.45,
+        fontSize: 6.25,
+        fitChars: 31,
+        padX: 4,
         contentTop: 18
       },
       {
         title: "Aktivitäten",
         lines: activityLines,
         height: 115,
-        lineHeight: 6.45,
-        fontSize: 5.45,
-        fitChars: 36,
-        padX: 5,
+        lineHeight: 7.45,
+        fontSize: 6.25,
+        fitChars: 31,
+        padX: 4,
         contentTop: 18
       },
       {
@@ -1158,16 +1151,17 @@ function buildWeeklyPdf(reviews) {
     sections.forEach(section => {
       rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
       stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.55);
-      const padX = section.padX ?? 6;
-      const contentTop = section.contentTop ?? 19;
-      const lineHeight = section.lineHeight ?? 7.0;
-      const fontSize = section.fontSize ?? 5.65;
-      const fitChars = section.fitChars ?? 32;
-      textAt(section.title, innerX + padX, cursorTop + 5, 6.7, true, "1E2330");
-      line(innerX + padX, cursorTop + 15, innerX + innerW - padX, cursorTop + 15, "EDF1F6", 0.35);
+      const padX = section.padX ?? 4;
+      const contentTop = section.contentTop ?? 18;
+      const lineHeight = section.lineHeight ?? 7.45;
+      const fontSize = section.fontSize ?? 6.25;
+      const fitChars = section.fitChars ?? 31;
+      textAt(section.title, innerX + padX, cursorTop + 5, fontSize, true, "1E2330");
+      line(innerX + padX, cursorTop + 14.5, innerX + innerW - padX, cursorTop + 14.5, "EDF1F6", 0.35);
       let lineTop = cursorTop + contentTop;
-      const maxLines = Math.floor((section.height - (contentTop + 4)) / lineHeight);
-      section.lines.slice(0, maxLines).forEach(lineText => {
+      const maxLines = Math.floor((section.height - (contentTop + 3)) / lineHeight);
+      const renderedLines = section.lines.flatMap(lineText => pdfWrapText(lineText, fitChars, 8));
+      renderedLines.slice(0, maxLines).forEach(lineText => {
         textAt(pdfFit(lineText, fitChars), innerX + padX, lineTop, fontSize, false, "404757");
         lineTop += lineHeight;
       });

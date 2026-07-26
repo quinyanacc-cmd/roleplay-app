@@ -1,8 +1,12 @@
-# Roleplay App 3.2
+# Roleplay App 3.4
 
-Version 3.3.1 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
+Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
-## Neu in Version 3.3.1
+## Neu in Version 3.4
+
+- Dark-Mode-Kopfzeile wieder dezent in der Farbe der ausgewählten Tagesrolle.
+- Wochenstatistik ohne zusätzliche Balken- oder Kreisvisualisierung unterhalb der Erfolgskurve.
+- Wochenplan-PDF mit größerer, einheitlicher Schrift und besserer Nutzung der verfügbaren Textflächen.
 
 - Intelligente Erfolgsquote mit differenzierter Gebetsqualität:
   - Gemeinschaftsgebet: 22 Punkte
