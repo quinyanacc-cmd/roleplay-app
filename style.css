@@ -3332,3 +3332,32 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.035), 0 8px 18px rgba(0,0,0,.17) !important;
   }
 }
+
+
+/* v3.5: Routinen auch während einer laufenden Session bearbeiten */
+.session-routine-editor {
+  width: min(100%, 620px); margin-top: 20px; padding: 16px; border-radius: 22px;
+  background: color-mix(in srgb, var(--card) 98%, transparent); border: 1px solid var(--line);
+  box-shadow: 0 18px 45px rgba(0,0,0,.12);
+}
+.session-editor-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:12px; }
+.session-editor-head > div { display:grid; gap:4px; }
+.session-editor-head small { color:var(--muted); line-height:1.35; }
+.session-editor-head button { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:var(--bg); color:var(--text); font-size:24px; }
+.session-routine-item-list { display:grid; gap:9px; }
+.session-editor-item { display:grid; grid-template-columns:34px 42px minmax(0,1fr) auto; align-items:center; gap:9px; padding:10px; border:1px solid var(--line); border-radius:16px; background:var(--bg); }
+.session-editor-item.is-current { box-shadow: inset 3px 0 0 #6d75ff; }
+.session-editor-number { color:var(--muted); font-weight:800; text-align:center; }
+.session-editor-emoji { font-size:24px; text-align:center; }
+.session-editor-copy { min-width:0; display:grid; gap:2px; }
+.session-editor-copy strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.session-editor-copy small { color:var(--muted); }
+.session-editor-actions { display:flex; gap:5px; }
+.session-editor-actions button { min-width:34px; height:34px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--text); font-weight:800; }
+.session-editor-actions button:disabled { opacity:.3; }
+.session-add-item { width:100%; margin-top:11px; padding:12px 14px; border:1px dashed var(--line); border-radius:14px; background:transparent; color:var(--text); font-weight:780; }
+@media (max-width:520px) {
+  .session-routine-editor { padding:12px; }
+  .session-editor-item { grid-template-columns:26px 34px minmax(0,1fr); }
+  .session-editor-actions { grid-column:2 / -1; justify-content:flex-end; }
+}

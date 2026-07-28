@@ -1490,6 +1490,45 @@ function renderRoutineDetail(key) {
   });
 }
 
+
+function renderSessionRoutineEditor() {
+  if (!routineSession || !("sessionRoutineItemList" in window || $("sessionRoutineItemList"))) return;
+  const routine = routines[routineSession.key];
+  if (!routine) return;
+  const currentId = currentSessionItem()?.id;
+  $("sessionRoutineItemList").innerHTML = routine.items.map((item, index) => `
+    <div class="session-editor-item ${item.id === currentId ? "is-current" : ""}">
+      <span class="session-editor-number">${index + 1}</span>
+      <span class="session-editor-emoji">${escapeHTML(item.emoji)}</span>
+      <div class="session-editor-copy"><strong>${escapeHTML(item.title)}</strong><small>${item.minutes} Min.${item.id === currentId ? " · läuft gerade" : ""}</small></div>
+      <div class="session-editor-actions">
+        <button type="button" data-session-move="up" data-session-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Nach oben">↑</button>
+        <button type="button" data-session-move="down" data-session-index="${index}" ${index === routine.items.length - 1 ? "disabled" : ""} aria-label="Nach unten">↓</button>
+        <button type="button" data-session-edit="${escapeHTML(item.id)}" aria-label="Bearbeiten">⋯</button>
+      </div>
+    </div>`).join("");
+
+  document.querySelectorAll("[data-session-move]").forEach(button => button.addEventListener("click", () => {
+    const currentItemId = currentSessionItem()?.id;
+    const index = Number(button.dataset.sessionIndex);
+    moveArrayItem(routine.items, index, button.dataset.sessionMove === "up" ? -1 : 1);
+    routineSession.index = Math.max(0, routine.items.findIndex(item => item.id === currentItemId));
+    saveRoutines(); persistRoutineSession(); renderRoutineSession(); renderSessionRoutineEditor(); renderRoutineCards();
+  }));
+  document.querySelectorAll("[data-session-edit]").forEach(button => button.addEventListener("click", () => {
+    activeRoutineKey = routineSession.key;
+    openRoutineItemDialog(button.dataset.sessionEdit);
+  }));
+}
+
+function toggleSessionRoutineEditor(force) {
+  const panel = $("sessionRoutineEditor");
+  if (!panel) return;
+  const show = typeof force === "boolean" ? force : panel.hidden;
+  panel.hidden = !show;
+  if (show) renderSessionRoutineEditor();
+}
+
 function openRoutineItemDialog(itemId = null) {
   editingRoutineItemId = itemId;
   const item = itemId ? routines[activeRoutineKey].items.find(entry => entry.id === itemId) : null;
@@ -1519,17 +1558,40 @@ function saveRoutineItemFromForm(event) {
   saveRoutines();
   $("routineItemDialog").close();
   renderRoutineDetail(activeRoutineKey); renderRoutineCards();
+  if (routineSession?.key === activeRoutineKey) {
+    const editedIndex = routines[activeRoutineKey].items.findIndex(entry => entry.id === item.id);
+    if (editingRoutineItemId && editedIndex >= 0 && currentSessionItem()?.id === item.id && routineSession.remaining > item.minutes * 60) {
+      routineSession.remaining = item.minutes * 60;
+      if (routineSession.running) routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+    }
+    persistRoutineSession(); renderRoutineSession(); renderSessionRoutineEditor();
+  }
 }
 
 function deleteRoutineItem() {
   if (!editingRoutineItemId || !confirm("Diesen Schritt wirklich löschen?")) return;
   const list = routines[activeRoutineKey].items;
   const index = list.findIndex(item => item.id === editingRoutineItemId);
+  const deletingCurrentSessionItem = routineSession?.key === activeRoutineKey && currentSessionItem()?.id === editingRoutineItemId;
   if (index >= 0) list.splice(index, 1);
   delete currentData.routineProgress?.[activeRoutineKey]?.[editingRoutineItemId];
+  if (routineSession?.key === activeRoutineKey) {
+    if (!list.length) { closeRoutineSession(); }
+    else {
+      routineSession.index = Math.min(index, list.length - 1);
+      if (deletingCurrentSessionItem) {
+        routineSession.remaining = Math.round(list[routineSession.index].minutes * 60);
+        routineSession.running = true;
+        routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+        routineSession.expiredNotified = false;
+      }
+      persistRoutineSession();
+    }
+  }
   saveRoutines(); saveReview(true);
   $("routineItemDialog").close();
   renderRoutineDetail(activeRoutineKey); renderRoutineCards();
+  if (routineSession) { renderRoutineSession(); renderSessionRoutineEditor(); }
 }
 
 function startRoutine(key) {
@@ -1574,6 +1636,7 @@ function renderRoutineSession() {
   $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
   const next = routine.items[routineSession.index + 1];
   $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
+  if ($("sessionRoutineEditor") && !$("sessionRoutineEditor").hidden) renderSessionRoutineEditor();
 }
 
 function formatTimer(seconds) {
@@ -1906,7 +1969,9 @@ function bindEvents() {
   $("sessionSkip").addEventListener("click", () => completeSessionItem("skipped"));
   $("sessionMinus").addEventListener("click", () => adjustRoutineSessionMinutes(-1));
   $("sessionPlus").addEventListener("click", () => adjustRoutineSessionMinutes(1));
-  $("sessionContextToggle").addEventListener("click", () => {});
+  $("sessionEditRoutine").addEventListener("click", () => toggleSessionRoutineEditor());
+  $("sessionEditorClose").addEventListener("click", () => toggleSessionRoutineEditor(false));
+  $("sessionAddRoutineItem").addEventListener("click", () => { activeRoutineKey = routineSession.key; openRoutineItemDialog(); });
 
   window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
   document.addEventListener("visibilitychange", () => {

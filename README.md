@@ -39,3 +39,8 @@ Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`role
 5. Das Backup nur importieren, wenn die bisherigen Einträge nicht automatisch erscheinen.
 
 Die Daten werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. Die Bestätigungsabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die lokal gespeicherten Daten jedoch nicht.
+
+
+## Version 3.5
+- Laufende Routinen können direkt im Timer bearbeitet, ergänzt und umsortiert werden.
+- Timerzustand wird weiterhin anhand eines absoluten Endzeitpunkts gespeichert und beim Zurückkehren korrekt synchronisiert.
