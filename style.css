@@ -3361,3 +3361,77 @@ textarea::placeholder, input::placeholder { color: var(--muted); }
   .session-editor-item { grid-template-columns:26px 34px minmax(0,1fr); }
   .session-editor-actions { grid-column:2 / -1; justify-content:flex-end; }
 }
+
+
+/* --- v3.6 timer, session editor and navigation controls --- */
+/* All previous/next/back navigation controls use the same exact circle. */
+.icon-button,
+.back-button.icon-only {
+  width: 46px !important;
+  min-width: 46px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  text-align: center !important;
+  font-size: 30px !important;
+  line-height: 1 !important;
+}
+.date-nav {
+  grid-template-columns: 46px minmax(0, 1fr) 46px !important;
+  align-items: center !important;
+}
+.date-nav .icon-button,
+.calendar-header .icon-button,
+.back-button.icon-only {
+  transform: none !important;
+}
+.icon-button,
+.back-button.icon-only {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif !important;
+}
+
+/* The editor control belongs below the timer rather than in the top bar. */
+.routine-session-dialog .session-topbar {
+  grid-template-columns: 46px minmax(0, 1fr) !important;
+}
+.session-edit-control {
+  width: min(100%, 560px);
+  min-height: 52px;
+  margin-top: 18px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  color: var(--text);
+  font-weight: 820;
+  box-shadow: 0 10px 26px rgba(31,39,61,.07);
+}
+.session-edit-control > span:first-child {
+  font-size: 20px;
+  line-height: 1;
+}
+.session-edit-control.is-open {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+.session-routine-editor {
+  scroll-margin-top: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  .session-edit-control {
+    background: #202531;
+    color: #f4f6fb;
+    border-color: rgba(255,255,255,.10);
+    box-shadow: 0 12px 28px rgba(0,0,0,.22);
+  }
+  .session-edit-control.is-open {
+    background: color-mix(in srgb, var(--accent) 16%, #202531);
+  }
+}

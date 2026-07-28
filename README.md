@@ -41,6 +41,8 @@ Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`role
 Die Daten werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. Die Bestätigungsabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die lokal gespeicherten Daten jedoch nicht.
 
 
-## Version 3.5
-- Laufende Routinen können direkt im Timer bearbeitet, ergänzt und umsortiert werden.
-- Timerzustand wird weiterhin anhand eines absoluten Endzeitpunkts gespeichert und beim Zurückkehren korrekt synchronisiert.
+## Version 3.6
+- Der Timer aktualisiert sich während geöffneter App wieder sichtbar und synchronisiert sich weiterhin nach dem Zurückkehren.
+- Die nicht zuverlässig nutzbare Benachrichtigungsabfrage wurde vollständig entfernt.
+- „Routine anpassen“ befindet sich gut sichtbar unter dem laufenden Timer; dort können Schritte verschoben, bearbeitet und ergänzt werden.
+- Zurück-, Vorwärts- und Kalenderpfeile sind einheitlich kreisrund und exakt zentriert.

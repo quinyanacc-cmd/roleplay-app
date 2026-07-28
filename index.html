@@ -322,7 +322,6 @@
     <div class="session-topbar">
       <button id="closeRoutineSession" class="session-icon-button" type="button" aria-label="Routine schließen">×</button>
       <span id="sessionRoutineName" class="session-routine-name"></span>
-      <button id="sessionEditRoutine" class="session-context-button" type="button">Anpassen</button>
     </div>
     <div class="session-content">
       <p id="sessionProgress" class="session-progress"></p>
@@ -342,6 +341,10 @@
         <button id="sessionSkip" class="session-secondary-control" type="button" aria-label="Schritt überspringen">›|</button>
       </div>
       <p id="sessionNext" class="session-next"></p>
+      <button id="sessionEditRoutine" class="session-edit-control" type="button" aria-expanded="false" aria-controls="sessionRoutineEditor">
+        <span aria-hidden="true">↕</span>
+        <span>Routine anpassen</span>
+      </button>
       <section id="sessionRoutineEditor" class="session-routine-editor" hidden>
         <div class="session-editor-head">
           <div>

@@ -1,4 +1,4 @@
-const CACHE = "roleplay-v3-5";
+const CACHE = "roleplay-v3-6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -36,15 +36,5 @@ self.addEventListener("fetch", event => {
         return response;
       })
       .catch(() => caches.match(event.request))
-  );
-});
-
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientList => {
-      const existing = clientList.find(client => "focus" in client);
-      return existing ? existing.focus() : clients.openWindow("./index.html");
-    })
   );
 });

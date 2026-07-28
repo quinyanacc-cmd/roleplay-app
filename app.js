@@ -231,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.4";
+const APP_VERSION = "3.6";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1492,10 +1492,12 @@ function renderRoutineDetail(key) {
 
 
 function renderSessionRoutineEditor() {
-  if (!routineSession || !("sessionRoutineItemList" in window || $("sessionRoutineItemList"))) return;
+  if (!routineSession || !$("sessionRoutineItemList")) return;
   const routine = routines[routineSession.key];
   if (!routine) return;
   const currentId = currentSessionItem()?.id;
+  const editor = $("sessionRoutineEditor");
+  if (editor) editor.dataset.currentItemId = currentId || "";
   $("sessionRoutineItemList").innerHTML = routine.items.map((item, index) => `
     <div class="session-editor-item ${item.id === currentId ? "is-current" : ""}">
       <span class="session-editor-number">${index + 1}</span>
@@ -1523,10 +1525,20 @@ function renderSessionRoutineEditor() {
 
 function toggleSessionRoutineEditor(force) {
   const panel = $("sessionRoutineEditor");
+  const button = $("sessionEditRoutine");
   if (!panel) return;
   const show = typeof force === "boolean" ? force : panel.hidden;
   panel.hidden = !show;
-  if (show) renderSessionRoutineEditor();
+  if (button) {
+    button.setAttribute("aria-expanded", String(show));
+    button.classList.toggle("is-open", show);
+    const label = button.querySelector("span:last-child");
+    if (label) label.textContent = show ? "Anpassung schließen" : "Routine anpassen";
+  }
+  if (show) {
+    renderSessionRoutineEditor();
+    requestAnimationFrame(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
 }
 
 function openRoutineItemDialog(itemId = null) {
@@ -1608,7 +1620,6 @@ function startRoutine(key) {
   const remaining = Math.round(routine.items[index].minutes * 60);
   routineSession = { key, index, remaining, running: true, endAt: Date.now() + remaining * 1000, interval: null, contextOpen: true, expiredNotified: false };
   persistRoutineSession();
-  requestTimerNotificationPermission();
   $("routineSessionDialog").showModal();
   renderRoutineSession();
   startSessionInterval();
@@ -1631,12 +1642,14 @@ function renderRoutineSession() {
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
   $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
-  $("sessionContextToggle").hidden = true;
+  const contextToggle = $("sessionContextToggle");
+  if (contextToggle) contextToggle.hidden = true;
   $("sessionContext").hidden = !item.context;
   $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
   const next = routine.items[routineSession.index + 1];
   $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
-  if ($("sessionRoutineEditor") && !$("sessionRoutineEditor").hidden) renderSessionRoutineEditor();
+  const editor = $("sessionRoutineEditor");
+  if (editor && !editor.hidden && editor.dataset.currentItemId !== item.id) renderSessionRoutineEditor();
 }
 
 function formatTimer(seconds) {
@@ -1686,20 +1699,25 @@ function syncRoutineSessionClock() {
     if (!routineSession.expiredNotified) {
       routineSession.expiredNotified = true;
       playTimerDoneTone();
-      notifyTimerDone();
     }
     persistRoutineSession();
   }
 }
 
-function startSessionInterval() {
-  clearInterval(routineSession?.interval);
+function updateRoutineSessionClockDisplay() {
   if (!routineSession) return;
-  routineSession.interval = setInterval(() => {
-    if (!routineSession) return;
-    syncRoutineSessionClock();
-    renderRoutineSession();
-  }, 500);
+  syncRoutineSessionClock();
+  const timer = $("sessionTimer");
+  if (timer) timer.textContent = formatTimer(routineSession.remaining);
+  const pause = $("sessionPause");
+  if (pause) pause.textContent = routineSession.running ? "Ⅱ" : "▶";
+}
+
+function startSessionInterval() {
+  if (routineSession?.interval) clearInterval(routineSession.interval);
+  if (!routineSession) return;
+  updateRoutineSessionClockDisplay();
+  routineSession.interval = window.setInterval(updateRoutineSessionClockDisplay, 250);
 }
 
 function toggleRoutineSessionRunning() {
@@ -1712,7 +1730,6 @@ function toggleRoutineSessionRunning() {
     routineSession.running = true;
     routineSession.endAt = Date.now() + routineSession.remaining * 1000;
     routineSession.expiredNotified = false;
-    requestTimerNotificationPermission();
   }
   persistRoutineSession();
   renderRoutineSession();
@@ -1726,26 +1743,6 @@ function adjustRoutineSessionMinutes(deltaMinutes) {
   routineSession.expiredNotified = false;
   persistRoutineSession();
   renderRoutineSession();
-}
-
-async function requestTimerNotificationPermission() {
-  if (!("Notification" in window) || Notification.permission !== "default") return;
-  try { await Notification.requestPermission(); } catch (error) { console.warn("Benachrichtigungen konnten nicht angefragt werden", error); }
-}
-
-function notifyTimerDone() {
-  if (!("Notification" in window) || Notification.permission !== "granted" || !routineSession) return;
-  const routine = routines[routineSession.key];
-  const item = currentSessionItem();
-  const title = `${routine?.title || "Routine"}: Zeit abgelaufen`;
-  const options = { body: item ? `${item.title} ist beendet.` : "Der Timer ist abgelaufen.", icon: "./logo.jpeg", badge: "./logo.jpeg", tag: "roleplay-routine-timer", renotify: true };
-  if (navigator.serviceWorker?.ready) {
-    navigator.serviceWorker.ready.then(registration => registration.showNotification(title, options)).catch(() => {
-      try { new Notification(title, options); } catch {}
-    });
-  } else {
-    try { new Notification(title, options); } catch {}
-  }
 }
 
 function restoreRoutineSession() {
@@ -1787,6 +1784,7 @@ function completeSessionItem(status) {
   saveReview(true);
   persistRoutineSession();
   renderRoutineSession();
+  if ($("sessionRoutineEditor") && !$("sessionRoutineEditor").hidden) renderSessionRoutineEditor();
 }
 
 function closeRoutineSession() {
@@ -1794,6 +1792,10 @@ function closeRoutineSession() {
   routineSession = null;
   localStorage.removeItem(ROUTINE_SESSION_STORAGE_KEY);
   if ($("routineSessionDialog").open) $("routineSessionDialog").close();
+  const editor = $("sessionRoutineEditor");
+  if (editor) { editor.hidden = true; editor.dataset.currentItemId = ""; }
+  const editButton = $("sessionEditRoutine");
+  if (editButton) { editButton.setAttribute("aria-expanded", "false"); editButton.classList.remove("is-open"); }
   updateRoutineStateButtons();
   renderRoutineCards();
   if (activeRoutineKey) renderRoutineDetail(activeRoutineKey);
