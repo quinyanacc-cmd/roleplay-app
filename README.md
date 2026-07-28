@@ -1,4 +1,4 @@
-# Roleplay App 3.8
+# Roleplay App 3.9
 
 Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
@@ -60,3 +60,10 @@ Die Daten werden ausschließlich lokal im Browser beziehungsweise in der install
 - Der Timerbereich in der laufenden Routine ist kompakter: kleineres Timerfeld, kleinerer Timer und geringere vertikale Abstände schaffen mehr Luft für Kontext, Steuerung und „Anpassen“.
 - Der aktuell ausgewählte Schritt im Anpassungsfenster erhält einen weichen violetten Lichtschein in der Designsprache der aktiven Hauptnavigation.
 - Die Tagesnavigation wurde auf schlanke, einheitliche 44-Pixel-Steuerelemente reduziert: Kreise und Datumsleiste liegen bündig auf einer Höhe, die Pfeile sind fein und exakt zentriert.
+
+
+## Version 3.9
+- Die komplette Kopfzeile wurde noch einmal sichtbar verschlankt: geringere Innenabstände, ein flacherer Rollenwähler sowie eine niedrigere Datumsnavigation.
+- Die Datumsleiste und beide runden Pfeiltasten bilden nun eine exakt bündige, einheitliche Zeile.
+- Die bisherigen Schriftzeichen-Pfeile wurden durch symmetrische SVG-Chevrons ersetzt. Dadurch sind sie unabhängig von iOS-Schriftmetriken mathematisch mittig im Kreis zentriert.
+- Die gleiche Pfeillogik gilt auch für Monatsnavigation und Zurück-Schaltfläche.

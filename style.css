@@ -3865,3 +3865,126 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
       0 12px 28px rgba(0, 0, 0, .28);
   }
 }
+
+/* --- v3.9 precise slim header and mathematically centred navigation arrows --- */
+:root {
+  --date-control-height: 40px;
+}
+
+/* Reduce the vertical bulk of the entire sticky header without changing its design language. */
+.app-header {
+  padding: calc(7px + env(safe-area-inset-top)) 14px 8px !important;
+}
+.header-title-row {
+  gap: 10px !important;
+}
+.app-header .eyebrow {
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+.app-header h1 {
+  margin-top: 2px !important;
+  font-size: 20px !important;
+  line-height: 1.08 !important;
+}
+.role-picker-wrap {
+  flex: 0 1 220px !important;
+  width: min(58vw, 220px) !important;
+}
+.role-picker {
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 6px 30px 6px 12px !important;
+  border-radius: 18px !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+}
+
+/* One slim row: both circles and the date pill are exactly the same height. */
+.date-nav {
+  grid-template-columns: var(--date-control-height) minmax(0, 1fr) var(--date-control-height) !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 7px !important;
+}
+.date-nav > .icon-button,
+.date-nav > .date-button {
+  box-sizing: border-box !important;
+  height: var(--date-control-height) !important;
+  min-height: var(--date-control-height) !important;
+  margin: 0 !important;
+}
+.date-nav > .icon-button {
+  width: var(--date-control-height) !important;
+  min-width: var(--date-control-height) !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+}
+.date-nav > .date-button {
+  border-radius: calc(var(--date-control-height) / 2) !important;
+  padding: 0 10px !important;
+  font-size: clamp(13px, 3.8vw, 16px) !important;
+  line-height: 1 !important;
+}
+
+/* Replace typographic chevrons with symmetric inline SVG paths.
+   This avoids iOS font metrics and guarantees true horizontal/vertical centring. */
+.nav-chevron-button {
+  display: grid !important;
+  place-items: center !important;
+  line-height: 0 !important;
+  font-size: 0 !important;
+  text-indent: 0 !important;
+}
+.nav-chevron-button::before,
+.nav-chevron-button::after {
+  content: none !important;
+  display: none !important;
+}
+.nav-chevron-icon {
+  display: block !important;
+  width: 17px !important;
+  height: 17px !important;
+  overflow: visible !important;
+  pointer-events: none;
+}
+.nav-chevron-icon path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Apply the same exact centring to calendar and routine-back controls. */
+.calendar-header > .nav-chevron-button,
+.back-button.icon-only.nav-chevron-button {
+  display: grid !important;
+  place-items: center !important;
+}
+
+@media (max-width: 430px) {
+  :root { --date-control-height: 38px; }
+  .app-header {
+    padding-inline: 13px !important;
+    padding-bottom: 7px !important;
+  }
+  .role-picker-wrap {
+    flex-basis: 205px !important;
+    width: min(57vw, 205px) !important;
+  }
+  .role-picker {
+    height: 35px !important;
+    min-height: 35px !important;
+    font-size: 12.5px !important;
+  }
+  .date-nav {
+    gap: 6px !important;
+    margin-top: 6px !important;
+  }
+  .nav-chevron-icon {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
