@@ -1,7 +1,7 @@
 {
   "name": "Roleplay",
   "short_name": "Roleplay",
-  "description": "Tagesreflexion, geführte Routinen, geschützte Streaks und Wochenstatistik",
+  "description": "Adaptives Rollen-, Zustands- und Reflexionssystem für verantwortungsvolle Tagesgestaltung",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f9",
