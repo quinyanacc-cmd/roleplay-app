@@ -27,32 +27,14 @@
       </div>
 
       <div class="date-nav" id="dateNavigation">
-        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag"></button>
+        <button id="prevDay" class="icon-button nav-chevron-button" type="button" aria-label="Vorheriger Tag"><svg class="nav-chevron-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M11.5 3.75 6.25 9l5.25 5.25"/></svg></button>
         <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
-        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag"></button>
+        <button id="nextDay" class="icon-button nav-chevron-button" type="button" aria-label="Nächster Tag"><svg class="nav-chevron-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="m6.5 3.75 5.25 5.25-5.25 5.25"/></svg></button>
       </div>
     </header>
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
-        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
-          <div class="section-title-row state-title-row">
-            <div>
-              <p class="card-eyebrow">ADAPTIVER RAHMEN</p>
-              <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
-            </div>
-            <button id="openStateCheckin" class="small-button state-checkin-button" type="button"><span aria-hidden="true">＋</span> Check-in</button>
-          </div>
-          <p class="state-intro">Dein Zustand verändert nicht deine Identität – aber die verantwortungsvolle Ausprägung deiner Rollen.</p>
-          <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
-          <div id="adaptiveRoutineHint" class="adaptive-routine-hint" hidden></div>
-          <div class="state-timeline-head">
-            <strong>Verlauf des Tages</strong>
-            <small id="stateCheckinCount">Noch kein Check-in</small>
-          </div>
-          <div id="stateTimeline" class="state-timeline"></div>
-        </section>
-
         <section class="card">
           <h2>Vitalität</h2>
 
@@ -181,64 +163,6 @@
           </div>
         </section>
 
-        <section class="card responsibility-card" aria-labelledby="responsibilityTitle">
-          <div class="section-title-row">
-            <div>
-              <p class="card-eyebrow">ROLLENTREUE STATT LEISTUNG</p>
-              <h2 id="responsibilityTitle">Verantwortungsreflexion</h2>
-            </div>
-            <div id="responsibilityScoreBadge" class="responsibility-score-badge">Noch offen</div>
-          </div>
-          <p class="section-hint responsibility-hint">Bewerte nicht, wie viel du geleistet hast, sondern ob du unter den tatsächlichen Bedingungen aufrichtig, angemessen und nicht selbstschädigend gehandelt hast.</p>
-
-          <div class="responsibility-questions" id="responsibilityQuestions">
-            <div class="responsibility-question" data-responsibility-question="stateHonesty">
-              <span>Habe ich meinen Zustand ehrlich wahrgenommen?</span>
-              <div class="responsibility-options" role="group" aria-label="Zustand ehrlich wahrgenommen">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-            <div class="responsibility-question" data-responsibility-question="boundaryRespect">
-              <span>Habe ich meine Grenzen respektiert?</span>
-              <div class="responsibility-options" role="group" aria-label="Grenzen respektiert">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-            <div class="responsibility-question" data-responsibility-question="amanahCare">
-              <span>Habe ich die Amānah von Körper und Seele gewahrt?</span>
-              <div class="responsibility-options" role="group" aria-label="Amanah gewahrt">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-            <div class="responsibility-question" data-responsibility-question="roleFidelity">
-              <span>Habe ich meine Rollen im möglichen Maß treu gelebt?</span>
-              <div class="responsibility-options" role="group" aria-label="Rollen treu gelebt">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="role-reflection-head">
-            <strong>Ausprägung meiner Rollen</strong>
-            <small>Antippen, bis die passende Einordnung erscheint.</small>
-          </div>
-          <div id="roleReflectionGrid" class="role-reflection-grid"></div>
-
-          <div class="field-group responsibility-note-field">
-            <label for="responsibilityNote">Was war heute der verantwortungsvollste Schritt?</label>
-            <textarea id="responsibilityNote" rows="4" placeholder="Zum Beispiel: eine Erwartung angepasst, Hilfe angenommen, eine Pflicht bewahrt oder bewusst regeneriert …"></textarea>
-          </div>
-          <div id="responsibilityGuidance" class="responsibility-guidance"></div>
-        </section>
-
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
           <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
@@ -278,7 +202,7 @@
         </div>
 
         <div id="routineDetail" class="routine-detail" hidden>
-          <button id="backToRoutineOverview" class="back-button icon-only" type="button" aria-label="Zur Übersicht"></button>
+          <button id="backToRoutineOverview" class="back-button icon-only nav-chevron-button" type="button" aria-label="Zur Übersicht"><svg class="nav-chevron-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M11.5 3.75 6.25 9l5.25 5.25"/></svg></button>
           <div class="routine-detail-head">
             <div>
               <p id="routineDetailEyebrow" class="eyebrow"></p>
@@ -313,81 +237,11 @@
     </nav>
   </div>
 
-  <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
-    <form id="stateCheckinForm">
-      <div class="dialog-title-row">
-        <div>
-          <p class="card-eyebrow">MOMENTAUFNAHME</p>
-          <h3>Zustand erfassen</h3>
-        </div>
-        <span id="stateFrameworkPreview" class="framework-preview-badge">Balance</span>
-      </div>
-      <p class="dialog-description">Eine kurze ehrliche Einschätzung reicht. Du kannst deinen Zustand im Tagesverlauf jederzeit neu erfassen.</p>
-
-      <div class="field-group state-energy-field">
-        <div class="label-value-row">
-          <label for="stateEnergy">Verfügbare Energie</label>
-          <strong id="stateEnergyValue">60 %</strong>
-        </div>
-        <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
-        <div class="state-range-legend"><small>kaum Kraft</small><small>volle Kraft</small></div>
-      </div>
-
-      <div class="state-form-grid">
-        <label>Körper
-          <select id="stateBody">
-            <option value="fit">Fit</option>
-            <option value="stable" selected>Stabil</option>
-            <option value="tired">Müde</option>
-            <option value="exhausted">Erschöpft</option>
-            <option value="sick">Krank</option>
-            <option value="pain">Schmerzen</option>
-          </select>
-        </label>
-        <label>Geist
-          <select id="stateMind">
-            <option value="clear">Klar</option>
-            <option value="normal" selected>Ausgeglichen</option>
-            <option value="scattered">Ablenkbar</option>
-            <option value="strained">Angespannt</option>
-            <option value="overloaded">Überfordert</option>
-          </select>
-        </label>
-        <label>Umfeld
-          <select id="stateEnvironment">
-            <option value="supportive">Unterstützend</option>
-            <option value="normal" selected>Normal</option>
-            <option value="pressure">Zeitdruck</option>
-            <option value="conflict">Konflikt</option>
-            <option value="overstimulating">Überreizend</option>
-          </select>
-        </label>
-        <label>Emotion
-          <select id="stateEmotion"></select>
-        </label>
-      </div>
-
-      <div class="field-group">
-        <label for="stateTime">Zeitpunkt</label>
-        <input id="stateTime" type="time">
-      </div>
-      <div class="field-group">
-        <label for="stateNote">Was prägt den Zustand gerade?</label>
-        <textarea id="stateNote" rows="3" placeholder="Optional: Krankheit, Konflikt, Trauer, Schlafmangel, Erleichterung …"></textarea>
-      </div>
-      <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
-      <div class="dialog-actions">
-        <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>
-        <button type="submit" class="primary-button compact">Zustand speichern</button>
-      </div>
-    </form>
-  </dialog>
-
   <dialog id="calendarDialog" class="calendar-dialog">
     <div class="calendar-header">
-      <button id="calendarPrevMonth" class="icon-button" type="button" aria-label="Vorheriger Monat"></button>
+      <button id="calendarPrevMonth" class="icon-button nav-chevron-button" type="button" aria-label="Vorheriger Monat"><svg class="nav-chevron-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M11.5 3.75 6.25 9l5.25 5.25"/></svg></button>
       <strong id="calendarMonthLabel"></strong>
-      <button id="calendarNextMonth" class="icon-button" type="button" aria-label="Nächster Monat"></button>
+      <button id="calendarNextMonth" class="icon-button nav-chevron-button" type="button" aria-label="Nächster Monat"><svg class="nav-chevron-icon" viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="m6.5 3.75 5.25 5.25-5.25 5.25"/></svg></button>
     </div>
     <div class="calendar-weekdays" aria-hidden="true">
       <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>

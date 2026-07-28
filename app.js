@@ -84,51 +84,6 @@ const SLEEP_LABELS = [
 
 const SLEEP_COLORS = ["#38d4c3", "#53d38f", "#c6de5f", "#d9dee9", "#f7b54a", "#f47c5f", "#df4050"];
 
-const STATE_BODY_OPTIONS = {
-  fit: { label: "Fit", icon: "⚡", score: 95 },
-  stable: { label: "Stabil", icon: "🌿", score: 75 },
-  tired: { label: "Müde", icon: "😴", score: 52 },
-  exhausted: { label: "Erschöpft", icon: "🥱", score: 28 },
-  sick: { label: "Krank", icon: "🤒", score: 24 },
-  pain: { label: "Schmerzen", icon: "🤕", score: 30 }
-};
-
-const STATE_MIND_OPTIONS = {
-  clear: { label: "Klar", icon: "🧭", score: 92 },
-  normal: { label: "Ausgeglichen", icon: "🧠", score: 72 },
-  scattered: { label: "Ablenkbar", icon: "🫧", score: 54 },
-  strained: { label: "Angespannt", icon: "〰️", score: 44 },
-  overloaded: { label: "Überfordert", icon: "🌪️", score: 25 }
-};
-
-const STATE_ENVIRONMENT_OPTIONS = {
-  supportive: { label: "Unterstützend", icon: "🤝", score: 92 },
-  normal: { label: "Normal", icon: "🏠", score: 72 },
-  pressure: { label: "Zeitdruck", icon: "⏱️", score: 46 },
-  conflict: { label: "Konflikt", icon: "⚠️", score: 34 },
-  overstimulating: { label: "Überreizend", icon: "🔊", score: 29 }
-};
-
-const POSITIVE_EMOTIONS = new Set(["Freudig", "Zufrieden", "Ruhig", "Dankbar", "Motiviert", "Fokussiert", "Gelassen", "Hoffnungsvoll", "Liebevoll", "Verbunden", "Zuversichtlich", "Stolz", "Inspiriert", "Klar", "Geerdet", "Friedlich", "Gottesfürchtig", "Erleichtert"]);
-const HEAVY_EMOTIONS = new Set(["Überfordert", "Erschöpft", "Leer", "Krank", "Schmerzen", "Überreizt", "Wütend", "Ängstlich"]);
-
-const FRAMEWORKS = [
-  { min: 76, key: "development", label: "Entfaltung", icon: "✦", color: "#5B72FF", summary: "Kraft für Gestaltung, Wachstum und zusätzliche Vorhaben.", focus: ["Wesentliche Pflichten bewusst sichern", "Entwicklung und Gestaltung einplanen", "Pausen trotz guter Kraft beibehalten"] },
-  { min: 56, key: "balance", label: "Balance", icon: "◐", color: "#2EC4B6", summary: "Wesentliches und begrenzte Entwicklung sind realistisch.", focus: ["Kernaufgaben zuerst", "Zusätzliche Vorhaben bewusst begrenzen", "Energie im Tagesverlauf erneut prüfen"] },
-  { min: 36, key: "maintenance", label: "Erhaltung", icon: "⌁", color: "#E7A31A", summary: "Stabilität, Versorgung und Kernverantwortung stehen im Vordergrund.", focus: ["Pflichten und Versorgung priorisieren", "Routinen kürzen oder anpassen", "Regeneration als Verantwortung anerkennen"] },
-  { min: 21, key: "recovery", label: "Regeneration", icon: "☾", color: "#E8798D", summary: "Nur das Notwendige, Schutz und Erholung sind heute angemessen.", focus: ["Notwendiges sichern", "Unterstützung und Entlastung zulassen", "Keine nachholende Überforderung erzeugen"] },
-  { min: 0, key: "protection", label: "Schutz", icon: "◇", color: "#C557B7", summary: "Sicherheit, Versorgung und Hilfe haben Vorrang vor jeder Zusatzanforderung.", focus: ["Sicherheit und Grundversorgung", "Hilfe annehmen oder Kontakt aufnehmen", "Zusätzliche Erwartungen vollständig aussetzen"] }
-];
-
-const RESPONSIBILITY_KEYS = ["stateHonesty", "boundaryRespect", "amanahCare", "roleFidelity"];
-const ROLE_REFLECTION_ORDER = ["", "responsible", "partial", "overextended"];
-const ROLE_REFLECTION_META = {
-  "": { label: "Nicht reflektiert", short: "Offen", icon: "○", score: null },
-  responsible: { label: "Verantwortungsvoll gelebt", short: "Verantwortungsvoll", icon: "✓", score: 2 },
-  partial: { label: "Teilweise angemessen", short: "Teilweise", icon: "≈", score: 1 },
-  overextended: { label: "Mich dabei überfordert", short: "Überfordert", icon: "!", score: 0 }
-};
-
 const ALLAH_NAMES = [
 "الرَّحْمَن / Ar-Rahmān – Der Allerbarmer",
 "الرَّحِيم / Ar-Rahīm – Der Barmherzige",
@@ -276,12 +231,12 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "4.0";
+const APP_VERSION = "3.7";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
 const ROUTINE_SESSION_STORAGE_KEY = `${STORAGE_NAMESPACE}-active-routine-session`;
-const ROUTINE_STATE_ORDER = ["", "done", "adapted", "missed"];
+const ROUTINE_STATE_ORDER = ["", "done", "missed"];
 const $ = id => document.getElementById(id);
 
 let selectedDate = todayISO();
@@ -402,10 +357,6 @@ function emptyReview(date) {
     streaks: inheritedStreaks(previous),
     mood: "",
     gratitude1: "", gratitude2: "", allahName: "",
-    stateCheckins: [],
-    responsibility: Object.fromEntries(RESPONSIBILITY_KEYS.map(key => [key, null])),
-    roleReflections: Object.fromEntries(ROLES.map(role => [role.name, ""])),
-    responsibilityNote: "",
     notes: ""
   };
 }
@@ -431,26 +382,6 @@ function normalizeReview(raw, date, hasStoredValue) {
     morning: { ...(raw?.routineProgress?.morning || {}) },
     evening: { ...(raw?.routineProgress?.evening || {}) }
   };
-  merged.stateCheckins = Array.isArray(raw?.stateCheckins) ? raw.stateCheckins.map((entry, index) => ({
-    id: String(entry.id || `state-${date}-${index}`),
-    time: /^\d{2}:\d{2}$/.test(entry.time || "") ? entry.time : "12:00",
-    energy: clamp(Number(entry.energy ?? 60), 0, 100),
-    body: STATE_BODY_OPTIONS[entry.body] ? entry.body : "stable",
-    mind: STATE_MIND_OPTIONS[entry.mind] ? entry.mind : "normal",
-    environment: STATE_ENVIRONMENT_OPTIONS[entry.environment] ? entry.environment : "normal",
-    emotion: EMOTIONS.some(option => option.value === entry.emotion) ? entry.emotion : "",
-    note: String(entry.note || ""),
-    createdAt: entry.createdAt || `${date}T${entry.time || "12:00"}:00`
-  })).sort((a, b) => a.time.localeCompare(b.time)) : [];
-  merged.responsibility = Object.fromEntries(RESPONSIBILITY_KEYS.map(key => {
-    const value = raw?.responsibility?.[key];
-    return [key, [0, 1, 2].includes(Number(value)) ? Number(value) : null];
-  }));
-  merged.roleReflections = Object.fromEntries(ROLES.map(role => {
-    const value = raw?.roleReflections?.[role.name];
-    return [role.name, ROLE_REFLECTION_ORDER.includes(value) ? value : ""];
-  }));
-  merged.responsibilityNote = String(raw?.responsibilityNote || "");
   merged.streaks = hasStoredValue ? { ...base.streaks } : base.streaks;
   STREAKS.forEach(streak => {
     const old = raw?.streaks?.[streak.key];
@@ -471,7 +402,7 @@ function loadReview(date) {
 
 function collectForm() {
   if (!currentData) return;
-  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "gratitude2", "allahName", "responsibilityNote", "notes"].forEach(id => {
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "gratitude2", "allahName", "notes"].forEach(id => {
     if ($(id)) currentData[id] = $(id).value;
   });
   currentData.ramadanDays = Number(currentData.ramadanDays || 0);
@@ -525,7 +456,7 @@ function setDate(date) {
 }
 
 function fillForm() {
-  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "gratitude2", "allahName", "responsibilityNote", "notes"].forEach(id => {
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "dreams", "gratitude1", "gratitude2", "allahName", "notes"].forEach(id => {
     if ($(id)) $(id).value = currentData[id] ?? "";
   });
   $("dayRole").value = getRole(currentData.role).name;
@@ -538,237 +469,7 @@ function fillForm() {
   updateRoutineStateButtons();
   renderPrayers();
   renderActivities();
-  renderStateOverview();
-  renderResponsibilityReflection();
   renderStreaks();
-}
-
-function currentClockTime() {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-}
-
-function emotionStateScore(value) {
-  if (!value) return 65;
-  if (POSITIVE_EMOTIONS.has(value)) return 88;
-  if (HEAVY_EMOTIONS.has(value)) return 28;
-  if (["Traurig", "Besorgt", "Gestresst", "Scham", "Reue", "Schuldig", "Einsam", "Unruhig", "Versucht", "Begehrlich"].includes(value)) return 44;
-  return 62;
-}
-
-function stateCapacity(checkin) {
-  if (!checkin) return null;
-  const energy = clamp(Number(checkin.energy ?? 60), 0, 100);
-  const body = STATE_BODY_OPTIONS[checkin.body]?.score ?? 75;
-  const mind = STATE_MIND_OPTIONS[checkin.mind]?.score ?? 72;
-  const environment = STATE_ENVIRONMENT_OPTIONS[checkin.environment]?.score ?? 72;
-  const emotion = emotionStateScore(checkin.emotion);
-  return Math.round(energy * .42 + body * .24 + mind * .19 + environment * .10 + emotion * .05);
-}
-
-function frameworkForCheckin(checkin) {
-  const capacity = stateCapacity(checkin);
-  if (capacity === null) return null;
-  const framework = FRAMEWORKS.find(item => capacity >= item.min) || FRAMEWORKS[FRAMEWORKS.length - 1];
-  return { ...framework, capacity };
-}
-
-function latestStateCheckin(data = currentData) {
-  const entries = Array.isArray(data?.stateCheckins) ? data.stateCheckins : [];
-  return [...entries].sort((a, b) => a.time.localeCompare(b.time)).at(-1) || null;
-}
-
-function stateMetaLine(checkin) {
-  if (!checkin) return "";
-  const body = STATE_BODY_OPTIONS[checkin.body] || STATE_BODY_OPTIONS.stable;
-  const mind = STATE_MIND_OPTIONS[checkin.mind] || STATE_MIND_OPTIONS.normal;
-  const environment = STATE_ENVIRONMENT_OPTIONS[checkin.environment] || STATE_ENVIRONMENT_OPTIONS.normal;
-  return `${body.icon} ${body.label} · ${mind.icon} ${mind.label} · ${environment.icon} ${environment.label}${checkin.emotion ? ` · ${checkin.emotion}` : ""}`;
-}
-
-function renderStateOverview() {
-  const summary = $("currentStateSummary");
-  const timeline = $("stateTimeline");
-  if (!summary || !timeline || !currentData) return;
-  const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => a.time.localeCompare(b.time));
-  const latest = checkins.at(-1);
-  const framework = frameworkForCheckin(latest);
-  $("stateCheckinCount").textContent = checkins.length ? `${checkins.length} ${checkins.length === 1 ? "Check-in" : "Check-ins"}` : "Noch kein Check-in";
-
-  if (!latest || !framework) {
-    summary.className = "current-state-summary empty-state-summary";
-    summary.innerHTML = `<div class="empty-state-icon" aria-hidden="true">◇</div><div><strong>Noch kein Verantwortungsrahmen</strong><p>Erfasse deinen aktuellen Zustand. Die App hilft dir anschließend, Anforderungen angemessen einzuordnen.</p></div>`;
-    $("adaptiveRoutineHint").hidden = true;
-  } else {
-    summary.className = `current-state-summary framework-${framework.key}`;
-    summary.style.setProperty("--framework-color", framework.color);
-    summary.innerHTML = `
-      <div class="framework-main">
-        <div class="framework-icon" aria-hidden="true">${framework.icon}</div>
-        <div class="framework-copy">
-          <span>Aktueller Verantwortungsrahmen · ${escapeHTML(latest.time)} Uhr</span>
-          <strong>${escapeHTML(framework.label)}</strong>
-          <p>${escapeHTML(framework.summary)}</p>
-        </div>
-        <div class="capacity-indicator" aria-label="Verfügbarer Handlungsspielraum ${framework.capacity} Prozent">
-          <strong>${framework.capacity}</strong><small>Spielraum</small>
-        </div>
-      </div>
-      <div class="state-meta-line">${escapeHTML(stateMetaLine(latest))}</div>
-      <div class="framework-focus-list">${framework.focus.map(item => `<span>${escapeHTML(item)}</span>`).join("")}</div>`;
-    const hint = $("adaptiveRoutineHint");
-    hint.hidden = false;
-    hint.style.setProperty("--framework-color", framework.color);
-    const routineText = framework.key === "development"
-      ? "Die vollständigen Routinen können heute stimmig sein – bewahre trotzdem Pausen und Maß."
-      : framework.key === "balance"
-        ? "Beginne mit den Kernschritten. Zusätzliche Schritte bleiben eine bewusste Entscheidung."
-        : framework.key === "maintenance"
-          ? "Eine gekürzte oder angepasste Routine kann heute verantwortungsvoller sein als vollständige Erfüllung."
-          : framework.key === "recovery"
-            ? "Sichere nur notwendige Schritte. Überspringen und Regeneration dürfen bewusste Anpassungen sein."
-            : "Versorgung, Sicherheit und Hilfe haben Vorrang. Zusätzliche Routineanforderungen ruhen.";
-    hint.innerHTML = `<strong>Adaptive Einordnung</strong><span>${escapeHTML(routineText)}</span>`;
-  }
-
-  timeline.innerHTML = checkins.length ? [...checkins].reverse().map(entry => {
-    const entryFramework = frameworkForCheckin(entry);
-    return `<article class="state-timeline-item" style="--framework-color:${entryFramework.color}">
-      <div class="state-timeline-marker"></div>
-      <div class="state-timeline-copy">
-        <div class="state-timeline-title"><strong>${escapeHTML(entry.time)} Uhr · ${escapeHTML(entryFramework.label)}</strong><span>${entryFramework.capacity}</span></div>
-        <small>${escapeHTML(stateMetaLine(entry))}</small>
-        ${entry.note ? `<p>${escapeHTML(entry.note)}</p>` : ""}
-      </div>
-      <button type="button" class="state-delete-button" data-delete-state-checkin="${escapeHTML(entry.id)}" aria-label="Zustands-Check-in löschen">×</button>
-    </article>`;
-  }).join("") : `<p class="state-timeline-empty">Zustände verändern sich. Erfasse bei einer deutlichen Veränderung einen neuen Check-in, statt den ganzen Tag rückwirkend als gleich zu bewerten.</p>`;
-
-  document.querySelectorAll("[data-delete-state-checkin]").forEach(button => button.addEventListener("click", () => {
-    currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.id !== button.dataset.deleteStateCheckin);
-    saveReview(true);
-    renderStateOverview();
-    renderResponsibilityReflection();
-  }));
-}
-
-function populateStateCheckinEmotion() {
-  const select = $("stateEmotion");
-  if (!select) return;
-  select.innerHTML = EMOTIONS.map(emotion => `<option value="${escapeHTML(emotion.value)}">${escapeHTML(emotion.label)}</option>`).join("");
-}
-
-function openStateCheckinDialog() {
-  const latest = latestStateCheckin();
-  $("stateEnergy").value = latest?.energy ?? 60;
-  $("stateBody").value = latest?.body || "stable";
-  $("stateMind").value = latest?.mind || "normal";
-  $("stateEnvironment").value = latest?.environment || "normal";
-  $("stateEmotion").value = latest?.emotion || currentData.mood || "";
-  $("stateTime").value = selectedDate === todayISO() ? currentClockTime() : (latest?.time || "12:00");
-  $("stateNote").value = "";
-  updateStateCheckinPreview();
-  $("stateCheckinDialog").showModal();
-}
-
-function stateCheckinFromForm() {
-  return {
-    energy: clamp(Number($("stateEnergy").value || 0), 0, 100),
-    body: $("stateBody").value,
-    mind: $("stateMind").value,
-    environment: $("stateEnvironment").value,
-    emotion: $("stateEmotion").value,
-    time: $("stateTime").value || "12:00",
-    note: $("stateNote").value.trim()
-  };
-}
-
-function updateStateCheckinPreview() {
-  if (!$("stateEnergy")) return;
-  const draft = stateCheckinFromForm();
-  const framework = frameworkForCheckin(draft);
-  $("stateEnergyValue").textContent = `${draft.energy} %`;
-  $("stateFrameworkPreview").textContent = framework.label;
-  $("stateFrameworkPreview").style.setProperty("--framework-color", framework.color);
-  $("stateFrameworkPreviewText").innerHTML = `<strong>${framework.icon} ${escapeHTML(framework.label)}</strong><span>${escapeHTML(framework.summary)}</span>`;
-}
-
-function saveStateCheckin(event) {
-  event.preventDefault();
-  const entry = stateCheckinFromForm();
-  entry.id = `state-${selectedDate}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  entry.createdAt = `${selectedDate}T${entry.time}:00`;
-  currentData.stateCheckins = [...(currentData.stateCheckins || []), entry].sort((a, b) => a.time.localeCompare(b.time));
-  if (!currentData.mood && entry.emotion) {
-    currentData.mood = entry.emotion;
-    $("mood").value = entry.emotion;
-  }
-  $("stateCheckinDialog").close();
-  saveReview(true);
-  renderStateOverview();
-  renderResponsibilityReflection();
-}
-
-function responsibilityScore(data = currentData) {
-  if (!data) return null;
-  const questionValues = RESPONSIBILITY_KEYS.map(key => data.responsibility?.[key]).filter(value => [0, 1, 2].includes(Number(value))).map(Number);
-  const roleValues = ROLES.map(role => ROLE_REFLECTION_META[data.roleReflections?.[role.name]]?.score).filter(value => value !== null && value !== undefined);
-  const questionScore = questionValues.length ? questionValues.reduce((sum, value) => sum + value, 0) / (questionValues.length * 2) * 100 : null;
-  const roleScore = roleValues.length ? roleValues.reduce((sum, value) => sum + value, 0) / (roleValues.length * 2) * 100 : null;
-  if (questionScore === null && roleScore === null) return null;
-  if (questionScore === null) return Math.round(roleScore);
-  if (roleScore === null) return Math.round(questionScore);
-  return Math.round(questionScore * .7 + roleScore * .3);
-}
-
-function responsibilityLabel(score) {
-  if (score === null) return { label: "Noch offen", tone: "open", text: "Die Verantwortung des Tages wird durch deine ehrliche Reflexion sichtbar – nicht durch eine automatische Leistungswertung." };
-  if (score >= 85) return { label: "Sehr stimmig", tone: "strong", text: "Du hast Zustand, Grenzen, Rollen und Amānah nach deiner Einschätzung sehr stimmig miteinander verbunden." };
-  if (score >= 65) return { label: "Verantwortungsvoll", tone: "good", text: "Der Tag war überwiegend angemessen. Einzelne Spannungen dürfen als Hinweis für morgen dienen." };
-  if (score >= 40) return { label: "Teilweise stimmig", tone: "mixed", text: "Du erkennst sowohl verantwortungsvolle Schritte als auch Bereiche, in denen Anspruch und Zustand nicht zusammenpassten." };
-  return { label: "Überforderung erkannt", tone: "warning", text: "Die Reflexion zeigt eine deutliche Soll-Spannung. Die Erkenntnis ist kein Versagen, sondern ein Signal für Schutz, Anpassung und Unterstützung." };
-}
-
-function renderResponsibilityReflection() {
-  if (!currentData) return;
-  RESPONSIBILITY_KEYS.forEach(key => {
-    const value = currentData.responsibility?.[key];
-    document.querySelectorAll(`[data-responsibility-question="${key}"] [data-responsibility-value]`).forEach(button => {
-      const active = Number(button.dataset.responsibilityValue) === Number(value) && value !== null;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-  });
-
-  const grid = $("roleReflectionGrid");
-  grid.innerHTML = ROLES.map(role => {
-    const status = currentData.roleReflections?.[role.name] || "";
-    const meta = ROLE_REFLECTION_META[status];
-    const selected = currentData.role === role.name;
-    return `<button type="button" class="role-reflection-chip status-${status || "open"} ${selected ? "selected-day-role" : ""}" data-cycle-role-reflection="${escapeHTML(role.name)}" style="--role-color:${role.color};--role-soft:${hexToRgba(role.color,.14)};--role-text:${role.text}" aria-label="${escapeHTML(role.name)}: ${escapeHTML(meta.label)}">
-      <span class="role-reflection-identity"><b>${escapeHTML(role.emoji)}</b><strong>${escapeHTML(role.name)}</strong></span>
-      <span class="role-reflection-state"><i>${escapeHTML(meta.icon)}</i>${escapeHTML(meta.short)}</span>
-    </button>`;
-  }).join("");
-
-  document.querySelectorAll("[data-cycle-role-reflection]").forEach(button => button.addEventListener("click", () => {
-    const roleName = button.dataset.cycleRoleReflection;
-    const current = currentData.roleReflections?.[roleName] || "";
-    const next = ROLE_REFLECTION_ORDER[(ROLE_REFLECTION_ORDER.indexOf(current) + 1) % ROLE_REFLECTION_ORDER.length];
-    currentData.roleReflections[roleName] = next;
-    saveReview(true);
-    renderResponsibilityReflection();
-  }));
-
-  const score = responsibilityScore();
-  const assessment = responsibilityLabel(score);
-  const badge = $("responsibilityScoreBadge");
-  badge.className = `responsibility-score-badge tone-${assessment.tone}`;
-  badge.textContent = score === null ? assessment.label : `${score} · ${assessment.label}`;
-  const framework = frameworkForCheckin(latestStateCheckin());
-  const context = framework ? `Dein letzter Zustand lag im Rahmen „${framework.label}“. ` : "";
-  $("responsibilityGuidance").className = `responsibility-guidance tone-${assessment.tone}`;
-  $("responsibilityGuidance").innerHTML = `<strong>${escapeHTML(assessment.label)}</strong><p>${escapeHTML(context + assessment.text)}</p>`;
 }
 
 function applyRolePickerStyle() {
@@ -809,7 +510,6 @@ function routineStateButtonHTML(value) {
   const labels = {
     "": "Offen",
     done: "Erledigt",
-    adapted: "Angepasst",
     missed: "Nicht erledigt"
   };
   return `${routineStateIconHTML(value, "small")}<strong class="routine-state-button-label">${labels[value] || "Offen"}</strong>`;
@@ -817,7 +517,6 @@ function routineStateButtonHTML(value) {
 
 function routineStateIconHTML(value, size = "small") {
   if (value === "done") return statusCircle("✓", "gradient", size);
-  if (value === "adapted") return statusCircle("≈", "adapted", size);
   if (value === "missed") return statusCircle("✕", "missed", size);
   return statusCircle("–", "neutral", size);
 }
@@ -841,10 +540,9 @@ function updateRoutineStateButtons() {
   document.querySelectorAll("[data-routine-cycle]").forEach(button => {
     const key = button.dataset.routineCycle;
     const state = key === "morning" ? currentData.morningRoutineState : currentData.eveningRoutineState;
-    const label = state === "done" ? "Erledigt" : state === "adapted" ? "Angepasst" : state === "missed" ? "Nicht erledigt" : "Offen";
+    const label = state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
     button.dataset.state = state;
     button.classList.toggle("is-done", state === "done");
-    button.classList.toggle("is-adapted", state === "adapted");
     button.classList.toggle("is-missed", state === "missed");
     button.innerHTML = `${routineStateIconHTML(state, "small")}<span>${label}</span>`;
     button.setAttribute("aria-label", `${key === "morning" ? "Morgenroutine" : "Abendroutine"}: ${label}. Antippen zum Ändern.`);
@@ -1068,11 +766,30 @@ function prayerStateWeight(state) {
   return points === null ? 0 : points / 20;
 }
 
+function prayerPerformance(data, date = selectedDate) {
+  const values = PRAYERS.map(prayer => prayerStatePoints(data.prayers?.[prayer] || ""));
+  const isToday = date === todayISO();
+  const resolved = values.filter(value => value !== null);
+  const denominator = isToday ? resolved.length : PRAYERS.length;
+  if (!denominator) return 0;
+  const total = values.reduce((sum, value) => sum + (value ?? 0), 0);
+  return (total / (denominator * 20)) * 100;
+}
+
+function reviewCompletion(data, date = selectedDate) {
+  // Gebete bilden 80 Prozent der Erfolgsquote. Fünf pünktliche Gebete
+  // ergeben 80 Prozent; Moschee kann die Quote über 100 Prozent heben.
+  const prayerShare = prayerPerformance(data, date) * 0.8;
+  const routinePoints = [data.morningRoutineState, data.eveningRoutineState]
+    .filter(state => state === "done").length * 10;
+  return Math.round(clamp(prayerShare + routinePoints, 0, 108));
+}
+
 function buildWeeklyTrendChart(labels, currentValues, previousValues, options = {}) {
-  const title = options.title || "Verantwortungsbalance";
+  const title = options.title || "Erfolgsquote";
   const subtitle = options.subtitle || "Aktuelle Woche im Vergleich zur Vorwoche";
   const target = Number.isFinite(options.target) ? options.target : null;
-  const maxValue = Number.isFinite(options.maxValue) ? options.maxValue : 100;
+  const maxValue = Number.isFinite(options.maxValue) ? options.maxValue : 110;
   const todayIndex = Number.isInteger(options.todayIndex) ? options.todayIndex : -1;
   const width = 420;
   const height = 224;
@@ -1142,112 +859,87 @@ function renderStats() {
     const previousDate = addDays(date, -7);
     return { date: previousDate, data: loadReview(previousDate), stored: Boolean(localStorage.getItem(storageKey(previousDate))) };
   });
-
-  const scoredReviews = reviews.map(item => ({ ...item, score: responsibilityScore(item.data) })).filter(item => item.score !== null);
-  const previousScored = previousReviews.map(item => ({ ...item, score: responsibilityScore(item.data) })).filter(item => item.score !== null);
-  const responsibilityAverage = scoredReviews.length ? Math.round(scoredReviews.reduce((sum, item) => sum + item.score, 0) / scoredReviews.length) : null;
-  const previousAverage = previousScored.length ? Math.round(previousScored.reduce((sum, item) => sum + item.score, 0) / previousScored.length) : null;
-  const scoreDelta = responsibilityAverage === null || previousAverage === null ? null : responsibilityAverage - previousAverage;
-
-  const latestStates = reviews.map(item => ({ ...item, checkin: latestStateCheckin(item.data) })).filter(item => item.checkin);
-  const capacityValues = latestStates.map(item => stateCapacity(item.checkin));
-  const averageCapacity = capacityValues.length ? Math.round(capacityValues.reduce((sum, value) => sum + value, 0) / capacityValues.length) : null;
-  const frameworkCounts = {};
-  latestStates.forEach(item => {
-    const label = frameworkForCheckin(item.checkin)?.label;
-    if (label) frameworkCounts[label] = (frameworkCounts[label] || 0) + 1;
-  });
-  const commonFramework = Object.entries(frameworkCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
-
-  const totalCheckins = reviews.reduce((sum, item) => sum + (item.data.stateCheckins?.length || 0), 0);
-  const boundaryAnswers = reviews.map(item => item.data.responsibility?.boundaryRespect).filter(value => [0, 1, 2].includes(Number(value))).map(Number);
-  const amanahAnswers = reviews.map(item => item.data.responsibility?.amanahCare).filter(value => [0, 1, 2].includes(Number(value))).map(Number);
-  const boundaryYes = boundaryAnswers.filter(value => value === 2).length;
-  const amanahYes = amanahAnswers.filter(value => value === 2).length;
-  const overextendedRoles = reviews.reduce((sum, item) => sum + ROLES.filter(role => item.data.roleReflections?.[role.name] === "overextended").length, 0);
-  const responsibleRoles = reviews.reduce((sum, item) => sum + ROLES.filter(role => item.data.roleReflections?.[role.name] === "responsible").length, 0);
-
+  const elapsedDays = Math.max(1, reviews.length);
+  const prayerTarget = elapsedDays * 5;
+  const routineTarget = elapsedDays * 2;
   const prayerCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => prayerStateWeight(item.data.prayers?.[prayer] || "") > 0).length, 0);
-  const prayerTarget = Math.max(1, reviews.length * 5);
+  const weightedPrayerTotal = reviews.reduce((sum, item) => sum + prayerPerformance(item.data, item.date), 0);
   const mosqueCount = reviews.reduce((sum, item) => sum + PRAYERS.filter(prayer => item.data.prayers?.[prayer] === "Gemeinschaft").length, 0);
   const routineDone = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "done").length, 0);
-  const routineAdapted = reviews.reduce((sum, item) => sum + [item.data.morningRoutineState, item.data.eveningRoutineState].filter(state => state === "adapted").length, 0);
-  const routineTarget = Math.max(1, reviews.length * 2);
-  const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
+  const sleepValues = reviews.map(item => item.data.sleepQualityScore).filter(value => value !== "" && value !== undefined && value !== null).map(Number);
   const totalSteps = reviews.reduce((sum, item) => sum + Number(item.data.steps || 0), 0);
-  const averageWater = totalWaterMl / Math.max(1, reviews.length) / 1000;
-  const averageSteps = Math.round(totalSteps / Math.max(1, reviews.length));
-
+  const totalWaterMl = reviews.reduce((sum, item) => sum + Number(item.data.water || 0), 0);
+  const fastDays = reviews.filter(item => item.data.fastingCompleted).length;
+  const successScore = Math.round(reviews.reduce((sum, item) => sum + reviewCompletion(item.data, item.date), 0) / elapsedDays);
+  const storedDays = reviews.filter(item => item.stored).length;
+  const routineRate = Math.round((routineDone / routineTarget) * 100);
+  const prayerRate = Math.round(weightedPrayerTotal / elapsedDays);
+  const averageRoutines = routineDone / elapsedDays;
+  const averageSteps = Math.round(totalSteps / elapsedDays);
+  const averageWater = totalWaterMl / elapsedDays / 1000;
+  const previousHasData = previousReviews.some(item => item.stored);
+  const previousScore = previousHasData ? Math.round(previousReviews.reduce((sum, item) => sum + reviewCompletion(item.data, item.date), 0) / elapsedDays) : null;
+  const scoreDelta = previousScore === null ? null : successScore - previousScore;
+  const currentScores = dates.map(date => date <= selectedDate ? reviewCompletion(loadReview(date), date) : null);
+  const previousScores = dates.map(date => { const previousDate = addDays(date, -7); return localStorage.getItem(storageKey(previousDate)) ? reviewCompletion(loadReview(previousDate), previousDate) : null; });
+  const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
   const moodCounts = {};
   reviews.forEach(item => { if (item.data.mood) moodCounts[item.data.mood] = (moodCounts[item.data.mood] || 0) + 1; });
-  const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
-
-  const currentScores = dates.map(date => date <= selectedDate ? responsibilityScore(loadReview(date)) : null);
-  const previousScores = dates.map(date => {
-    const previousDate = addDays(date, -7);
-    return localStorage.getItem(storageKey(previousDate)) ? responsibilityScore(loadReview(previousDate)) : null;
-  });
-  const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
-  const deltaText = scoreDelta === null ? "Noch keine Vergleichsbasis" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta} Punkte zur Vorwoche`;
+  const topMood = Object.entries(moodCounts).sort((a,b) => b[1]-a[1])[0]?.[0] || "–";
+  const lastSleepValue = sleepValues.length ? sleepValues[sleepValues.length - 1] : null;
+  const lastSleepLabel = lastSleepValue === null ? "–" : (SLEEP_LABELS[lastSleepValue] || "–");
+  const deltaText = scoreDelta === null ? "Keine Vergleichsdaten" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta} Prozentpunkte`;
 
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
-    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Verantwortungsbalance", subtitle: "Selbsteinschätzung aus Zustand, Grenzen, Amānah und Rollentreue – keine Leistungsquote", target: null, maxValue: 100, todayIndex: dates.indexOf(todayISO()) })}
+    ${buildWeeklyTrendChart(labels, currentScores, previousScores, { title: "Erfolgsquote", subtitle: "Gebete 80 %, Routinen 20 % · Moschee wird zusätzlich belohnt", target: 80, maxValue: 110, todayIndex: dates.indexOf(todayISO()) })}
     <div class="stats-metrics colorful-metrics">
-      ${statTile(responsibilityAverage === null ? "–" : String(responsibilityAverage), "Verantwortungsbalance")}
+      ${statTile(`${successScore}%`, "Erfolgsquote")}
       ${statTile(scoreDelta === null ? "–" : `${scoreDelta >= 0 ? "+" : ""}${scoreDelta}`, "Pkt. zur Vorwoche")}
-      ${statTile(averageCapacity === null ? "–" : String(averageCapacity), "Ø Handlungsspielraum")}
-      ${statTile(String(totalCheckins), "Zustands-Check-ins")}
-      ${statTile(`${boundaryYes}/${boundaryAnswers.length || 0}`, "Grenzen geachtet")}
-      ${statTile(`${amanahYes}/${amanahAnswers.length || 0}`, "Amānah gewahrt")}
-      ${statTile(String(routineAdapted), "Routinen angepasst")}
-      ${statTile(String(responsibleRoles), "Rollen stimmig gelebt")}
+      ${statTile(`${prayerRate}%`, "Gebetsleistung")}
+      ${statTile(`${routineRate}%`, "Routinenquote")}
+      ${statTile(averageRoutines.toFixed(1).replace(".", ","), "Routinen / Tag")}
+      ${statTile(`${averageWater.toFixed(1).replace('.', ',')} L`, "Wasser / Tag")}
+      ${statTile(averageSteps.toLocaleString("de-DE"), "Schritte / Tag")}
+      ${statTile(String(mosqueCount), "Gemeinschaftsgebete")}
     </div>
     <div class="insight-grid compact-insights">
-      <div class="insight-card"><span class="insight-label">Häufigster Rahmen</span><strong>${escapeHTML(commonFramework)}</strong><small>${latestStates.length}/${reviews.length} Tage mit Zustandsdaten</small></div>
-      <div class="insight-card"><span class="insight-label">Soll-Spannung erkannt</span><strong>${overextendedRoles}</strong><small>Rollen als überfordernd reflektiert</small></div>
-      <div class="insight-card"><span class="insight-label">Häufigste Emotion</span><strong>${escapeHTML(topMood)}</strong><small>${escapeHTML(deltaText)}</small></div>
+      <div class="insight-card"><span class="insight-label">Entwicklung</span><strong>${escapeHTML(deltaText)}</strong><small>Gewichteter Wochenschnitt</small></div>
+      <div class="insight-card"><span class="insight-label">Häufigste Emotion</span><strong>${escapeHTML(topMood)}</strong><small>Achtsamkeits-Tendenz</small></div>
+      <div class="insight-card"><span class="insight-label">Schlaf zuletzt</span><strong>${escapeHTML(lastSleepLabel)}</strong><small>${sleepValues.length}/${elapsedDays} Tage dokumentiert</small></div>
     </div>
-    <div class="weekly-visual-grid adaptive-week-grid">
+    <div class="weekly-visual-grid">
       <div class="visual-panel">
-        <h3>Zustandswoche</h3>
-        ${reviews.map(item => {
-          const checkin = latestStateCheckin(item.data);
-          const framework = frameworkForCheckin(checkin);
-          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track state-track"><i style="width:${framework?.capacity || 0}%;--track-color:${framework?.color || '#D9DEE9'}"></i></div><strong>${framework ? framework.capacity : "–"}</strong></div>`;
-        }).join("")}
-      </div>
-      <div class="visual-panel">
-        <h3>Verantwortungswoche</h3>
-        ${reviews.map(item => {
-          const score = responsibilityScore(item.data);
-          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track responsibility-track"><i style="width:${score ?? 0}%"></i></div><strong>${score ?? "–"}</strong></div>`;
-        }).join("")}
-      </div>
-      <div class="visual-panel">
-        <h3>Gebete dokumentiert</h3>
+        <h3>Gebetswoche</h3>
         ${reviews.map(item => {
           const prayed = PRAYERS.filter(prayer => prayerStateWeight(item.data.prayers?.[prayer] || "") > 0).length;
           const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
-          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${(prayed / 5) * 100}%"></i></div><strong>${prayed}/5</strong></div>`;
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${(prayed/5)*100}%"></i></div><strong>${prayed}/5</strong></div>`;
+        }).join("")}
+      </div>
+      <div class="visual-panel">
+        <h3>Routinewoche</h3>
+        ${reviews.map(item => {
+          const routineCount = [item.data.morningRoutineState, item.data.eveningRoutineState].filter(v => v === "done").length;
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track warm"><i style="width:${(routineCount/2)*100}%"></i></div><strong>${routineCount}/2</strong></div>`;
+        }).join("")}
+      </div>
+      <div class="visual-panel">
+        <h3>Wasserwoche</h3>
+        ${reviews.map(item => {
+          const liters = Number(item.data.water || 0) / 1000;
+          const day = new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${item.date}T12:00:00`)).replace(".", "");
+          return `<div class="mini-track-row"><span>${day}</span><div class="mini-track"><i style="width:${Math.min(100, (liters / 3) * 100)}%"></i></div><strong>${liters.toFixed(1).replace('.', ',')}L</strong></div>`;
         }).join("")}
       </div>
       <div class="visual-panel overview-panel">
-        <h3>Fakten, nicht Urteil</h3>
-        <div class="summary-pair"><span>Routinen vollständig</span><strong>${routineDone}/${routineTarget}</strong></div>
-        <div class="summary-pair"><span>Routinen angepasst</span><strong>${routineAdapted}</strong></div>
-        <div class="summary-pair"><span>Gebete erfasst</span><strong>${prayerCount}/${prayerTarget}</strong></div>
-        <div class="summary-pair"><span>Gemeinschaftsgebete</span><strong>${mosqueCount}</strong></div>
-        <div class="summary-pair"><span>Wasser / Tag</span><strong>${averageWater.toFixed(1).replace(".", ",")} L</strong></div>
-        <div class="summary-pair"><span>Schritte / Tag</span><strong>${averageSteps.toLocaleString("de-DE")}</strong></div>
+        <h3>Überblick</h3>
+        <div class="summary-pair"><span>Fastentage</span><strong>${fastDays}</strong></div>
+        <div class="summary-pair"><span>Routinen gesamt</span><strong>${routineDone}/${routineTarget}</strong></div>
+        <div class="summary-pair"><span>Gebete gesamt</span><strong>${prayerCount}/${prayerTarget}</strong></div>
       </div>
     </div>`;
-}
-
-function responsibilityAnswerLabel(value) {
-  return Number(value) === 2 ? "Ja" : Number(value) === 1 ? "Teilweise" : Number(value) === 0 ? "Nein" : "-";
 }
 
 function statTile(value, label) {
@@ -1288,14 +980,14 @@ function exportBackup() {
   const payload = {
     app: "Roleplay",
     version: APP_VERSION,
-    schemaVersion: 4,
+    schemaVersion: 3,
     exportedAt: new Date().toISOString(),
     reviews: getAllReviews(),
     routines
   };
   downloadTextFile(`roleplay-backup-${todayISO()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
   localStorage.setItem(BACKUP_TIMESTAMP_KEY, new Date().toISOString());
-  $("backupStatus").textContent = `Backup erstellt: ${payload.reviews.length} Tagesreviews und ${Object.keys(routines || {}).length} Routinen.`;
+  $("backupStatus").textContent = `Backup erstellt: ${payload.reviews.length} Tagesreviews und beide Routinen.`;
 }
 
 function importBackup(file) {
@@ -1324,15 +1016,11 @@ function csvEscape(value) {
 
 function exportCsv() {
   saveReview(true);
-  const headers = ["Datum", "Rolle", "Frühstück", "Mittagessen", "Abendessen", "Snack", "Wasser_ml", "Schritte", "Morgenroutine", "Abendroutine", ...PRAYERS, "Ramadan_Tage", "Fastentag", "Schlafqualität", "Träume", "Emotion", "Dankbarkeit", "Name_Allahs", "Zustands_Checkins", "Letzter_Verantwortungsrahmen", "Letzter_Handlungsrahmen", "Zustand_ehrlich", "Grenzen_respektiert", "Amanah_gewahrt", "Rollentreue", "Verantwortungsbalance", "Rollenreflexion", "Verantwortungsvollster_Schritt", "Cannabis_Tage", "Begierde_Tage", "Alkohol_Tage", "Rauchfrei_Tage", "Aktivitäten", "Notizen"];
+  const headers = ["Datum", "Rolle", "Frühstück", "Mittagessen", "Abendessen", "Snack", "Wasser_ml", "Schritte", "Morgenroutine", "Abendroutine", ...PRAYERS, "Ramadan_Tage", "Fastentag", "Schlafqualität_1_bis_5", "Träume", "Emotion", "Dankbarkeit", "Name_Allahs", "Cannabis_Tage", "Begierde_Tage", "Alkohol_Tage", "Rauchfrei_Tage", "Aktivitäten", "Notizen"];
   const lines = [headers.map(csvEscape).join(";")];
   getAllReviews().forEach(({ date, data }) => {
     const activities = (data.activities || []).map(activity => `${activity.title} | ${activity.role}`).join(" / ");
-    const latest = latestStateCheckin(data);
-    const framework = frameworkForCheckin(latest);
-    const responsibilityValues = RESPONSIBILITY_KEYS.map(key => data.responsibility?.[key] === null || data.responsibility?.[key] === undefined ? "" : data.responsibility[key]);
-    const roleReflection = ROLES.map(role => `${role.name}: ${ROLE_REFLECTION_META[data.roleReflections?.[role.name] || ""].short}`).join(" / ");
-    const row = [date, data.role, data.breakfast, data.lunch, data.dinner, data.snack, data.water, data.steps, data.morningRoutineState, data.eveningRoutineState, ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, data.dreams, data.mood, data.gratitude1, data.allahName, data.stateCheckins?.length || 0, framework?.label || "", framework?.capacity ?? "", ...responsibilityValues, responsibilityScore(data) ?? "", roleReflection, data.responsibilityNote || "", ...STREAKS.map(streak => Number(data.streaks?.[streak.key]?.days || 0)), activities, data.notes];
+    const row = [date, data.role, data.breakfast, data.lunch, data.dinner, data.snack, data.water, data.steps, data.morningRoutineState, data.eveningRoutineState, ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, data.dreams, data.mood, data.gratitude1, data.allahName, ...STREAKS.map(streak => Number(data.streaks?.[streak.key]?.days || 0)), activities, data.notes];
     lines.push(row.map(csvEscape).join(";"));
   });
   downloadTextFile(`roleplay-export-${todayISO()}.csv`, `\ufeff${lines.join("\r\n")}`, "text/csv;charset=utf-8");
@@ -1370,9 +1058,6 @@ function buildWeeklyPdf(reviews) {
   reviews.forEach((item, index) => {
     const role = getRole(item.data.role);
     const data = item.data;
-    const latestState = latestStateCheckin(data);
-    const framework = frameworkForCheckin(latestState);
-    const responsibilityValue = responsibilityScore(data);
     const x = margin + index * (cardW + gap);
     const headerH = 40;
     const bodyPad = 5;
@@ -1388,7 +1073,7 @@ function buildWeeklyPdf(reviews) {
     textAt(formatLongDate(item.date), x + 7, cardsTop + 27, 5.4, false, pdfContrast(role.color));
 
     let cursorTop = cardsTop + headerH + 5;
-    const routineLabel = state => state === "done" ? "Erledigt" : state === "adapted" ? "Angepasst" : state === "missed" ? "Nicht erledigt" : "Offen";
+    const routineLabel = state => state === "done" ? "Erledigt" : state === "missed" ? "Nicht erledigt" : "Offen";
     const prayerLine = name => {
       const state = data.prayers?.[name] || "";
       return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
@@ -1407,22 +1092,6 @@ function buildWeeklyPdf(reviews) {
       ? (data.activities || []).slice(0, 18).flatMap(entry => pdfWrapText(`- ${entry.title}`, 31, 3))
       : ["- Keine Aktivitäten"];
     const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)}`);
-    const stateLines = latestState && framework ? [
-      `Rahmen: ${framework.label} (${framework.capacity})`,
-      `Zeit: ${latestState.time} Uhr`,
-      `Energie: ${latestState.energy}%`,
-      `Körper: ${STATE_BODY_OPTIONS[latestState.body]?.label || '-'}`,
-      `Geist: ${STATE_MIND_OPTIONS[latestState.mind]?.label || '-'}`,
-      `Emotion: ${latestState.emotion || '-'}`
-    ] : ["Noch kein Zustands-Check-in"];
-    const responsibilityLines = [
-      `Balance: ${responsibilityValue === null ? '-' : responsibilityValue}`,
-      `Zustand ehrlich: ${responsibilityAnswerLabel(data.responsibility?.stateHonesty)}`,
-      `Grenzen: ${responsibilityAnswerLabel(data.responsibility?.boundaryRespect)}`,
-      `Amanah: ${responsibilityAnswerLabel(data.responsibility?.amanahCare)}`,
-      `Rollentreue: ${responsibilityAnswerLabel(data.responsibility?.roleFidelity)}`,
-      `Schritt: ${data.responsibilityNote || '-'}`
-    ];
 
     const sections = [
       {
@@ -1435,12 +1104,7 @@ function buildWeeklyPdf(reviews) {
           `Getrunken: ${(Number(data.water || 0) / 1000).toFixed(1).replace('.', ',')} L`,
           `Schritte: ${data.steps ? Number(data.steps).toLocaleString('de-DE') : '-'}`
         ],
-        height: 62
-      },
-      {
-        title: "Zustand",
-        lines: stateLines,
-        height: 68
+        height: 70
       },
       {
         title: "Routinen",
@@ -1450,22 +1114,17 @@ function buildWeeklyPdf(reviews) {
           `Schlaf: ${data.sleepQualityScore === '' || data.sleepQualityScore === undefined ? '-' : (SLEEP_LABELS[Number(data.sleepQualityScore)] || '-')}`,
           `Fasten: ${data.fastingCompleted ? 'Geschafft' : `${Number(data.ramadanDays || 0)} offen`}`
         ],
-        height: 46
+        height: 50
       },
       {
         title: "Gebete",
         lines: PRAYERS.map(prayerLine),
-        height: 54
-      },
-      {
-        title: "Verantwortung",
-        lines: responsibilityLines,
-        height: 80
+        height: 57
       },
       {
         title: "Reflexion",
         lines: reflexionLines,
-        height: 235,
+        height: 374,
         lineHeight: 7.45,
         fontSize: 6.25,
         fitChars: 31,
@@ -1475,7 +1134,7 @@ function buildWeeklyPdf(reviews) {
       {
         title: "Aktivitäten",
         lines: activityLines,
-        height: 95,
+        height: 115,
         lineHeight: 7.45,
         fontSize: 6.25,
         fitChars: 31,
@@ -1485,7 +1144,7 @@ function buildWeeklyPdf(reviews) {
       {
         title: "Streaks",
         lines: streakLines,
-        height: 45
+        height: 55
       }
     ];
 
@@ -1546,7 +1205,7 @@ function pdfPlainText(value) {
 function weeklyPdfRows(reviews) {
   const value = getter => reviews.map(item => getter(item.data));
   const meals = data => [data.breakfast, data.lunch, data.dinner, data.snack].filter(Boolean).join(" / ") || "-";
-  const routineState = state => state === "done" ? "✓" : state === "adapted" ? "≈" : state === "missed" ? "×" : "○";
+  const routineState = state => state === "done" ? "✓" : state === "missed" ? "×" : "○";
   const prayer = (data, name) => prayerStateMeta(data.prayers?.[name] || "").short;
   const activity = data => (data.activities || []).map(item => item.title).join(" / ") || "-";
   const streak = data => STREAKS.map(s => `${s.label}: ${Number(data.streaks?.[s.key]?.days || 0)}`).join(" · ");
@@ -1560,8 +1219,6 @@ function weeklyPdfRows(reviews) {
     { label: "Abend", values: value(data => routineState(data.eveningRoutineState)) },
     { label: "Gebete", values: value(data => PRAYERS.map(name => `${name}: ${prayer(data, name)}`).join(" · ")), maxChars: 32, fontSize: 4.6 },
     { label: "Fasten", values: value(data => data.fastingCompleted ? `✓ (${Number(data.ramadanDays || 0)})` : `${Number(data.ramadanDays || 0)} offen`) },
-    { label: "Zustand", values: value(data => { const framework = frameworkForCheckin(latestStateCheckin(data)); return framework ? `${framework.label} (${framework.capacity})` : "-"; }), maxChars: 18, fontSize: 4.8 },
-    { label: "Verantwortung", values: value(data => responsibilityScore(data) ?? "-"), maxChars: 12 },
     { label: "Emotion", values: value(data => data.mood || "-") },
     { label: "Dankbarkeit", values: value(data => [data.gratitude1, data.gratitude2].filter(Boolean).join(" / ") || "-"), maxChars: 24, fontSize: 4.8 },
     { label: "Allah", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 14, fontSize: 4.8 },
@@ -2183,11 +1840,11 @@ function completeSessionItem(status) {
   const nextIndex = routineSession.index + 1;
   if (nextIndex >= routine.items.length) {
     const allDone = routine.items.every(entry => currentData.routineProgress[key][entry.id] === "done");
-    if (key === "morning") currentData.morningRoutineState = allDone ? "done" : "adapted";
-    else if (key === "evening") currentData.eveningRoutineState = allDone ? "done" : "adapted";
+    if (key === "morning") currentData.morningRoutineState = allDone ? "done" : "missed";
+    else if (key === "evening") currentData.eveningRoutineState = allDone ? "done" : "missed";
     saveReview(true);
     closeRoutineSession();
-    alert(allDone ? `${routine.title} abgeschlossen.` : `${routine.title} angepasst abgeschlossen. Übersprungene Schritte bleiben dokumentiert.`);
+    alert(allDone ? `${routine.title} abgeschlossen.` : `${routine.title} beendet. Übersprungene Schritte wurden markiert.`);
     return;
   }
   routineSession.index = nextIndex;
@@ -2251,7 +1908,6 @@ function initOptions() {
   $("dayRole").innerHTML = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
   $("activityRole").innerHTML = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
   $("mood").innerHTML = EMOTIONS.map(emotion => `<option value="${escapeHTML(emotion.value)}">${escapeHTML(emotion.label)}</option>`).join("");
-  populateStateCheckinEmotion();
   $("allahName").innerHTML = `<option value="">Name Allahs auswählen …</option>${ALLAH_NAMES.map(name => `<option>${escapeHTML(name)}</option>`).join("")}`;
   $("emojiQuickPicks").innerHTML = QUICK_EMOJIS.map(emoji => `<button type="button" data-emoji="${escapeHTML(emoji)}">${escapeHTML(emoji)}</button>`).join("");
 }
@@ -2320,27 +1976,13 @@ function bindEvents() {
   $("calendarClose").addEventListener("click", () => $("calendarDialog").close());
   $("prayerDialogClose").addEventListener("click", () => $("prayerDialog").close());
 
-  $("dayRole").addEventListener("change", () => { currentData.role = $("dayRole").value; applyRolePickerStyle(); saveReview(true); renderResponsibilityReflection(); });
+  $("dayRole").addEventListener("change", () => { currentData.role = $("dayRole").value; applyRolePickerStyle(); saveReview(true); });
   $("saveButton").addEventListener("click", () => saveReview(false));
-  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "dreams", "gratitude1", "gratitude2", "allahName", "responsibilityNote", "notes", "mood"].forEach(id => {
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "dreams", "gratitude1", "gratitude2", "allahName", "notes", "mood"].forEach(id => {
     if (!$(id)) return;
     $(id).addEventListener("change", () => saveReview(true));
     $(id).addEventListener("input", () => { collectForm(); scheduleAutoSave(); });
   });
-  $("openStateCheckin").addEventListener("click", openStateCheckinDialog);
-  $("cancelStateCheckin").addEventListener("click", () => $("stateCheckinDialog").close());
-  $("stateCheckinDialog").addEventListener("cancel", event => { event.preventDefault(); $("stateCheckinDialog").close(); });
-  $("stateCheckinForm").addEventListener("submit", saveStateCheckin);
-  ["stateEnergy", "stateBody", "stateMind", "stateEnvironment", "stateEmotion", "stateTime"].forEach(id => {
-    $(id).addEventListener(id === "stateEnergy" ? "input" : "change", updateStateCheckinPreview);
-  });
-  document.querySelectorAll("[data-responsibility-question] [data-responsibility-value]").forEach(button => button.addEventListener("click", () => {
-    const key = button.closest("[data-responsibility-question]").dataset.responsibilityQuestion;
-    currentData.responsibility[key] = Number(button.dataset.responsibilityValue);
-    saveReview(true);
-    renderResponsibilityReflection();
-  }));
-
   if ($("waterPlus")) $("waterPlus").addEventListener("click", () => { currentData.water = String(Math.min(5000, Number(currentData.water || 0) + 500)); renderWaterControl(); saveReview(true); });
   if ($("waterMinus")) $("waterMinus").addEventListener("click", () => { currentData.water = String(Math.max(0, Number(currentData.water || 0) - 500)); renderWaterControl(); saveReview(true); });
   $("sleepQuality").addEventListener("input", () => { updateSleepLabel(); collectForm(); scheduleAutoSave(); });
