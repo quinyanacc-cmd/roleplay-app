@@ -1,4 +1,4 @@
-# Roleplay App 3.7
+# Roleplay App 3.8
 
 Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
@@ -55,3 +55,8 @@ Die Daten werden ausschließlich lokal im Browser beziehungsweise in der install
 - „Erledigt“ schließt nur das Anpassungsfenster und lässt die Routine weiterlaufen.
 - Die Hinzufügen-Funktion wurde aus dem laufenden Anpassungsfenster entfernt.
 - Tages-, Monats- und Zurück-Pfeile sind kreisrund, optisch zentriert und exakt so hoch wie die Datumsleiste.
+
+## Version 3.8
+- Der Timerbereich in der laufenden Routine ist kompakter: kleineres Timerfeld, kleinerer Timer und geringere vertikale Abstände schaffen mehr Luft für Kontext, Steuerung und „Anpassen“.
+- Der aktuell ausgewählte Schritt im Anpassungsfenster erhält einen weichen violetten Lichtschein in der Designsprache der aktiven Hauptnavigation.
+- Die Tagesnavigation wurde auf schlanke, einheitliche 44-Pixel-Steuerelemente reduziert: Kreise und Datumsleiste liegen bündig auf einer Höhe, die Pfeile sind fein und exakt zentriert.
