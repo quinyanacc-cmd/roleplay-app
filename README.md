@@ -1,4 +1,4 @@
-# Roleplay App 3.4
+# Roleplay App 3.7
 
 Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
@@ -46,3 +46,12 @@ Die Daten werden ausschließlich lokal im Browser beziehungsweise in der install
 - Die nicht zuverlässig nutzbare Benachrichtigungsabfrage wurde vollständig entfernt.
 - „Routine anpassen“ befindet sich gut sichtbar unter dem laufenden Timer; dort können Schritte verschoben, bearbeitet und ergänzt werden.
 - Zurück-, Vorwärts- und Kalenderpfeile sind einheitlich kreisrund und exakt zentriert.
+
+
+## Version 3.7
+- „Anpassen“ öffnet während der laufenden Routine ein eigenes Bottom-Sheet in der bestehenden Roleplay-Designsprache.
+- Schritte lassen sich am Griff per Touch oder Maus direkt umsortieren.
+- Jeder andere Schritt kann über die Play-Schaltfläche unmittelbar gestartet werden; der bisherige Schritt bleibt dabei unbewertet.
+- „Erledigt“ schließt nur das Anpassungsfenster und lässt die Routine weiterlaufen.
+- Die Hinzufügen-Funktion wurde aus dem laufenden Anpassungsfenster entfernt.
+- Tages-, Monats- und Zurück-Pfeile sind kreisrund, optisch zentriert und exakt so hoch wie die Datumsleiste.

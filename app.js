@@ -231,7 +231,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "3.6";
+const APP_VERSION = "3.7";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1492,35 +1492,110 @@ function renderRoutineDetail(key) {
 
 
 function renderSessionRoutineEditor() {
-  if (!routineSession || !$("sessionRoutineItemList")) return;
+  if (!routineSession || !$('sessionRoutineItemList')) return;
   const routine = routines[routineSession.key];
   if (!routine) return;
   const currentId = currentSessionItem()?.id;
-  const editor = $("sessionRoutineEditor");
-  if (editor) editor.dataset.currentItemId = currentId || "";
-  $("sessionRoutineItemList").innerHTML = routine.items.map((item, index) => `
-    <div class="session-editor-item ${item.id === currentId ? "is-current" : ""}">
-      <span class="session-editor-number">${index + 1}</span>
-      <span class="session-editor-emoji">${escapeHTML(item.emoji)}</span>
-      <div class="session-editor-copy"><strong>${escapeHTML(item.title)}</strong><small>${item.minutes} Min.${item.id === currentId ? " · läuft gerade" : ""}</small></div>
-      <div class="session-editor-actions">
-        <button type="button" data-session-move="up" data-session-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Nach oben">↑</button>
-        <button type="button" data-session-move="down" data-session-index="${index}" ${index === routine.items.length - 1 ? "disabled" : ""} aria-label="Nach unten">↓</button>
-        <button type="button" data-session-edit="${escapeHTML(item.id)}" aria-label="Bearbeiten">⋯</button>
-      </div>
-    </div>`).join("");
+  const editor = $('sessionRoutineEditor');
+  if (editor) editor.dataset.currentItemId = currentId || '';
 
-  document.querySelectorAll("[data-session-move]").forEach(button => button.addEventListener("click", () => {
-    const currentItemId = currentSessionItem()?.id;
-    const index = Number(button.dataset.sessionIndex);
-    moveArrayItem(routine.items, index, button.dataset.sessionMove === "up" ? -1 : 1);
-    routineSession.index = Math.max(0, routine.items.findIndex(item => item.id === currentItemId));
-    saveRoutines(); persistRoutineSession(); renderRoutineSession(); renderSessionRoutineEditor(); renderRoutineCards();
+  $('sessionRoutineItemList').innerHTML = routine.items.map((item, index) => {
+    const state = currentData.routineProgress?.[routineSession.key]?.[item.id] || '';
+    const stateLabel = item.id === currentId ? 'läuft gerade' : state === 'done' ? 'erledigt' : state === 'skipped' ? 'übersprungen' : '';
+    return `<div class="session-editor-item ${item.id === currentId ? 'is-current' : ''}" data-session-item-id="${escapeHTML(item.id)}">
+      <button class="session-editor-drag-handle" type="button" aria-label="${escapeHTML(item.title)} verschieben" data-session-drag-handle>
+        <span></span><span></span><span></span>
+      </button>
+      <span class="session-editor-emoji">${escapeHTML(item.emoji)}</span>
+      <div class="session-editor-copy">
+        <strong>${escapeHTML(item.title)}</strong>
+        <small>${item.minutes} Min.${stateLabel ? ` · ${stateLabel}` : ''}</small>
+      </div>
+      <button type="button" class="session-editor-start ${item.id === currentId ? 'is-current' : ''}" data-session-start="${escapeHTML(item.id)}" aria-label="${item.id === currentId ? 'Läuft gerade' : `${escapeHTML(item.title)} starten`}" ${item.id === currentId ? 'disabled' : ''}>
+        <span aria-hidden="true">${item.id === currentId ? '●' : '▶'}</span>
+      </button>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('[data-session-start]').forEach(button => button.addEventListener('click', () => {
+    startSessionItemById(button.dataset.sessionStart);
   }));
-  document.querySelectorAll("[data-session-edit]").forEach(button => button.addEventListener("click", () => {
-    activeRoutineKey = routineSession.key;
-    openRoutineItemDialog(button.dataset.sessionEdit);
-  }));
+  bindSessionEditorReordering();
+}
+
+function bindSessionEditorReordering() {
+  const list = $('sessionRoutineItemList');
+  if (!list) return;
+
+  list.querySelectorAll('[data-session-drag-handle]').forEach(handle => {
+    handle.addEventListener('pointerdown', event => {
+      if (!routineSession || event.button > 0) return;
+      const row = handle.closest('.session-editor-item');
+      if (!row) return;
+      const currentItemId = currentSessionItem()?.id;
+      const pointerId = event.pointerId;
+      event.preventDefault();
+      handle.setPointerCapture?.(pointerId);
+      row.classList.add('is-dragging');
+      document.body.classList.add('session-editor-sorting');
+
+      const move = moveEvent => {
+        const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY)?.closest('.session-editor-item');
+        if (!target || target === row || target.parentElement !== list) return;
+        const box = target.getBoundingClientRect();
+        const placeAfter = moveEvent.clientY > box.top + box.height / 2;
+        list.insertBefore(row, placeAfter ? target.nextSibling : target);
+
+        const listBox = list.getBoundingClientRect();
+        if (moveEvent.clientY < listBox.top + 70) list.scrollTop -= 14;
+        if (moveEvent.clientY > listBox.bottom - 70) list.scrollTop += 14;
+      };
+
+      const finish = () => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', finish);
+        document.removeEventListener('pointercancel', finish);
+        row.classList.remove('is-dragging');
+        document.body.classList.remove('session-editor-sorting');
+        try { handle.releasePointerCapture?.(pointerId); } catch (_) {}
+
+        const order = [...list.querySelectorAll('.session-editor-item')].map(entry => entry.dataset.sessionItemId);
+        const byId = new Map(routines[routineSession.key].items.map(item => [item.id, item]));
+        routines[routineSession.key].items = order.map(id => byId.get(id)).filter(Boolean);
+        routineSession.index = Math.max(0, routines[routineSession.key].items.findIndex(item => item.id === currentItemId));
+        saveRoutines();
+        persistRoutineSession();
+        renderRoutineSession();
+        renderSessionRoutineEditor();
+        renderRoutineCards();
+        if (activeRoutineKey === routineSession.key) renderRoutineDetail(activeRoutineKey);
+      };
+
+      document.addEventListener('pointermove', move, { passive: false });
+      document.addEventListener('pointerup', finish, { once: true });
+      document.addEventListener('pointercancel', finish, { once: true });
+    });
+  });
+}
+
+function startSessionItemById(itemId) {
+  if (!routineSession) return;
+  const routine = routines[routineSession.key];
+  const index = routine?.items.findIndex(item => item.id === itemId) ?? -1;
+  if (index < 0) return;
+
+  const item = routine.items[index];
+  routineSession.index = index;
+  routineSession.remaining = Math.round(Number(item.minutes || 0) * 60);
+  routineSession.running = true;
+  routineSession.endAt = Date.now() + routineSession.remaining * 1000;
+  routineSession.expiredNotified = false;
+  routineSession.contextOpen = false;
+  delete currentData.routineProgress?.[routineSession.key]?.[item.id];
+  saveReview(true);
+  persistRoutineSession();
+  renderRoutineSession();
+  renderSessionRoutineEditor();
 }
 
 function toggleSessionRoutineEditor(force) {
@@ -1533,12 +1608,9 @@ function toggleSessionRoutineEditor(force) {
     button.setAttribute("aria-expanded", String(show));
     button.classList.toggle("is-open", show);
     const label = button.querySelector("span:last-child");
-    if (label) label.textContent = show ? "Anpassung schließen" : "Routine anpassen";
+    if (label) label.textContent = show ? "Anpassen geöffnet" : "Anpassen";
   }
-  if (show) {
-    renderSessionRoutineEditor();
-    requestAnimationFrame(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }));
-  }
+  if (show) renderSessionRoutineEditor();
 }
 
 function openRoutineItemDialog(itemId = null) {
@@ -1965,15 +2037,22 @@ function bindEvents() {
   document.querySelectorAll("[data-emoji]").forEach(button => button.addEventListener("click", () => { $("routineItemEmoji").value = button.dataset.emoji; }));
 
   $("closeRoutineSession").addEventListener("click", closeRoutineSession);
-  $("routineSessionDialog").addEventListener("cancel", event => { event.preventDefault(); closeRoutineSession(); });
+  $("routineSessionDialog").addEventListener("cancel", event => {
+    event.preventDefault();
+    const editor = $("sessionRoutineEditor");
+    if (editor && !editor.hidden) toggleSessionRoutineEditor(false);
+    else closeRoutineSession();
+  });
   $("sessionPause").addEventListener("click", toggleRoutineSessionRunning);
   $("sessionComplete").addEventListener("click", () => completeSessionItem("done"));
   $("sessionSkip").addEventListener("click", () => completeSessionItem("skipped"));
   $("sessionMinus").addEventListener("click", () => adjustRoutineSessionMinutes(-1));
   $("sessionPlus").addEventListener("click", () => adjustRoutineSessionMinutes(1));
   $("sessionEditRoutine").addEventListener("click", () => toggleSessionRoutineEditor());
-  $("sessionEditorClose").addEventListener("click", () => toggleSessionRoutineEditor(false));
-  $("sessionAddRoutineItem").addEventListener("click", () => { activeRoutineKey = routineSession.key; openRoutineItemDialog(); });
+  $("sessionEditorDone").addEventListener("click", () => toggleSessionRoutineEditor(false));
+  $("sessionRoutineEditor").addEventListener("click", event => {
+    if (event.target === $("sessionRoutineEditor")) toggleSessionRoutineEditor(false);
+  });
 
   window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
   document.addEventListener("visibilitychange", () => {

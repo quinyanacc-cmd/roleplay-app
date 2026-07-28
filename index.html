@@ -343,18 +343,20 @@
       <p id="sessionNext" class="session-next"></p>
       <button id="sessionEditRoutine" class="session-edit-control" type="button" aria-expanded="false" aria-controls="sessionRoutineEditor">
         <span aria-hidden="true">↕</span>
-        <span>Routine anpassen</span>
+        <span>Anpassen</span>
       </button>
-      <section id="sessionRoutineEditor" class="session-routine-editor" hidden>
-        <div class="session-editor-head">
-          <div>
-            <strong>Routine anpassen</strong>
-            <small>Reihenfolge und Inhalte lassen sich auch während des Timers ändern.</small>
+      <section id="sessionRoutineEditor" class="session-routine-editor" hidden aria-label="Routine anpassen">
+        <div class="session-editor-sheet" role="document">
+          <div class="session-editor-grabber" aria-hidden="true"></div>
+          <div class="session-editor-head">
+            <div>
+              <strong>Routine anpassen</strong>
+              <small>Am Griff verschieben oder mit ▶ direkt zu einem Schritt wechseln.</small>
+            </div>
           </div>
-          <button id="sessionEditorClose" type="button" aria-label="Editor schließen">×</button>
+          <div id="sessionRoutineItemList" class="session-routine-item-list"></div>
+          <button id="sessionEditorDone" class="session-editor-done" type="button">Erledigt</button>
         </div>
-        <div id="sessionRoutineItemList" class="session-routine-item-list"></div>
-        <button id="sessionAddRoutineItem" class="session-add-item" type="button">＋ Schritt hinzufügen</button>
       </section>
     </div>
   </dialog>
