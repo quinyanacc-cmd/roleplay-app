@@ -15,11 +15,11 @@ const PRAYER_STATES = [
 ];
 
 const PRAYER_COLOR_META = {
-  Fajr: { a: "#6658D6", b: "#3A7BEB" },
-  Dhuhr: { a: "#F7C84B", b: "#F09632" },
-  "ʿAsr": { a: "#F3A13B", b: "#E46A3C" },
-  Maghrib: { a: "#E66A76", b: "#B94FA1" },
-  "ʿIschāʾ": { a: "#3158B8", b: "#24BFB5" }
+  Fajr: { a: "#6D63F6", b: "#27C7E8" },
+  Dhuhr: { a: "#FFD15C", b: "#F2A13B" },
+  "ʿAsr": { a: "#F6A54C", b: "#EC6A55" },
+  Maghrib: { a: "#F36D8B", b: "#B96AF2" },
+  "ʿIschāʾ": { a: "#2F7FE9", b: "#20D6CA" }
 };
 
 const ROLES = [
@@ -378,7 +378,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.0.0";
+const APP_VERSION = "5.0.2";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -773,7 +773,7 @@ function innerStateCapacity(checkin) {
   const mood = checkin.mood === null || checkin.mood === undefined ? emotionStateScore(checkin.emotion) : clamp(Number(checkin.mood), 0, 100);
   const emotion = emotionStateScore(checkin.emotion);
   const load = LOAD_OPTIONS[checkin.load]?.score ?? LOAD_OPTIONS.normal.score;
-  return Math.round(energy * .45 + mood * .23 + emotion * .10 + load * .22);
+  return Math.round(energy * .40 + mood * .28 + emotion * .12 + load * .20);
 }
 
 function hydrationContextScore(slot, ml) {
@@ -801,8 +801,15 @@ function stateCapacity(checkin, data = currentData) {
 function recommendedFrameworkForCheckin(checkin, data = currentData) {
   const capacity = stateCapacity(checkin, data);
   if (capacity === null) return null;
-  const base = FRAMEWORKS.find(item => capacity >= item.min) || FRAMEWORKS.at(-1);
-  return { ...base, capacity };
+  const mood = checkin?.mood === null || checkin?.mood === undefined ? null : Number(checkin.mood);
+  const emotion = checkin?.emotion || "";
+  const load = checkin?.load || "normal";
+  const moodAdjustment = mood === null ? 0 : Math.round((mood - 60) * 0.10);
+  const emotionAdjustment = POSITIVE_EMOTIONS.has(emotion) ? 4 : HEAVY_EMOTIONS.has(emotion) ? -6 : ["Traurig", "Besorgt", "Gestresst", "Frustriert", "Ärgerlich", "Scham", "Reue", "Schuldig", "Einsam", "Unruhig"].includes(emotion) ? -3 : 0;
+  const loadAdjustment = load === "high" ? -6 : load === "low" ? 3 : 0;
+  const adjustedCapacity = clamp(capacity + moodAdjustment + emotionAdjustment + loadAdjustment, 0, 100);
+  const base = FRAMEWORKS.find(item => adjustedCapacity >= item.min) || FRAMEWORKS.at(-1);
+  return { ...base, capacity: adjustedCapacity, rawCapacity: capacity };
 }
 
 function frameworkForCheckin(checkin, data = currentData) {
@@ -1029,10 +1036,12 @@ function openStateCheckinDialog(slotKey = null) {
 function stateCheckinFromForm() {
   const slot = $("stateSlot").value;
   const nightSleep = $("stateSleepQuality").value;
+  const energyRaw = $("stateEnergy").value;
+  const moodRaw = $("stateMood").value;
   return {
     slot,
-    energy: slot === "night" ? null : Number($("stateEnergy").value || 60),
-    mood: slot === "night" ? null : Number($("stateMood").value || 60),
+    energy: slot === "night" ? null : Number(energyRaw === "" ? 60 : energyRaw),
+    mood: slot === "night" ? null : Number(moodRaw === "" ? 60 : moodRaw),
     load: slot === "night" ? "normal" : $("stateLoad").value,
     body: "stable",
     mind: "normal",

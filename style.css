@@ -18,17 +18,17 @@
 
   /* Rundungen */
   --r-card: 22px;
-  --r-field: 16px;
-  --r-chip: 16px;
+  --r-field: 18px;
+  --r-chip: 18px;
   --r-pill: 999px;
 
   /* Feldhöhen & Icons */
   --control-h: 48px;
-  --control-h-sm: 40px;
+  --control-h-sm: 38px;
   --icon-sm: 28px;
   --icon-md: 34px;
-  --nav-height: 54px;
-  --header-date-h: 42px;
+  --nav-height: 50px;
+  --header-date-h: 34px;
 
   /* Schrift */
   --font: "Futura", "Futura PT", "Avenir Next", Avenir,
@@ -61,9 +61,9 @@
   --conscientious: #2aa89c;
   --energy-chart: #183E96;
   --load-chart: #E04F59;
-  --prayer-chart: #20BFAF;
+  --prayer-chart: #1FD7D0;
   --glow-blue: rgba(68,125,255,.28);
-  --glow-turquoise: rgba(38,196,181,.28);
+  --glow-turquoise: rgba(31,215,208,.32);
   --glow-red: rgba(224,79,89,.25);
 
   /* Tints bewusst als rgba, damit keine color-mix-Abhängigkeit entsteht */
@@ -112,9 +112,9 @@
     --conscientious: #4fd7c6;
     --energy-chart: #6388F0;
     --load-chart: #FF6D78;
-    --prayer-chart: #47D9CB;
+    --prayer-chart: #53E8E1;
     --glow-blue: rgba(99,136,240,.34);
-    --glow-turquoise: rgba(71,217,203,.32);
+    --glow-turquoise: rgba(83,232,225,.36);
     --glow-red: rgba(255,109,120,.30);
 
     --tint-accent: rgba(123,164,255,.15);
@@ -208,7 +208,7 @@ main { padding: var(--sp-3); }
   top: 0;
   z-index: 30;
   padding: calc(var(--sp-2) + env(safe-area-inset-top)) var(--sp-3) var(--sp-2);
-  color: var(--header-role-text);
+  color: var(--role-text, var(--header-role-text));
   background:
     linear-gradient(180deg, var(--header-role-soft), var(--header-role-fade)),
     var(--header-role);
@@ -251,16 +251,17 @@ main { padding: var(--sp-3); }
 .role-picker {
   -webkit-appearance: none;
   appearance: none;
-  max-width: 190px;
-  min-height: var(--control-h-sm);
+  max-width: 198px;
+  min-height: 36px;
   padding: 0 30px 0 var(--sp-3);
   border-radius: var(--r-pill);
   font-size: var(--fs-label);
   font-weight: 750;
   /* Fügt sich in Light und Dark gleichermaßen in die farbige Kopfzeile ein. */
   color: var(--header-role-text);
-  background-color: rgba(255,255,255,.26);
+  background: linear-gradient(145deg, rgba(255,255,255,.26), var(--role-soft, rgba(255,255,255,.18)));
   border: 1px solid rgba(255,255,255,.34);
+  box-shadow: 0 6px 16px rgba(24,30,48,.08), 0 0 12px color-mix(in srgb, var(--role-color, #fff) 18%, transparent);
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
                     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
@@ -272,9 +273,10 @@ main { padding: var(--sp-3); }
 
 .date-nav {
   display: grid;
-  grid-template-columns: 38px 1fr 38px;
+  grid-template-columns: 34px 1fr 34px;
   gap: var(--sp-1);
   align-items: center;
+  margin-top: 2px;
 }
 
 .app-header .icon-button,
@@ -282,11 +284,12 @@ main { padding: var(--sp-3); }
   height: var(--header-date-h);
   min-height: var(--header-date-h);
   color: var(--header-role-text);
-  background: rgba(255,255,255,.26);
-  border: 1px solid rgba(255,255,255,.30);
+  background: linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.20));
+  border: 1px solid rgba(255,255,255,.34);
   border-radius: var(--r-chip);
+  box-shadow: 0 6px 16px rgba(255,255,255,.06) inset, 0 8px 20px rgba(24,30,48,.08);
 }
-.app-header .icon-button { font-size: 22px; font-weight: 700; }
+.app-header .icon-button { font-size: 20px; font-weight: 700; }
 .app-header .date-button { font-size: var(--fs-label); font-weight: 750; }
 
 /* Untere Navigation – behält ihren dezenten Leuchteffekt. */
@@ -316,9 +319,9 @@ main { padding: var(--sp-3); }
 .nav-symbol {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
-  font-size: 21px;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
   line-height: 1;
   transition: transform .18s ease, filter .18s ease, opacity .18s ease;
   opacity: .72;
@@ -326,7 +329,7 @@ main { padding: var(--sp-3); }
 .nav-button.active .nav-symbol {
   opacity: 1;
   transform: translateY(-1px) scale(1.08);
-  filter: drop-shadow(0 0 7px rgba(95,105,255,.68)) drop-shadow(0 0 14px rgba(201,76,196,.34));
+  filter: drop-shadow(0 0 8px rgba(95,105,255,.72)) drop-shadow(0 0 15px rgba(201,76,196,.32));
 }
 
 /* --------------------------------------------------------------------------
@@ -603,7 +606,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   text-align: left;
   border-radius: var(--r-field);
   border: 1px solid var(--slot-soft, var(--line));
-  background: linear-gradient(145deg, var(--slot-soft, var(--field-2)), var(--field-2) 72%);
+  background: linear-gradient(145deg, rgba(255,255,255,.74), var(--slot-soft, var(--field-2)) 22%, color-mix(in srgb, var(--slot-color, #ffffff) 10%, var(--field-2)) 62%, var(--field-2) 100%);
+  box-shadow: 0 6px 18px rgba(24,30,48,.04);
   color: var(--text);
   transition: border-color .16s ease, background .16s ease, box-shadow .18s ease, transform .18s ease;
 }
@@ -617,11 +621,11 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Auswahlzustand: dezente Hinterlegung, klarer Rand – kein starker Schein. */
+/* Auswahlzustand: farbige, sanft strahlende Karte im früheren ROLEPLAY-Stil. */
 .checkin-slot.complete {
-  background: linear-gradient(145deg, var(--slot-soft, var(--tint-accent)), var(--field) 82%);
+  background: linear-gradient(145deg, rgba(255,255,255,.84), color-mix(in srgb, var(--slot-color, #ffffff) 14%, white) 0%, var(--slot-soft, var(--tint-accent)) 40%, var(--field) 100%);
   border-color: var(--slot-color, var(--tint-accent-line));
-  box-shadow: 0 0 0 1px var(--slot-soft, transparent), 0 7px 22px var(--slot-glow, var(--tint-accent-glow));
+  box-shadow: 0 0 0 1px var(--slot-soft, transparent), 0 8px 20px rgba(24,30,48,.08);
   transform: translateY(-1px);
 }
 .checkin-slot.complete > span { filter: drop-shadow(0 0 7px var(--slot-glow, var(--tint-accent-glow))); }
@@ -648,8 +652,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   padding: var(--sp-4);
   border-radius: var(--r-field);
   border: 1px solid var(--framework-color, var(--line));
-  background: linear-gradient(145deg, var(--framework-soft, var(--field-2)), var(--field-2) 76%);
-  box-shadow: 0 8px 24px var(--framework-glow, transparent);
+  background: linear-gradient(145deg, rgba(255,255,255,.45), var(--framework-soft, var(--field-2)) 28%, var(--field-2) 86%);
+  box-shadow: 0 10px 26px var(--framework-glow, transparent);
 }
 .compact-framework-main {
   display: flex;
@@ -734,7 +738,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   transition: border-color .16s ease, background .16s ease;
 }
 .meal-entry > strong { font-size: var(--fs-label); font-weight: 750; }
-.meal-entry.is-selected { background: linear-gradient(145deg, var(--tint-accent), var(--field-2) 78%); border-color: var(--tint-accent-line); box-shadow: 0 6px 18px var(--tint-accent-glow); }
+.meal-entry.is-selected { background: linear-gradient(145deg, rgba(255,255,255,.44), var(--tint-accent) 24%, var(--field-2) 84%); border-color: var(--tint-accent-line); box-shadow: 0 8px 20px var(--tint-accent-glow); }
 .meal-entry.meal-none { background: var(--tint-neutral); border-color: var(--line-strong); }
 
 .vitality-metrics { display: grid; gap: var(--sp-3); margin-top: var(--sp-4); }
@@ -785,8 +789,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   padding: 0 1px;
   border: 0;
   background: none;
-  font-size: 15px;
-  line-height: 1.35;
+  font-size: 16px;
+  line-height: 1.4;
   filter: grayscale(1);
   opacity: .38;
 }
@@ -867,9 +871,9 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.routine-cycle-button.is-done { background: linear-gradient(135deg, rgba(111,151,255,.70), rgba(83,76,210,.70)); border-color: rgba(255,255,255,.58); box-shadow: 0 0 18px rgba(91,105,235,.30); }
-.routine-cycle-button.is-conscientious { background: linear-gradient(135deg, rgba(91,222,207,.68), rgba(25,139,134,.72)); border-color: rgba(255,255,255,.58); box-shadow: 0 0 18px rgba(47,201,185,.28); }
-.routine-cycle-button.is-missed { background: rgba(150,44,58,.5); border-color: rgba(255,255,255,.42); }
+.routine-cycle-button.is-done { background: linear-gradient(135deg, rgba(167,195,255,.72), rgba(93,109,232,.72)); border-color: rgba(255,255,255,.62); box-shadow: 0 0 18px rgba(91,105,235,.34); }
+.routine-cycle-button.is-conscientious { background: linear-gradient(135deg, rgba(153,242,230,.72), rgba(28,155,145,.74)); border-color: rgba(255,255,255,.62); box-shadow: 0 0 18px rgba(47,201,185,.30); }
+.routine-cycle-button.is-missed { background: linear-gradient(135deg, rgba(187,71,90,.52), rgba(123,32,48,.58)); border-color: rgba(255,255,255,.44); }
 
 /* --------------------------------------------------------------------------
    9. Gebete – eine einzige, konsistente Darstellung
@@ -889,7 +893,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   padding: var(--sp-2) 4px;
   border-radius: var(--r-chip);
   border: 1px solid var(--prayer-soft);
-  background: linear-gradient(155deg, var(--prayer-soft), var(--field-2) 74%);
+  background: linear-gradient(155deg, rgba(255,255,255,.56), var(--prayer-soft) 26%, var(--field-2) 82%);
   text-align: center;
   transition: border-color .16s ease, background .16s ease, box-shadow .18s ease, transform .18s ease;
   overflow: hidden;
@@ -911,18 +915,18 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   border: 0;
   background: none;
 }
-/* Auswahlzustand identisch für alle Gebete. */
+/* Auswahlzustand mit deutlicherem Verlauf und ruhigem Glow im früheren Stil. */
 .prayer-card:not([data-state=""]) {
-  background: linear-gradient(145deg, var(--prayer-soft), var(--prayer-soft-b), var(--field-2));
+  background: linear-gradient(145deg, rgba(255,255,255,.84), color-mix(in srgb, var(--prayer-a) 12%, white) 0%, var(--prayer-soft) 26%, var(--prayer-soft-b) 62%, var(--field-2) 100%);
   border-color: var(--prayer-a);
-  box-shadow: 0 7px 20px var(--prayer-glow);
+  box-shadow: 0 9px 24px var(--prayer-glow), 0 0 0 1px var(--prayer-soft);
   transform: translateY(-1px);
 }
 .prayer-card:not([data-state=""]) .status-circle.gradient {
   background: linear-gradient(145deg, var(--prayer-a), var(--prayer-b));
   box-shadow: 0 5px 16px var(--prayer-glow);
 }
-.prayer-card[data-state="Nicht gebetet"] { background: linear-gradient(145deg, var(--tint-danger), var(--field-2)); border-color: var(--tint-danger-line); box-shadow: 0 5px 16px var(--glow-red); }
+.prayer-card[data-state="Nicht gebetet"] { background: linear-gradient(145deg, rgba(255,255,255,.42), var(--tint-danger) 36%, var(--field-2)); border-color: var(--tint-danger-line); box-shadow: 0 6px 18px var(--glow-red); }
 
 .sunnah-prayer-grid {
   display: grid;
@@ -957,8 +961,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 }
 .sunnah-prayer-chip > strong { min-width: 0; font-size: var(--fs-small); font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sunnah-prayer-chip > small { margin-left: auto; flex: 0 0 auto; font-size: var(--fs-tiny); color: var(--muted); }
-.sunnah-prayer-chip.state-done { background: linear-gradient(145deg, rgba(38,196,181,.18), var(--field-2)); border-color: var(--prayer-chart); box-shadow: 0 5px 16px var(--glow-turquoise); }
-.sunnah-prayer-chip.state-done > span { background: linear-gradient(145deg, #55E1D2, #159E98); border-color: transparent; color: #fff; box-shadow: 0 4px 12px var(--glow-turquoise); }
+.sunnah-prayer-chip.state-done { background: linear-gradient(145deg, rgba(255,255,255,.46), rgba(38,196,181,.20) 32%, var(--field-2)); border-color: var(--prayer-chart); box-shadow: 0 6px 18px var(--glow-turquoise); }
+.sunnah-prayer-chip.state-done > span { background: linear-gradient(145deg, #6CE8DC, #15A7A0); border-color: transparent; color: #fff; box-shadow: 0 4px 12px var(--glow-turquoise); }
 
 .prayer-state-options { display: grid; gap: var(--sp-2); }
 .prayer-option {
@@ -1005,8 +1009,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   padding: var(--sp-2);
   border-radius: var(--r-field);
   border: 1px solid var(--activity-soft, var(--line));
-  background: linear-gradient(145deg, var(--activity-soft, var(--field-2)), var(--field-2) 78%);
-  box-shadow: 0 4px 16px var(--activity-glow, transparent);
+  background: linear-gradient(145deg, rgba(255,255,255,.46), var(--activity-soft, var(--field-2)) 26%, var(--field-2) 84%);
+  box-shadow: 0 6px 18px var(--activity-glow, transparent);
   overflow: hidden;
 }
 .activity-main { display: flex; align-items: center; gap: var(--sp-2); flex: 1 1 auto; min-width: 0; }
@@ -1089,11 +1093,16 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 
 .trend-note { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--muted); line-height: 1.4; }
 
+.trend-panel,
+.prayer-week-panel {
+  background: linear-gradient(145deg, rgba(255,255,255,.42), var(--field-2) 26%, var(--field-2) 100%);
+}
+
 .prayer-week-panel {
   padding: var(--sp-3);
   border-radius: var(--r-field);
   border: 1px solid var(--line);
-  background: var(--field-2);
+  background: linear-gradient(145deg, rgba(255,255,255,.42), var(--field-2) 26%, var(--field-2) 100%);
 }
 .panel-caption { display: block; margin-bottom: var(--sp-2); font-size: var(--fs-small); font-weight: 650; color: var(--muted); }
 .prayer-week-grid {
@@ -1685,4 +1694,25 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 
 @media (max-width: 390px) {
   .streak-daily-actions { grid-template-columns: 1fr; }
+}
+
+.checkin-slot.complete strong { color: var(--slot-color, var(--text)); }
+
+.mindfulness-card .reflection-field textarea,
+.mindfulness-card .reflection-field select {
+  min-height: var(--control-h);
+  height: var(--control-h);
+}
+.mindfulness-card .reflection-field textarea {
+  padding-top: 12px;
+  resize: none;
+}
+.responsibility-card {
+  background: linear-gradient(145deg, rgba(255,255,255,.48), rgba(116,101,227,.10) 28%, rgba(65,200,185,.10) 72%, var(--card) 100%);
+  border-color: rgba(116,101,227,.24);
+  box-shadow: 0 8px 22px rgba(101,95,212,.12);
+}
+.responsibility-card .lean-card-summary > span {
+  color: #6A63DA;
+  text-shadow: 0 0 10px rgba(106,99,218,.18);
 }
