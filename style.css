@@ -4743,3 +4743,328 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   .activity-row.system-activity .activity-actions { grid-column: 1 / -1; justify-self: end; }
   .streak-daily-actions { grid-template-columns: 1fr; }
 }
+
+/* --- v4.0.2 lean system kernel --- */
+:root { --nav-height: 58px; }
+
+/* Header and navigation become deliberately slimmer. */
+.app-header {
+  padding: calc(5px + env(safe-area-inset-top)) 10px 7px !important;
+  box-shadow: 0 5px 16px rgba(36,42,60,.045) !important;
+}
+.header-title-row { gap: 8px !important; }
+.app-header .eyebrow { font-size: 7px !important; letter-spacing: .15em !important; }
+.app-header h1 { margin-top: 1px !important; font-size: 18px !important; line-height: 1.05 !important; }
+.role-picker-wrap { width: min(49vw, 184px) !important; flex-basis: auto !important; }
+.role-picker {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 5px 25px 5px 9px !important;
+  border-radius: 14px !important;
+  font-size: 11px !important;
+}
+.date-nav {
+  grid-template-columns: 31px minmax(0,1fr) 31px !important;
+  gap: 6px !important;
+  margin-top: 5px !important;
+}
+.app-header .icon-button,
+.app-header .date-button {
+  min-height: 31px !important;
+  height: 31px !important;
+  border-radius: 11px !important;
+}
+.app-header .icon-button { font-size: 20px !important; }
+.app-header .date-button { font-size: 12px !important; padding: 4px 8px !important; }
+.app-header.compact { padding-top: calc(3px + env(safe-area-inset-top)) !important; padding-bottom: 5px !important; }
+.app-header.compact h1 { font-size: 16px !important; }
+main { padding: 10px !important; }
+.card { margin-bottom: 11px !important; }
+
+.bottom-nav {
+  min-height: 50px !important;
+  height: calc(50px + env(safe-area-inset-bottom)) !important;
+  padding: 4px 16px calc(4px + env(safe-area-inset-bottom)) !important;
+}
+.bottom-nav .nav-button { min-height: 38px !important; padding: 4px 10px !important; }
+.bottom-nav .nav-button .nav-symbol { font-size: 22px !important; }
+
+/* Compact adaptive overview. */
+.state-overview-card { padding: 14px !important; }
+.state-intro { margin: 7px 0 11px !important; font-size: 11.5px !important; line-height: 1.38 !important; }
+.state-checkin-button { display: none !important; }
+.adaptive-routine-hint { display: none !important; }
+.checkin-slots {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+  margin-bottom: 9px !important;
+}
+.checkin-slot {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 58px !important;
+  padding: 7px 4px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: auto auto auto !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 2px !important;
+  text-align: center !important;
+  border-radius: 15px !important;
+}
+.checkin-slot > span { grid-row: auto !important; font-size: 17px !important; }
+.checkin-slot strong { font-size: 9.5px !important; line-height: 1.1 !important; }
+.checkin-slot small { font-size: 7.5px !important; max-width: 100% !important; }
+.checkin-slot.complete { box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--slot-color) 76%, transparent) !important; }
+
+/* The ray motif marks selected and completed elements without a heavy block fill. */
+.ray-selected { position: relative; isolation: isolate; overflow: hidden; }
+.ray-selected::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -85%;
+  background: repeating-conic-gradient(from -12deg, color-mix(in srgb, var(--slot-color, #7758ff) 18%, transparent) 0deg 5deg, transparent 5deg 16deg);
+  opacity: .62;
+  pointer-events: none;
+}
+.ray-selected::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--slot-color, #7758ff) 15%, var(--card)) 0 34%, transparent 70%);
+  pointer-events: none;
+}
+
+.current-state-summary { padding: 11px !important; border-radius: 17px !important; }
+.compact-empty-state { grid-template-columns: 34px 1fr !important; gap: 9px !important; }
+.compact-empty-state .empty-state-icon { width: 34px !important; height: 34px !important; border-radius: 12px !important; font-size: 17px !important; }
+.compact-empty-state strong { font-size: 13px !important; }
+.compact-empty-state p { margin-top: 2px !important; font-size: 10px !important; }
+.compact-framework-main {
+  display: grid;
+  grid-template-columns: 36px minmax(0,1fr) 45px;
+  gap: 9px;
+  align-items: center;
+}
+.compact-framework-main .framework-icon { width: 36px; height: 36px; border-radius: 12px; font-size: 18px; }
+.compact-framework-main .framework-copy > span { font-size: 8.5px; }
+.compact-framework-main .framework-copy strong { font-size: 16px; }
+.compact-framework-main .framework-copy p {
+  margin-top: 2px;
+  font-size: 9.5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.compact-framework-main .capacity-indicator { width: 45px; height: 45px; border-radius: 14px; }
+.compact-framework-main .capacity-indicator strong { font-size: 17px; }
+.compact-framework-main .capacity-indicator small { font-size: 6.5px; }
+.compact-state-tags {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-top: 8px;
+  padding-bottom: 1px;
+}
+.compact-state-tags::-webkit-scrollbar { display: none; }
+.compact-state-tags span {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tag-color, var(--framework-color)) 8%, var(--card));
+  font-size: 8px;
+  font-weight: 720;
+}
+.framework-details { margin-top: 7px; border-top: 1px solid color-mix(in srgb, var(--framework-color) 15%, var(--line)); padding-top: 6px; }
+.framework-details summary { cursor: pointer; color: var(--muted); font-size: 9px; font-weight: 780; }
+.framework-details .framework-focus-list { margin-top: 7px; gap: 4px; }
+.framework-details .framework-focus-list span { font-size: 9.5px; }
+.state-history-details { margin-top: 9px; }
+.state-history-details > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 2px 2px;
+  color: var(--muted);
+}
+.state-history-details > summary::-webkit-details-marker { display: none; }
+.state-history-details > summary::after { content: "⌄"; margin-left: 7px; font-size: 14px; }
+.state-history-details[open] > summary::after { transform: rotate(180deg); }
+.state-history-details > summary strong { font-size: 10px; color: var(--text); }
+.state-history-details > summary small { margin-left: auto; font-size: 8px; }
+.state-timeline { margin-top: 7px !important; }
+.state-timeline-item { padding: 8px !important; gap: 7px !important; }
+
+/* Vitality data: one category and an optional note per meal. */
+.vitality-hint { margin: -7px 0 9px !important; font-size: 10.5px !important; }
+.compact-vitality-group { margin-top: 8px !important; }
+.meal-tracking-grid { grid-template-columns: repeat(2, minmax(0,1fr)); gap: 7px !important; }
+.meal-entry {
+  --slot-color: #7758ff;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--card) 97%, transparent);
+}
+.meal-entry.ray-selected { border-color: rgba(119,88,255,.24); }
+.meal-entry.meal-none { --slot-color: #a0a5b1; }
+.meal-entry-head { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 6px; align-items: center; }
+.meal-entry-head strong { font-size: 10px; }
+.meal-entry select,
+.meal-entry input {
+  min-height: 32px !important;
+  height: 32px !important;
+  margin-top: 0 !important;
+  padding: 5px 8px !important;
+  border-radius: 10px !important;
+  font-size: 9px !important;
+}
+.meal-entry input { margin-top: 6px !important; }
+.two-column { gap: 8px !important; }
+.water-tracker { gap: 5px !important; }
+
+/* Lean check-in dialog. */
+.state-checkin-dialog { width: min(95%, 470px) !important; max-height: min(88vh, 760px); padding: 15px !important; }
+.state-checkin-dialog form { display: block; }
+.dialog-description { margin: 6px 0 10px !important; font-size: 10.5px !important; }
+.compact-select-row { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 10px; margin-bottom: 8px !important; }
+.compact-select-row label { font-size: 10px; }
+.compact-select-row select { margin: 0 !important; min-height: 34px !important; height: 34px !important; }
+.checkin-form-section { margin-top: 8px !important; padding: 10px !important; border-radius: 15px !important; }
+.checkin-section-head { margin-bottom: 7px !important; gap: 7px !important; }
+.checkin-section-head > span { width: 23px !important; height: 23px !important; border-radius: 8px !important; font-size: 10px !important; }
+.checkin-section-head strong { font-size: 11px !important; }
+.checkin-section-head small { font-size: 8px !important; }
+.compact-energy-field { padding: 9px !important; border-radius: 13px !important; }
+.compact-energy-field input[type="range"] { margin-top: 6px !important; }
+.state-form-grid { gap: 7px !important; margin-top: 8px !important; }
+.state-form-grid label { font-size: 9.5px !important; }
+.state-form-grid select,
+.state-form-grid input { min-height: 34px !important; height: 34px !important; margin-top: 4px !important; padding: 6px 8px !important; border-radius: 11px !important; font-size: 10px !important; }
+.compact-field { margin-top: 8px !important; }
+.compact-field input { min-height: 35px !important; height: 35px !important; margin-top: 4px !important; padding: 7px 9px !important; border-radius: 11px !important; font-size: 10px !important; }
+.night-checkin-section { background: linear-gradient(145deg, rgba(91,79,210,.08), rgba(43,58,121,.045)) !important; }
+.ray-choice { display: grid; gap: 5px; }
+.sleep-quality-choices { grid-template-columns: repeat(3, minmax(0,1fr)); margin-top: 6px; }
+.ray-choice button {
+  --slot-color: #7758ff;
+  position: relative;
+  min-height: 34px;
+  padding: 5px 6px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: rgba(116,119,128,.035);
+  color: var(--muted);
+  font-size: 8.5px;
+  font-weight: 760;
+  isolation: isolate;
+  overflow: hidden;
+}
+.ray-choice button.active { color: var(--text); border-color: rgba(119,88,255,.32); }
+.checkin-advanced { margin-top: 8px; border: 1px solid var(--line); border-radius: 13px; padding: 8px 10px; }
+.checkin-advanced summary { cursor: pointer; color: var(--muted); font-size: 9.5px; font-weight: 760; }
+.state-framework-preview-text { margin-top: 8px !important; padding: 9px 10px !important; border-radius: 13px !important; }
+.state-framework-preview-text strong { font-size: 11px !important; }
+.state-framework-preview-text span { font-size: 9px !important; line-height: 1.35 !important; }
+.state-checkin-dialog .dialog-actions { margin-top: 10px !important; }
+.state-checkin-dialog .dialog-actions button { min-height: 37px !important; padding: 7px 11px !important; }
+
+/* Activities are a neutral log, not a scored task list. */
+.activity-row.tracking-activity {
+  grid-template-columns: minmax(0,1fr) 30px !important;
+  padding: 9px 10px !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(116,119,128,.03) !important;
+}
+.activity-row.tracking-activity .activity-main { min-width: 0; }
+.activity-row.tracking-activity .activity-copy strong { font-size: 12px; }
+.activity-row.tracking-activity .activity-copy small { font-size: 9px; }
+.activity-empty { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+
+/* Marked choices throughout the app reuse the ray motif. */
+.responsibility-options button.active,
+.streak-daily-actions button.active,
+.prayer-option.active {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(60,128,250,.11), rgba(119,88,255,.12), rgba(217,79,186,.08)) !important;
+}
+.responsibility-options button.active::before,
+.streak-daily-actions button.active::before,
+.prayer-option.active::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -120%;
+  background: repeating-conic-gradient(from 0deg, rgba(119,88,255,.12) 0 5deg, transparent 5deg 17deg);
+}
+
+@media (max-width: 390px) {
+  .app-header h1 { font-size: 17px !important; }
+  .role-picker-wrap { width: 48vw !important; }
+  .checkin-slot { min-height: 55px !important; }
+  .meal-entry-head { grid-template-columns: 1fr; gap: 4px; }
+  .meal-entry-head strong { display: none; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .meal-entry,
+  .activity-row.tracking-activity,
+  .ray-choice button,
+  .checkin-advanced { background-color: rgba(255,255,255,.035) !important; }
+  .ray-selected::after { background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--slot-color, #8a66ff) 18%, var(--card)) 0 34%, transparent 72%); }
+}
+
+/* v4.0.2 refinement: the selected tile defines the check-in; default entry stays deliberately small. */
+.checkin-slot-display {
+  --slot-color: #7758ff;
+  display: inline-grid;
+  grid-template-columns: 24px auto auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 5px 10px 5px 6px;
+  border: 1px solid rgba(119,88,255,.18);
+  border-radius: 12px;
+  background: linear-gradient(135deg,rgba(60,128,250,.06),rgba(119,88,255,.07),rgba(217,79,186,.04));
+}
+.checkin-slot-display > span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg,#3c80fa,#7758ff);
+  font-size: 13px;
+}
+.checkin-slot-display strong { font-size: 10.5px; }
+.checkin-slot-display small { color: var(--muted); font-size: 8.5px; }
+.primary-state-grid { grid-template-columns: .72fr 1.28fr !important; }
+.primary-context-grid { grid-template-columns: 1fr !important; }
+.checkin-advanced summary { display: flex; align-items: center; gap: 5px; }
+.checkin-advanced summary small { font-size: 8px; font-weight: 650; opacity: .8; }
+.full-grid-field { grid-column: 1 / -1; }
+@media (max-width: 390px) {
+  .primary-state-grid { grid-template-columns: 1fr !important; }
+  .night-form-grid { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 390px) {
+  .meal-entry-head strong { display: block !important; font-size: 9px !important; color: var(--muted); }
+}
