@@ -1,7 +1,7 @@
 {
-  "name": "Roleplay",
-  "short_name": "Roleplay",
-  "description": "Tagesreflexion, geführte Routinen, geschützte Streaks und Wochenstatistik",
+  "name": "ROLEPLAY",
+  "short_name": "ROLEPLAY",
+  "description": "Adaptives rollenbasiertes Orientierungs-, Entscheidungs- und Reflexionssystem für verantwortliches Handeln",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f9",

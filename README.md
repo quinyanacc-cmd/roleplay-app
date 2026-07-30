@@ -1,72 +1,67 @@
-# Roleplay App 3.10
+# ROLEPLAY App 4.0.1 – Systemkern-Integration
 
-Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
+Diese Fassung überführt den universellen ROLEPLAY-Systemkern erstmals systematisch in die bestehende Tagesreview-App. Die bisherige Designsprache, lokale Speicherung, Routinen, Tagesreflexion, Streaks sowie PDF-, CSV- und Backup-Funktionen bleiben erhalten.
 
-## Neu in Version 3.4
+Die Version ist ein praktischer Prototyp. Die abgeleiteten Orientierungswerte sind weder Diagnosen noch wissenschaftlich validierte Messinstrumente.
 
-- Dark-Mode-Kopfzeile wieder dezent in der Farbe der ausgewählten Tagesrolle.
-- Wochenstatistik ohne zusätzliche Balken- oder Kreisvisualisierung unterhalb der Erfolgskurve.
-- Wochenplan-PDF mit größerer, einheitlicher Schrift und besserer Nutzung der verfügbaren Textflächen.
+## Zentrale Systemlogik in der App
 
-- Intelligente Erfolgsquote mit differenzierter Gebetsqualität:
-  - Gemeinschaftsgebet: 22 Punkte
-  - pünktlich gebetet: 20 Punkte
-  - verspätet gebetet: 15 Punkte
-  - nachgeholt: 8 Punkte
-  - nicht gebetet: 0 Punkte
-  - Morgen- und Abendroutine: jeweils 10 Punkte
-- Fünf pünktliche Gebete und beide Routinen ergeben 100 Prozent; Gemeinschaftsgebete ermöglichen einen Bonus bis 108 Prozent.
-- Noch offene Gebete werden am laufenden Tag neutral behandelt und erst an vergangenen Tagen mit 0 bewertet.
-- Geglättete Wochenkurve mit Montag bis Sonntag, 80-Prozent-Zielgrenze und Markierung des heutigen Tages.
-- Korrigierter Überblick in der Wochenstatistik ohne überlappende Werte.
-- Streak-Seite mit schlankem Einleitungstext statt einer zusätzlichen Informationskarte.
-- Kompaktere Streak-Karten, kleinere Statuschips sowie sauber ausgerichtete Tagesangabe.
-- Schutzdialog mit gleich breiten Schaltflächen: Abbrechen links, Öffnen rechts.
-- Leicht verfeinerte Routine-Karten und Navigation.
-- Neu gewichteter Wochenplan-PDF:
-  - kompaktere Kopf-, Vitalitäts-, Routine- und Gebetsbereiche
-  - wesentlich mehr Platz für Reflexion und Notizen
-  - mehr Platz für Aktivitäten
-  - kompakter Streak-Bereich mit allen vier Einträgen
-  - weißer Hintergrund und korrekte deutsche Umlaute
+Die App trennt nun konsequent:
+
+1. innere Verfassung: körperlicher, emotionaler, kognitiver und motivationaler Zustand,
+2. äußeren Kontext: Umfeld und verfügbare Unterstützung,
+3. Verantwortungsrahmen: Rolle, Verantwortungsquelle, Dringlichkeit, Tragweite, Anpassungsspielraum und mögliche Konflikte,
+4. Handlungsspielraum und Rollenmodus,
+5. tatsächliche Handlungsausprägung,
+6. Wirkung, Restverantwortung, Korrektur und Lernen.
+
+Damit wird nicht mehr nur gefragt, was abstrakt getan werden sollte, sondern welche zulässige und verantwortbare Form unter den tatsächlichen Bedingungen möglich ist.
+
+## Neu und überarbeitet
+
+- Vier feste Zustands- und Verantwortungs-Check-ins: Morgen, Mittag, Abend und Nacht.
+- Der Nacht-Check-in ist ausdrücklich auf Wirkung, Restverantwortung und Lernen ausgerichtet.
+- Innerer Zustand und äußerer Kontext sind begrifflich getrennt.
+- Der Verantwortungsrahmen wird nicht mehr aus dem Zustand abgeleitet, sondern eigenständig erfasst.
+- Erfassung von primärer Rolle, Verantwortungsquelle, Dringlichkeit, Tragweite, Anpassungsspielraum und Verantwortungskonflikt.
+- Orientierende Ableitung eines Rollenmodus: Gestaltungs-, regulärer, reduzierter, Sicherungs- oder Schutz- und Regenerationsmodus.
+- Hinweise zu Mindesthandlung, Hilfe, Delegation, Grenzsetzung, Konfliktabwägung und Restverantwortung.
+- Persönliche Rolle „Ich-Person“ gemäß Anwendungsglossar; ältere Einträge mit „Yannick“ oder „Ich“ werden automatisch übernommen.
+- Routinen und Aktivitäten besitzen die Status:
+  - offen,
+  - erledigt,
+  - angepasst erfüllt,
+  - verantwortungsvoll nicht erledigt,
+  - versäumt.
+- Eine verantwortliche Anpassung oder ein verantwortliches Nichtausführen wird in der Rollentreue vollwertig behandelt. Die App weist zugleich darauf hin, dass dies eine echte Verantwortungsprüfung und Absicherung voraussetzt.
+- Pflichtgebete werden differenziert dokumentiert; freiwillige und Sunnah-Gebete sind zusätzlich erfassbar und erzeugen bei Auslassung keine negative Wertung.
+- Streaks unterscheiden geschützte Tage, aktiv widerstandene Herausforderungen und Unterbrechungen.
+- Das aktive Widerstehen einer realen Begierde wird als besonderer Schutz- und Verantwortungserfolg hervorgehoben.
+- Die Wochenkurve „Rollentreue“ berücksichtigt Pflichtgebete, Routinen, Aktivitäten und Schutzentscheidungen.
+- Die separate „Prüfschleife“ bewertet die eigene Reflexion zu Sachlage, Zustand, Verantwortung, Rolle, Angemessenheit, Wirkung und Lernen.
+- Neue Wochenwerte für vier Check-ins, Nacht-Check-ins, Handlungsspielraum, verantwortliche Anpassungen, Schutzentscheidungen und freiwillige Gebete.
+- CSV, Backup und Wochenplan-PDF enthalten die neuen Systemkern-Daten.
+
+## Bewertungslogik
+
+Die Rollentreue ist kein Urteil über den Wert der Person. Sie fasst ausschließlich dokumentierte Handlungen zusammen. Offene Einträge werden nicht automatisch als Misserfolg gewertet.
+
+Bei Routinen und Aktivitäten zählen „erledigt“, „angepasst erfüllt“ und „verantwortungsvoll nicht erledigt“ vollwertig. Pflichtgebete werden entsprechend ihrer dokumentierten Ausprägung differenziert einbezogen. Sunnah- und freiwillige Gebete werden nur positiv dokumentiert.
+
+Die Verantwortungsreflexion bleibt davon getrennt. Dadurch kann ein formal produktiver Tag einen erkannten Korrekturbedarf zeigen, während ein reduzierter Tag bei verantwortlicher Anpassung stimmig sein kann.
+
+## Datenkompatibilität
+
+Der bestehende lokale Datenspeicher `roleplay-v25` wird weiterverwendet. Vorhandene Tagesreviews und Routinen bleiben grundsätzlich erhalten. Ältere Begriffe und Status werden beim Laden in die neue Struktur überführt.
+
+Vor jeder Aktualisierung wird dennoch ein aktuelles Backup empfohlen.
 
 ## Aktualisierung
 
-1. In der bisherigen App ein Backup speichern.
-2. Den Inhalt dieses Ordners auf dem bisherigen Hosting vollständig ersetzen.
+1. In der bisherigen App unter „Export & Sicherung“ ein Backup speichern.
+2. Den Inhalt des bisherigen Hosting-Ordners vollständig durch den Inhalt dieses Ordners ersetzen.
 3. Die App vollständig schließen und erneut öffnen.
-4. Falls weiterhin eine ältere Version erscheint, die Web-App vom Home-Bildschirm entfernen und über Safari erneut hinzufügen oder den Browser-Cache leeren.
-5. Das Backup nur importieren, wenn die bisherigen Einträge nicht automatisch erscheinen.
+4. Erscheint weiterhin die ältere Fassung, die Web-App vom Home-Bildschirm entfernen und über Safari erneut hinzufügen oder den Website-Cache leeren.
+5. Ein Backup nur importieren, wenn die bisherigen Daten nicht automatisch erscheinen.
 
-Die Daten werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. Die Bestätigungsabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die lokal gespeicherten Daten jedoch nicht.
-
-
-## Version 3.6
-- Der Timer aktualisiert sich während geöffneter App wieder sichtbar und synchronisiert sich weiterhin nach dem Zurückkehren.
-- Die nicht zuverlässig nutzbare Benachrichtigungsabfrage wurde vollständig entfernt.
-- „Routine anpassen“ befindet sich gut sichtbar unter dem laufenden Timer; dort können Schritte verschoben, bearbeitet und ergänzt werden.
-- Zurück-, Vorwärts- und Kalenderpfeile sind einheitlich kreisrund und exakt zentriert.
-
-
-## Version 3.7
-- „Anpassen“ öffnet während der laufenden Routine ein eigenes Bottom-Sheet in der bestehenden Roleplay-Designsprache.
-- Schritte lassen sich am Griff per Touch oder Maus direkt umsortieren.
-- Jeder andere Schritt kann über die Play-Schaltfläche unmittelbar gestartet werden; der bisherige Schritt bleibt dabei unbewertet.
-- „Erledigt“ schließt nur das Anpassungsfenster und lässt die Routine weiterlaufen.
-- Die Hinzufügen-Funktion wurde aus dem laufenden Anpassungsfenster entfernt.
-- Tages-, Monats- und Zurück-Pfeile sind kreisrund, optisch zentriert und exakt so hoch wie die Datumsleiste.
-
-## Version 3.8
-- Der Timerbereich in der laufenden Routine ist kompakter: kleineres Timerfeld, kleinerer Timer und geringere vertikale Abstände schaffen mehr Luft für Kontext, Steuerung und „Anpassen“.
-- Der aktuell ausgewählte Schritt im Anpassungsfenster erhält einen weichen violetten Lichtschein in der Designsprache der aktiven Hauptnavigation.
-- Die Tagesnavigation wurde auf schlanke, einheitliche 44-Pixel-Steuerelemente reduziert: Kreise und Datumsleiste liegen bündig auf einer Höhe, die Pfeile sind fein und exakt zentriert.
-
-
-## Version 3.10
-
-- Kopfzeile auf die stabile Gestaltung vor Version 3.9 zurückgesetzt.
-- Pfeile ohne Schriftzeichen oder doppelte Ebenen exakt im Kreis zentriert.
-- Timer- und Kontextfeld innerhalb einer geführten Routine gleich breit.
-- Leere Kontextfelder werden vollständig ausgeblendet.
-- Mehr vertikaler Freiraum in der Routineansicht.
-- Der Button „Anpassen“ bleibt am unteren Ende der Routineansicht.
+Alle Einträge werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. ROLEPLAY ersetzt keine medizinische, psychotherapeutische, rechtliche, religiöse oder sonstige fachliche Beurteilung.

@@ -35,6 +35,25 @@
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
+        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
+          <div class="section-title-row state-title-row">
+            <div>
+              <p class="card-eyebrow">ADAPTIVER RAHMEN</p>
+              <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
+            </div>
+            <button id="openStateCheckin" class="small-button state-checkin-button" type="button"><span aria-hidden="true">＋</span> Check-in</button>
+          </div>
+          <p class="state-intro">Vom abstrakten „Soll“ zur verantwortbar möglichen Form: Zustand und äußerer Kontext verändern nicht deine Identität oder Verantwortung, wohl aber deinen Handlungsspielraum und den angemessenen Ausdruck deiner Rolle.</p>
+          <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
+          <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
+          <div id="adaptiveRoutineHint" class="adaptive-routine-hint" hidden></div>
+          <div class="state-timeline-head">
+            <strong>Verlauf des Tages</strong>
+            <small id="stateCheckinCount">Noch kein Check-in</small>
+          </div>
+          <div id="stateTimeline" class="state-timeline"></div>
+        </section>
+
         <section class="card">
           <h2>Vitalität</h2>
 
@@ -87,11 +106,23 @@
               <button class="routine-cycle-button" type="button" data-routine-cycle="evening" aria-label="Status Abendroutine ändern"></button>
             </article>
           </div>
+          <p class="section-hint routine-responsibility-hint">„Verantwortungsvoll nicht erledigt“ ist kein bequemes Überspringen: Es zählt vollwertig, wenn Verantwortung, Anpassungsspielraum und Folgen geprüft und das Notwendige abgesichert wurden.</p>
         </section>
 
         <section class="card">
-          <h2>Islam</h2>
+          <div class="section-title-row prayer-section-title">
+            <div>
+              <p class="card-eyebrow">GEBET & FREIWILLIGE NÄHE</p>
+              <h2>Islam</h2>
+            </div>
+          </div>
+          <span class="subheading prayer-subheading">Pflichtgebete</span>
           <div id="prayerList" class="prayer-strip"></div>
+          <details class="sunnah-prayer-details">
+            <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
+            <p class="section-hint">Freiwillige Gebete werden als zusätzliche Annäherung dokumentiert. Ihr Auslassen wird nicht als Misserfolg bewertet.</p>
+            <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
+          </details>
           <div class="ramadan-box">
             <div>
               <span class="subheading">Fastentage</span>
@@ -137,7 +168,7 @@
             <h2>Aktivitäten</h2>
             <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
           </div>
-          <p class="section-hint">Per Pfeilen oder Halten und Ziehen kannst du die Reihenfolge deiner Aktivitäten anpassen.</p>
+          <p class="section-hint">Ordne jede Aktivität einer Rolle zu und erfasse anschließend ihre verantwortliche Ausprägung: erledigt, angepasst, bewusst nicht ausgeführt oder tatsächlich versäumt.</p>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
@@ -161,6 +192,72 @@
             <label class="sr-only" for="allahName">Name Allahs auswählen</label>
             <select id="allahName" aria-label="Name Allahs auswählen"></select>
           </div>
+        </section>
+
+        <section class="card responsibility-card" aria-labelledby="responsibilityTitle">
+          <div class="section-title-row">
+            <div>
+              <p class="card-eyebrow">ROLLENTREUE STATT LEISTUNG</p>
+              <h2 id="responsibilityTitle">Verantwortungsreflexion</h2>
+            </div>
+            <div id="responsibilityScoreBadge" class="responsibility-score-badge">Noch offen</div>
+          </div>
+          <p class="section-hint responsibility-hint">Bewerte nicht die Menge deiner Leistung. Prüfe, ob du Situation, Verantwortung, Rolle, Handlungsspielraum, Wirkung und notwendigen Lernschritt miteinander verbunden hast.</p>
+
+          <div class="responsibility-questions" id="responsibilityQuestions">
+            <div class="responsibility-question" data-responsibility-question="situationState">
+              <span>Habe ich Sachlage und eigenen Zustand hinreichend erfasst?</span>
+              <div class="responsibility-options" role="group" aria-label="Sachlage und Zustand erfasst">
+                <button type="button" data-responsibility-value="0">Nein</button>
+                <button type="button" data-responsibility-value="1">Teilweise</button>
+                <button type="button" data-responsibility-value="2">Ja</button>
+              </div>
+            </div>
+            <div class="responsibility-question" data-responsibility-question="responsibilityClarity">
+              <span>Habe ich die relevante Verantwortung und ihren Ursprung erkannt?</span>
+              <div class="responsibility-options" role="group" aria-label="Verantwortung erkannt">
+                <button type="button" data-responsibility-value="0">Nein</button>
+                <button type="button" data-responsibility-value="1">Teilweise</button>
+                <button type="button" data-responsibility-value="2">Ja</button>
+              </div>
+            </div>
+            <div class="responsibility-question" data-responsibility-question="roleScope">
+              <span>Habe ich zuständige Rolle, Grenzen und tatsächlichen Handlungsspielraum geklärt?</span>
+              <div class="responsibility-options" role="group" aria-label="Rolle und Handlungsspielraum geklärt">
+                <button type="button" data-responsibility-value="0">Nein</button>
+                <button type="button" data-responsibility-value="1">Teilweise</button>
+                <button type="button" data-responsibility-value="2">Ja</button>
+              </div>
+            </div>
+            <div class="responsibility-question" data-responsibility-question="appropriateness">
+              <span>War meine Handlung zulässig, geeignet, ausführbar und verhältnismäßig?</span>
+              <div class="responsibility-options" role="group" aria-label="Handlung angemessen">
+                <button type="button" data-responsibility-value="0">Nein</button>
+                <button type="button" data-responsibility-value="1">Teilweise</button>
+                <button type="button" data-responsibility-value="2">Ja</button>
+              </div>
+            </div>
+            <div class="responsibility-question" data-responsibility-question="effectLearning">
+              <span>Habe ich Wirkung, Restverantwortung und nötige Korrektur betrachtet?</span>
+              <div class="responsibility-options" role="group" aria-label="Wirkung und Lernen betrachtet">
+                <button type="button" data-responsibility-value="0">Nein</button>
+                <button type="button" data-responsibility-value="1">Teilweise</button>
+                <button type="button" data-responsibility-value="2">Ja</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="role-reflection-head">
+            <strong>Ausprägung meiner Rollen</strong>
+            <small>Erfüllt, angepasst, bewusst zurückgestellt, versäumt oder überdehnt.</small>
+          </div>
+          <div id="roleReflectionGrid" class="role-reflection-grid"></div>
+
+          <div class="field-group responsibility-note-field">
+            <label for="responsibilityNote">Was war heute der verantwortungsvollste Schritt oder die wichtigste Korrektur?</label>
+            <textarea id="responsibilityNote" rows="4" placeholder="Zum Beispiel: eine Pflicht gesichert, eine Erwartung begrenzt, Hilfe angenommen, eine Handlung angepasst oder einen Schaden korrigiert …"></textarea>
+          </div>
+          <div id="responsibilityGuidance" class="responsibility-guidance"></div>
         </section>
 
         <section class="card notes-card">
@@ -219,7 +316,7 @@
       </section>
 
       <section id="streaksPage" class="app-page" aria-label="Streaks">
-        <p class="page-lead streaks-page-lead">Verwalte deine persönlichen Streaks. Dieser Bereich ist bewusst geschützt und muss vor dem Öffnen bestätigt werden.</p>
+        <p class="page-lead streaks-page-lead">Dokumentiere nicht nur Unterbrechungen, sondern auch Schutzentscheidungen. Einer starken Begierde zu widerstehen ist ein eigenständiger Verantwortungserfolg – nicht bloß ein weiterer gezählter Tag.</p>
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
     </main>
@@ -236,6 +333,102 @@
       </button>
     </nav>
   </div>
+
+  <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
+    <form id="stateCheckinForm">
+      <div class="dialog-title-row">
+        <div>
+          <p class="card-eyebrow">MOMENTAUFNAHME</p>
+          <h3>Zustand erfassen</h3>
+        </div>
+        <span id="stateFrameworkPreview" class="framework-preview-badge">Balance</span>
+      </div>
+      <p class="dialog-description" id="stateDialogDescription">Vier kurze Momentaufnahmen genügen: morgens, mittags, abends und nachts. Der Check-in trennt inneren Zustand, äußeren Kontext und konkreten Verantwortungsrahmen.</p>
+
+      <div class="checkin-slot-field">
+        <label for="stateSlot">Tagesabschnitt</label>
+        <select id="stateSlot"></select>
+      </div>
+
+      <section class="checkin-form-section">
+        <div class="checkin-section-head"><span>1</span><div><strong>Innerer Zustand</strong><small>Körperlich, emotional, kognitiv und motivational</small></div></div>
+        <div class="field-group state-energy-field">
+          <div class="label-value-row">
+            <label for="stateEnergy">Verfügbare Energie</label>
+            <strong id="stateEnergyValue">60 %</strong>
+          </div>
+          <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
+          <div class="state-range-legend"><small>kaum Kraft</small><small>volle Kraft</small></div>
+        </div>
+        <div class="state-form-grid">
+          <label>Körper
+            <select id="stateBody">
+              <option value="fit">Fit</option><option value="stable" selected>Stabil</option><option value="tired">Müde</option><option value="exhausted">Erschöpft</option><option value="sick">Krank</option><option value="pain">Schmerzen</option>
+            </select>
+          </label>
+          <label>Kognition
+            <select id="stateMind">
+              <option value="clear">Klar</option><option value="normal" selected>Ausgeglichen</option><option value="scattered">Ablenkbar</option><option value="strained">Angespannt</option><option value="overloaded">Überfordert</option>
+            </select>
+          </label>
+          <label>Motivation
+            <select id="stateMotivation">
+              <option value="driven">Entschlossen</option><option value="available" selected>Verfügbar</option><option value="hesitant">Zögerlich</option><option value="resistant">Starker Widerstand</option><option value="blocked">Blockiert</option>
+            </select>
+          </label>
+          <label>Emotion
+            <select id="stateEmotion"></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="checkin-form-section">
+        <div class="checkin-section-head"><span>2</span><div><strong>Äußerer Kontext</strong><small>Bedingungen außerhalb deiner Person</small></div></div>
+        <div class="state-form-grid">
+          <label>Umfeld
+            <select id="stateContext">
+              <option value="supportive">Unterstützend</option><option value="normal" selected>Normal</option><option value="pressure">Zeitdruck</option><option value="conflict">Konflikt</option><option value="overstimulating">Überreizend</option>
+            </select>
+          </label>
+          <label>Unterstützung
+            <select id="stateSupport">
+              <option value="strong">Gut verfügbar</option><option value="available" selected>Bei Bedarf verfügbar</option><option value="limited">Begrenzt</option><option value="none">Nicht verfügbar</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="checkin-form-section responsibility-frame-form">
+        <div class="checkin-section-head"><span>3</span><div><strong>Verantwortungsrahmen</strong><small>Was steht jetzt tatsächlich auf dem Spiel?</small></div></div>
+        <div class="state-form-grid">
+          <label>Primäre Rolle<select id="statePrimaryRole"></select></label>
+          <label>Verantwortungsquelle
+            <select id="stateResponsibilitySource">
+              <option value="role">Rolle / Auftrag</option><option value="relationship">Beziehung</option><option value="self">Selbst übernommen</option><option value="contract">Beruf / Vertrag</option><option value="law">Recht / übergeordnete Norm</option><option value="religion">Religiöse Norm</option><option value="cause">Verursachung / Schutzbedürftigkeit</option>
+            </select>
+          </label>
+          <label>Dringlichkeit<select id="stateUrgency"><option value="low">Gering</option><option value="medium" selected>Mittel</option><option value="high">Hoch</option><option value="immediate">Unmittelbar</option></select></label>
+          <label>Tragweite<select id="stateImpact"><option value="low">Gering</option><option value="medium" selected>Mittel</option><option value="high">Hoch</option></select></label>
+          <label>Anpassungsspielraum<select id="stateFlexibility"><option value="high">Hoch</option><option value="medium" selected>Mittel</option><option value="low">Gering</option><option value="none">Keiner</option></select></label>
+          <label>Verantwortungskonflikt<select id="stateConflict"><option value="no" selected>Nein</option><option value="possible">Möglich</option><option value="yes">Ja</option></select></label>
+        </div>
+        <div class="field-group">
+          <label for="stateResponsibility">Welche Verantwortung ist jetzt konkret berührt?</label>
+          <textarea id="stateResponsibility" rows="3" placeholder="Zum Beispiel: Pflichtgebet rechtzeitig sichern, gesundheitliche Stabilität schützen, eine Zusage erfüllen oder Hilfe organisieren …"></textarea>
+        </div>
+      </section>
+
+      <div class="state-form-grid state-time-grid">
+        <label>Zeitpunkt<input id="stateTime" type="time"></label>
+        <label>Kurzer Kontext<input id="stateNote" placeholder="Optional: Was prägt die Lage gerade?"></label>
+      </div>
+      <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
+      <div class="dialog-actions">
+        <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>
+        <button type="submit" class="primary-button compact">Zustand speichern</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="calendarDialog" class="calendar-dialog">
     <div class="calendar-header">
