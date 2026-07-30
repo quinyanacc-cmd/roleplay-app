@@ -42,7 +42,7 @@
               <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
             </div>
           </div>
-          <p class="state-intro">ROLEPLAY hilft dir, unter wechselnden Bedingungen verantwortlich aus deinen Rollen zu handeln.</p>
+          <p class="state-intro">Deine Check-ins verbinden Schlaf, Energie, Gefühle, Ernährung und Belastung zu einer einfachen Empfehlung für deinen nächsten Rollenmodus.</p>
           <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
           <div id="adaptiveRoutineHint" class="adaptive-routine-hint" hidden></div>
@@ -60,20 +60,24 @@
             <label>Mahlzeiten</label>
             <div class="meal-grid meal-tracking-grid">
               <div class="meal-entry" data-meal-entry="breakfast">
-                <div class="meal-entry-head"><strong>Frühstück</strong><select id="breakfastCategory" class="meal-category-select" aria-label="Kategorie Frühstück"></select></div>
-                <input id="breakfast" placeholder="Optional: Was hast du gegessen?">
+                <strong>Frühstück</strong>
+                <select id="breakfastCategory" class="meal-category-select" aria-label="Kategorie Frühstück"></select>
+                <input id="breakfast" placeholder="Optional: Was war es konkret?">
               </div>
               <div class="meal-entry" data-meal-entry="lunch">
-                <div class="meal-entry-head"><strong>Mittag</strong><select id="lunchCategory" class="meal-category-select" aria-label="Kategorie Mittagessen"></select></div>
-                <input id="lunch" placeholder="Optional: Was hast du gegessen?">
+                <strong>Mittagessen</strong>
+                <select id="lunchCategory" class="meal-category-select" aria-label="Kategorie Mittagessen"></select>
+                <input id="lunch" placeholder="Optional: Was war es konkret?">
               </div>
               <div class="meal-entry" data-meal-entry="dinner">
-                <div class="meal-entry-head"><strong>Abend</strong><select id="dinnerCategory" class="meal-category-select" aria-label="Kategorie Abendessen"></select></div>
-                <input id="dinner" placeholder="Optional: Was hast du gegessen?">
+                <strong>Abendessen</strong>
+                <select id="dinnerCategory" class="meal-category-select" aria-label="Kategorie Abendessen"></select>
+                <input id="dinner" placeholder="Optional: Was war es konkret?">
               </div>
               <div class="meal-entry" data-meal-entry="snack">
-                <div class="meal-entry-head"><strong>Snack</strong><select id="snackCategory" class="meal-category-select" aria-label="Kategorie Snack"></select></div>
-                <input id="snack" placeholder="Optional: Was hast du gegessen?">
+                <strong>Snacks</strong>
+                <select id="snackCategory" class="meal-category-select" aria-label="Kategorie Snacks"></select>
+                <input id="snack" placeholder="Optional: Was war es konkret?">
               </div>
             </div>
           </div>
@@ -156,93 +160,48 @@
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
-        <section class="card">
-          <h2>Gefühle & Achtsamkeit</h2>
-          <div class="field-group">
-            <label for="mood">Wie fühlst du dich?</label>
-            <select id="mood"></select>
-          </div>
-          <div class="gratitude-grid gratitude-field">
-            <div class="field-group compact-field">
-              <label for="gratitude1">Dankbar für …</label>
-              <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
+        <section class="card mindfulness-card">
+          <h2>Achtsamkeit & Dankbarkeit</h2>
+          <div class="reflection-stack">
+            <div class="field-group reflection-field">
+              <label for="gratitude1">Wofür bin ich heute dankbar?</label>
+              <textarea id="gratitude1" rows="2" placeholder="Ein Moment, eine Gunst oder ein Mensch …"></textarea>
             </div>
-            <div class="field-group compact-field">
-              <label for="gratitude2" class="sr-only">Zweite Dankbarkeit</label>
-              <input id="gratitude2" placeholder="Ein zweiter Dankbarkeitsmoment …">
+            <div class="field-group reflection-field">
+              <label for="gratitude2">Was habe ich heute bewusst wahrgenommen?</label>
+              <textarea id="gratitude2" rows="2" placeholder="Ein Gedanke, ein Gefühl oder etwas in deiner Umgebung …"></textarea>
             </div>
-          </div>
-          <div class="field-group">
-            <label class="sr-only" for="allahName">Name Allahs auswählen</label>
-            <select id="allahName" aria-label="Name Allahs auswählen"></select>
+            <div class="field-group reflection-field allah-name-field">
+              <label for="allahName">Welcher Name Allahs begleitet mich heute?</label>
+              <select id="allahName" aria-label="Name Allahs auswählen"></select>
+            </div>
           </div>
         </section>
 
-        <section class="card responsibility-card" aria-labelledby="responsibilityTitle">
-          <div class="section-title-row">
+        <details class="card responsibility-card lean-reflection-card">
+          <summary class="lean-card-summary">
             <div>
-              <p class="card-eyebrow">ROLLENTREUE STATT LEISTUNG</p>
-              <h2 id="responsibilityTitle">Verantwortungsreflexion</h2>
+              <p class="card-eyebrow">FREIWILLIGER TAGESABSCHLUSS</p>
+              <h2>Verantwortungsreflexion</h2>
             </div>
-            <div id="responsibilityScoreBadge" class="responsibility-score-badge">Noch offen</div>
-          </div>
-          <p class="section-hint responsibility-hint">Bewerte nicht die Menge deiner Leistung. Prüfe, ob du Situation, Verantwortung, Rolle, Handlungsspielraum, Wirkung und notwendigen Lernschritt miteinander verbunden hast.</p>
-
-          <div class="responsibility-questions" id="responsibilityQuestions">
-            <div class="responsibility-question" data-responsibility-question="situationState">
-              <span>Habe ich Sachlage und eigenen Zustand hinreichend erfasst?</span>
-              <div class="responsibility-options" role="group" aria-label="Sachlage und Zustand erfasst">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
+            <span>Ausklappen</span>
+          </summary>
+          <p class="section-hint responsibility-hint">Drei kurze Fragen genügen. Es geht nicht um eine Bewertung deiner Rollen, sondern um Klarheit für den nächsten verantwortlichen Schritt.</p>
+          <div class="reflection-stack responsibility-reflection-stack">
+            <div class="field-group reflection-field">
+              <label for="responsibilityMain">Was war heute meine wichtigste Verantwortung?</label>
+              <textarea id="responsibilityMain" rows="2" placeholder="Die Verantwortung, die heute wirklich getragen werden musste …"></textarea>
             </div>
-            <div class="responsibility-question" data-responsibility-question="responsibilityClarity">
-              <span>Habe ich die relevante Verantwortung und ihren Ursprung erkannt?</span>
-              <div class="responsibility-options" role="group" aria-label="Verantwortung erkannt">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
+            <div class="field-group reflection-field">
+              <label for="responsibilityAdaptation">Wo habe ich angemessen angepasst – und wo möglicherweise vermieden?</label>
+              <textarea id="responsibilityAdaptation" rows="3" placeholder="Ehrlich unterscheiden: Anpassung, Grenze, Unterstützung oder Ausweichen …"></textarea>
             </div>
-            <div class="responsibility-question" data-responsibility-question="roleScope">
-              <span>Habe ich zuständige Rolle, Grenzen und tatsächlichen Handlungsspielraum geklärt?</span>
-              <div class="responsibility-options" role="group" aria-label="Rolle und Handlungsspielraum geklärt">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-            <div class="responsibility-question" data-responsibility-question="appropriateness">
-              <span>War meine Handlung zulässig, geeignet, ausführbar und verhältnismäßig?</span>
-              <div class="responsibility-options" role="group" aria-label="Handlung angemessen">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
-            </div>
-            <div class="responsibility-question" data-responsibility-question="effectLearning">
-              <span>Habe ich Wirkung, Restverantwortung und nötige Korrektur betrachtet?</span>
-              <div class="responsibility-options" role="group" aria-label="Wirkung und Lernen betrachtet">
-                <button type="button" data-responsibility-value="0">Nein</button>
-                <button type="button" data-responsibility-value="1">Teilweise</button>
-                <button type="button" data-responsibility-value="2">Ja</button>
-              </div>
+            <div class="field-group reflection-field">
+              <label for="responsibilityNextStep">Was ist mein nächster verantwortlicher Schritt?</label>
+              <textarea id="responsibilityNextStep" rows="2" placeholder="Klein, konkret und ausführbar …"></textarea>
             </div>
           </div>
-
-          <div class="role-reflection-head">
-            <strong>Ausprägung meiner Rollen</strong>
-            <small>Erfüllt, angepasst, bewusst zurückgestellt, versäumt oder überdehnt.</small>
-          </div>
-          <div id="roleReflectionGrid" class="role-reflection-grid"></div>
-
-          <div class="field-group responsibility-note-field">
-            <label for="responsibilityNote">Was war heute der verantwortungsvollste Schritt oder die wichtigste Korrektur?</label>
-            <textarea id="responsibilityNote" rows="4" placeholder="Zum Beispiel: eine Pflicht gesichert, eine Erwartung begrenzt, Hilfe angenommen, eine Handlung angepasst oder einen Schaden korrigiert …"></textarea>
-          </div>
-          <div id="responsibilityGuidance" class="responsibility-guidance"></div>
-        </section>
+        </details>
 
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
@@ -251,13 +210,17 @@
 
         <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
 
-        <section class="card stats-card">
-          <div class="section-title-row">
-            <h2>Wochenstatistik</h2>
+        <details class="card stats-card week-course-card" open>
+          <summary class="lean-card-summary week-course-summary">
+            <div>
+              <p class="card-eyebrow">NEUTRALER VERLAUF</p>
+              <h2>7-Tage-Verlauf</h2>
+            </div>
             <span id="weekLabel" class="week-label"></span>
-          </div>
+          </summary>
+          <p class="section-hint week-course-hint">Der Verlauf zeigt Veränderungen von Energie, Belastung und Pflichtgebeten – nicht den Wert oder Erfolg eines Tages.</p>
           <div id="statsGrid" class="stats-grid"></div>
-        </section>
+        </details>
 
         <section class="card">
           <h2>Export & Sicherung</h2>
@@ -325,70 +288,74 @@
           <p class="card-eyebrow">KURZE MOMENTAUFNAHME</p>
           <h3>Check-in</h3>
         </div>
-        <span id="stateFrameworkPreview" class="framework-preview-badge">Regulär</span>
+        <span id="stateFrameworkPreview" class="framework-preview-badge">Regulärer Modus</span>
       </div>
-      <p class="dialog-description" id="stateDialogDescription">Zustand, Kontext und Verantwortung werden zu einem orientierenden Rollenmodus verbunden.</p>
+      <p class="dialog-description" id="stateDialogDescription">Wenige Angaben genügen für eine einfache, nachvollziehbare Empfehlung.</p>
 
       <div id="stateSlotDisplay" class="checkin-slot-display" aria-live="polite"></div>
       <select id="stateSlot" hidden aria-hidden="true" tabindex="-1"></select>
+      <input id="stateTime" type="hidden">
 
       <section id="nightCheckinSection" class="checkin-form-section night-checkin-section" hidden>
-        <div class="checkin-section-head"><span>🌙</span><div><strong>Schlaf & Träume</strong><small>Einmal kurz für die vergangene Nacht</small></div></div>
+        <div class="checkin-section-head"><span>🌙</span><div><strong>Schlaf & Träume</strong><small>Der vollständige Schlafbereich für die vergangene Nacht</small></div></div>
         <div class="field-group compact-field">
           <label>Schlafqualität</label>
           <input id="stateSleepQuality" type="hidden" value="">
-          <div id="sleepQualityChoices" class="ray-choice sleep-quality-choices" role="group" aria-label="Schlafqualität"></div>
+          <div id="sleepQualityChoices" class="sleep-quality-choices" role="group" aria-label="Schlafqualität"></div>
         </div>
-        <div class="state-form-grid night-form-grid">
+        <div class="night-form-stack">
           <label>Traumkategorie<select id="stateDreamCategory"></select></label>
-          <label>Kurze Notiz<input id="stateDreamNote" placeholder="Optional"></label>
+          <label>Traumnotiz<textarea id="stateDreamNote" rows="3" placeholder="Optional: Woran erinnerst du dich?"></textarea></label>
         </div>
       </section>
 
-      <section class="checkin-form-section compact-checkin-section">
-        <div class="checkin-section-head"><span>1</span><div><strong>Zustand</strong><small>Was ist gerade tatsächlich verfügbar?</small></div></div>
+      <section id="dayCheckinSection" class="checkin-form-section day-checkin-section">
+        <div class="checkin-section-head"><span>●</span><div><strong>Wie ist es gerade?</strong><small>Energie, Gefühl und Belastung reichen aus.</small></div></div>
         <div class="field-group state-energy-field compact-energy-field">
           <div class="label-value-row">
             <label for="stateEnergy">Energie</label>
             <strong id="stateEnergyValue">60 %</strong>
           </div>
           <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
+          <div class="state-range-legend"><small>kaum verfügbar</small><small>sehr verfügbar</small></div>
         </div>
-        <div class="state-form-grid primary-state-grid">
-          <label>Körper<select id="stateBody"><option value="fit">Fit</option><option value="stable" selected>Stabil</option><option value="tired">Müde</option><option value="exhausted">Erschöpft</option><option value="sick">Krank</option><option value="pain">Schmerzen</option></select></label>
-          <label>Gefühl<select id="stateEmotion"></select></label>
+        <div class="field-group">
+          <label for="stateEmotion">Vorherrschendes Gefühl</label>
+          <select id="stateEmotion"></select>
         </div>
+        <div class="field-group">
+          <label>Aktuelle Belastung</label>
+          <input id="stateLoad" type="hidden" value="normal">
+          <div id="stateLoadChoices" class="quick-choice-row" role="group" aria-label="Aktuelle Belastung">
+            <button type="button" data-state-load="low">Niedrig</button>
+            <button type="button" data-state-load="normal">Normal</button>
+            <button type="button" data-state-load="high">Hoch</button>
+          </div>
+        </div>
+        <details class="checkin-context-details">
+          <summary>Kurzen Kontext ergänzen <small>optional</small></summary>
+          <div class="field-group compact-field">
+            <label for="stateNote">Was prägt diesen Moment?</label>
+            <textarea id="stateNote" rows="2" placeholder="Zum Beispiel: schlecht geschlafen, Arbeit angespannt, ruhiger Nachmittag …"></textarea>
+          </div>
+        </details>
       </section>
 
-      <section class="checkin-form-section compact-checkin-section">
-        <div class="checkin-section-head"><span>2</span><div><strong>Kontext & Verantwortung</strong><small>Nur das Wesentliche für die nächste Handlung</small></div></div>
-        <div class="state-form-grid primary-context-grid">
-          <label>Umfeld<select id="stateContext"><option value="supportive">Unterstützend</option><option value="normal" selected>Normal</option><option value="pressure">Zeitdruck</option><option value="conflict">Konflikt</option><option value="overstimulating">Überreizend</option></select></label>
-        </div>
-        <div class="field-group compact-field">
-          <label for="stateResponsibility">Was ist jetzt konkret zu sichern?</label>
-          <input id="stateResponsibility" placeholder="Optional: Pflicht, Zusage, Schutzgut …">
-        </div>
-      </section>
+      <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
 
-      <details class="checkin-advanced">
-        <summary>Mehr Präzision <small>optional</small></summary>
-        <div class="state-form-grid">
-          <label>Fokus<select id="stateMind"><option value="clear">Klar</option><option value="normal" selected>Ausgeglichen</option><option value="scattered">Ablenkbar</option><option value="strained">Angespannt</option><option value="overloaded">Überfordert</option></select></label>
-          <label>Motivation<select id="stateMotivation"><option value="driven">Entschlossen</option><option value="available" selected>Verfügbar</option><option value="hesitant">Zögerlich</option><option value="resistant">Starker Widerstand</option><option value="blocked">Blockiert</option></select></label>
-          <label>Primäre Rolle<select id="statePrimaryRole"></select></label>
-          <label>Dringlichkeit<select id="stateUrgency"><option value="low">Gering</option><option value="medium" selected>Mittel</option><option value="high">Hoch</option><option value="immediate">Unmittelbar</option></select></label>
-          <label>Anpassung möglich?<select id="stateFlexibility"><option value="high">Gut</option><option value="medium" selected>Teilweise</option><option value="low">Kaum</option><option value="none">Nein</option></select></label>
-          <label>Unterstützung<select id="stateSupport"><option value="strong">Gut verfügbar</option><option value="available" selected>Bei Bedarf</option><option value="limited">Begrenzt</option><option value="none">Nicht verfügbar</option></select></label>
-          <label>Verantwortungsquelle<select id="stateResponsibilitySource"><option value="role">Rolle / Auftrag</option><option value="relationship">Beziehung</option><option value="self">Selbst übernommen</option><option value="contract">Beruf / Vertrag</option><option value="law">Recht / Norm</option><option value="religion">Religiöse Norm</option><option value="cause">Verursachung / Schutz</option></select></label>
-          <label>Tragweite<select id="stateImpact"><option value="low">Gering</option><option value="medium" selected>Mittel</option><option value="high">Hoch</option></select></label>
-          <label>Konflikt<select id="stateConflict"><option value="no" selected>Nein</option><option value="possible">Möglich</option><option value="yes">Ja</option></select></label>
-          <label>Zeitpunkt<input id="stateTime" type="time"></label>
-          <label class="full-grid-field">Kontextnotiz<input id="stateNote" placeholder="Optional"></label>
+      <details class="mode-adjustment-details">
+        <summary>Rollenmodus anpassen <small>optional</small></summary>
+        <p>Die App gibt eine Empfehlung. Du kannst sie verändern; bei einer Abweichung ist eine kurze Begründung erforderlich.</p>
+        <div class="field-group">
+          <label for="stateSelectedFramework">Gewählter Rollenmodus</label>
+          <select id="stateSelectedFramework"></select>
+        </div>
+        <div id="frameworkOverrideReasonWrap" class="field-group" hidden>
+          <label for="stateFrameworkReason">Warum passt ein anderer Modus besser?</label>
+          <textarea id="stateFrameworkReason" rows="2" placeholder="Kurze Begründung …"></textarea>
         </div>
       </details>
 
-      <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
       <div class="dialog-actions">
         <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>
         <button type="submit" class="primary-button compact">Speichern</button>
