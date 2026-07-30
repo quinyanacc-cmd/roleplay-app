@@ -14,6 +14,14 @@ const PRAYER_STATES = [
   { value: "Nicht gebetet", label: "Nicht gebetet", icon: "❌", short: "Nicht gebetet" }
 ];
 
+const PRAYER_COLOR_META = {
+  Fajr: { a: "#6658D6", b: "#3A7BEB" },
+  Dhuhr: { a: "#F7C84B", b: "#F09632" },
+  "ʿAsr": { a: "#F3A13B", b: "#E46A3C" },
+  Maghrib: { a: "#E66A76", b: "#B94FA1" },
+  "ʿIschāʾ": { a: "#3158B8", b: "#24BFB5" }
+};
+
 const ROLES = [
   { name: "Ich-Person", emoji: "🫆", color: "#4AA8FF", text: "#174E7A" },
   { name: "Vitalist", emoji: "🧬", color: "#193C8C", text: "#FFFFFF" },
@@ -180,13 +188,16 @@ const POSITIVE_EMOTIONS = new Set(["Euphorisch", "Erfüllt", "Freudig", "Begeist
 const HEAVY_EMOTIONS = new Set(["Ängstlich", "Panik", "Wütend", "Überfordert", "Überreizt", "Erschöpft", "Leer", "Hoffnungslos", "Verzweifelt", "Krank", "Schmerzen"]);
 
 const FRAMEWORKS = [
-  { min: 76, key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#5B72FF" },
-  { min: 56, key: "balance", label: "Regulärer Modus", icon: "◐", color: "#2EC4B6" },
-  { min: 33, key: "maintenance", label: "Reduzierter Modus", icon: "⌁", color: "#E7A31A" },
-  { min: 0, key: "stabilization", label: "Stabilisierungsmodus", icon: "☾", color: "#E8798D" }
+  { min: 88, key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#7258E8" },
+  { min: 76, key: "design", label: "Gestaltungsmodus", icon: "◆", color: "#4D7EEA" },
+  { min: 64, key: "focus", label: "Fokusmodus", icon: "◎", color: "#2D9BC7" },
+  { min: 52, key: "balance", label: "Regulärer Modus", icon: "◐", color: "#27B9A9" },
+  { min: 40, key: "maintenance", label: "Reduzierter Modus", icon: "⌁", color: "#E5A22E" },
+  { min: 27, key: "gentle", label: "Schonmodus", icon: "◔", color: "#E77D4D" },
+  { min: 0, key: "stabilization", label: "Stabilisierungsmodus", icon: "☾", color: "#D85F83" }
 ];
 
-// Frühere Modus-Schlüssel werden auf die vier aktuellen Rollenmodi abgebildet.
+// Frühere Modus-Schlüssel bleiben mit der erweiterten Modus-Skala kompatibel.
 const LEGACY_FRAMEWORK_KEYS = { recovery: "stabilization", protection: "stabilization" };
 
 function frameworkKey(value) {
@@ -367,7 +378,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "4.1.0";
+const APP_VERSION = "5.0.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -527,6 +538,7 @@ function normalizeReview(raw, date, hasStoredValue) {
       slot: CHECKIN_SLOTS.some(slot => slot.key === inferredSlot) ? inferredSlot : slotForTime(time),
       time,
       energy: entry.energy === "" || entry.energy === undefined || entry.energy === null ? null : clamp(Number(entry.energy), 0, 100),
+      mood: entry.mood === "" || entry.mood === undefined || entry.mood === null ? null : clamp(Number(entry.mood), 0, 100),
       load: LOAD_OPTIONS[entry.load] ? entry.load : "normal",
       body: STATE_BODY_OPTIONS[entry.body] ? entry.body : "stable",
       mind: STATE_MIND_OPTIONS[entry.mind] ? entry.mind : "normal",
@@ -563,7 +575,7 @@ function normalizeReview(raw, date, hasStoredValue) {
       merged.stateCheckins = [{
         id: `state-${date}-night-migrated`,
         slot: "night", time: "07:00",
-        energy: null, load: "normal", body: "stable", mind: "normal", motivation: "available",
+        energy: null, mood: null, load: "normal", body: "stable", mind: "normal", motivation: "available",
         context: "normal", support: "available", emotion: "",
         primaryRole: merged.role, responsibilitySource: "role", responsibility: "",
         urgency: "medium", impact: "medium", flexibility: "medium", conflict: "no",
@@ -758,9 +770,10 @@ function innerStateCapacity(checkin) {
     return sleepCapacityScore(checkin.sleepQualityScore) ?? 62;
   }
   const energy = checkin.energy === null || checkin.energy === undefined ? 60 : clamp(Number(checkin.energy), 0, 100);
+  const mood = checkin.mood === null || checkin.mood === undefined ? emotionStateScore(checkin.emotion) : clamp(Number(checkin.mood), 0, 100);
   const emotion = emotionStateScore(checkin.emotion);
   const load = LOAD_OPTIONS[checkin.load]?.score ?? LOAD_OPTIONS.normal.score;
-  return Math.round(energy * .56 + emotion * .22 + load * .22);
+  return Math.round(energy * .45 + mood * .23 + emotion * .10 + load * .22);
 }
 
 function hydrationContextScore(slot, ml) {
@@ -815,9 +828,12 @@ function recommendationForCheckin(checkin, framework = frameworkForCheckin(check
     return "Nimm die Schlafqualität als Ausgangslage, nicht als Urteil. Der Morgen-Check-in präzisiert den passenden Rollenmodus.";
   }
   const action = {
-    development: "Sichere zuerst das Wesentliche und wähle danach höchstens eine zusätzliche Entwicklungsaufgabe.",
-    balance: "Bearbeite deine wesentlichen Verantwortungen und begrenze zusätzliche Vorhaben bewusst.",
-    maintenance: "Sichere heute das Wesentliche und plane keine zusätzliche Entwicklungsaufgabe ein.",
+    development: "Sichere zuerst das Wesentliche und nutze den verbleibenden Raum für eine anspruchsvolle Entwicklungsaufgabe.",
+    design: "Die Lage wirkt tragfähig. Gestalte neben dem Wesentlichen eine klar priorisierte Aufgabe aktiv weiter.",
+    focus: "Arbeite fokussiert an den wesentlichen Verantwortungen und halte zusätzliche Vorhaben bewusst begrenzt.",
+    balance: "Bearbeite deine wesentlichen Verantwortungen in einem normalen Tempo und plane ausreichend Puffer ein.",
+    maintenance: "Sichere heute das Wesentliche und verzichte auf zusätzliche Entwicklungsaufgaben.",
+    gentle: "Reduziere Tempo und Umfang. Sichere Grundversorgung, Pflichtgebete und höchstens einen kleinen nächsten Schritt.",
     stabilization: "Sichere nur das Unaufschiebbare, hole Unterstützung und plane bewusst Erholung ein."
   }[framework.key] || "";
   const cause = stateCauseSentence(checkin, data);
@@ -833,8 +849,11 @@ function stateCauseSentence(checkin, data = currentData) {
   if (sleep !== null && sleep < 50) low.push("Schlaf");
   if (sleep !== null && sleep >= 80) high.push("Schlaf");
   const energy = checkin.energy === null || checkin.energy === undefined ? null : Number(checkin.energy);
+  const mood = checkin.mood === null || checkin.mood === undefined ? null : Number(checkin.mood);
   if (energy !== null && energy < 45) low.push("Energie");
   if (energy !== null && energy >= 75) high.push("Energie");
+  if (mood !== null && mood < 40) low.push("Laune");
+  if (mood !== null && mood >= 75) high.push("Laune");
   if (checkin.load === "high") return low.length ? `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig, die Belastung ist hoch.` : "Die Belastung ist heute hoch.";
   if (low.length) return `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig.`;
   if (high.length > 1) return `${high.join(" und ")} sind gut.`;
@@ -850,6 +869,7 @@ function checkinReasonFactors(checkin, data = currentData) {
     return factors;
   }
   factors.push(`Energie: ${checkin.energy ?? "–"} %`);
+  factors.push(`Laune: ${checkin.mood ?? "–"} %`);
   if (checkin.emotion) factors.push(`Gefühl: ${checkin.emotion}`);
   factors.push(`Belastung: ${LOAD_OPTIONS[checkin.load]?.label || "Normal"}`);
   const night = latestNightCheckin(data);
@@ -877,7 +897,7 @@ function renderCheckinSlots() {
       ? (SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Erfasst")
       : (framework?.label || "Erfasst");
     const color = framework?.color || slot.color;
-    return `<button type="button" class="checkin-slot ${entry ? "complete" : ""}" data-open-checkin-slot="${slot.key}" style="--slot-color:${color}" aria-label="${escapeHTML(slot.label)}-Check-in ${entry ? "bearbeiten" : "erfassen"}">
+    return `<button type="button" class="checkin-slot ${entry ? "complete" : ""}" data-open-checkin-slot="${slot.key}" style="--slot-color:${color};--slot-soft:${hexToRgba(color,.13)};--slot-glow:${hexToRgba(color,.30)}" aria-label="${escapeHTML(slot.label)}-Check-in ${entry ? "bearbeiten" : "erfassen"}">
       <span>${slot.icon}</span><div><strong>${escapeHTML(slot.label)}</strong><small>${escapeHTML(detail)}</small></div>
     </button>`;
   }).join("");
@@ -903,6 +923,8 @@ function renderStateOverview() {
     const overrideNote = framework.isOverride ? `<p class="mode-override-note"><strong>Bewusst angepasst:</strong> ${escapeHTML(framework.overrideReason || "Eigene Einschätzung")}</p>` : "";
     summary.className = `current-state-summary compact-state-summary framework-${framework.key}`;
     summary.style.setProperty("--framework-color", framework.color);
+    summary.style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
+    summary.style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
     summary.innerHTML = `
       <div class="compact-framework-main lean-framework-main">
         <div class="framework-icon" aria-hidden="true">${framework.icon}</div>
@@ -924,7 +946,7 @@ function renderStateOverview() {
     const slot = checkinSlot(entry.slot);
     const details = entry.slot === "night"
       ? `${entry.sleepQualityScore !== "" ? SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Schlaf erfasst" : "Schlaf nicht bewertet"}${entry.dreamCategory ? ` · ${dreamCategoryLabel(entry.dreamCategory)}` : ""}`
-      : `${entry.energy ?? "–"}% Energie · ${entry.emotion || "Gefühl offen"} · Belastung ${LOAD_OPTIONS[entry.load]?.label || "Normal"}`;
+      : `${entry.energy ?? "–"}% Energie · ${entry.mood ?? "–"}% Laune · ${entry.emotion || "Gefühl offen"} · Belastung ${LOAD_OPTIONS[entry.load]?.label || "Normal"}`;
     return `<article class="state-timeline-item" style="--framework-color:${entryFramework.color}">
       <div class="state-timeline-marker"></div>
       <div class="state-timeline-copy">
@@ -979,8 +1001,11 @@ function fillStateCheckinForm(slotKey) {
   $("stateCheckinDialog").dataset.editingSlot = requestedSlot;
   $("stateSlot").value = requestedSlot;
   $("stateSlotDisplay").style.setProperty("--slot-color", slot.color);
+  $("stateSlotDisplay").style.setProperty("--slot-soft", hexToRgba(slot.color, .12));
+  $("stateSlotDisplay").style.setProperty("--slot-glow", hexToRgba(slot.color, .24));
   $("stateSlotDisplay").innerHTML = `<span aria-hidden="true">${slot.icon}</span><strong>${escapeHTML(slot.label)}</strong><small>${requestedSlot === "night" ? "Schlafbereich" : "kurzer Check-in"}</small>`;
   $("stateEnergy").value = existing?.energy ?? latestDay?.energy ?? 60;
+  $("stateMood").value = existing?.mood ?? latestDay?.mood ?? 60;
   $("stateEmotion").value = existing?.emotion || latestDay?.emotion || "";
   renderLoadChoices(existing?.load || latestDay?.load || "normal");
   $("stateTime").value = existing?.time || (selectedDate === todayISO() ? currentClockTime() : slot.time);
@@ -1007,6 +1032,7 @@ function stateCheckinFromForm() {
   return {
     slot,
     energy: slot === "night" ? null : Number($("stateEnergy").value || 60),
+    mood: slot === "night" ? null : Number($("stateMood").value || 60),
     load: slot === "night" ? "normal" : $("stateLoad").value,
     body: "stable",
     mind: "normal",
@@ -1057,7 +1083,10 @@ function updateStateCheckinPreview(preferredFrameworkKey = null) {
   draft.selectedFrameworkKey = selected.key;
   const framework = frameworkForCheckin(draft);
   $("stateEnergyValue").textContent = `${draft.energy ?? 0} %`;
+  $("stateMoodValue").textContent = `${draft.mood ?? 0} %`;
   $("stateFrameworkPreviewText").style.setProperty("--framework-color", framework.color);
+  $("stateFrameworkPreviewText").style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
+  $("stateFrameworkPreviewText").style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
   $("stateFrameworkPreviewText").innerHTML = `<strong>${framework.icon} ${escapeHTML(framework.label)}</strong><span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>${framework.isOverride ? `<small>Systemempfehlung: ${escapeHTML(recommended.label)}</small>` : ""}`;
   updateFrameworkOverrideVisibility(recommended.key);
   $("stateCheckinDialog").dataset.recommendedFramework = recommended.key;
@@ -1187,7 +1216,8 @@ function renderPrayers() {
   $("prayerList").innerHTML = PRAYERS.map(prayer => {
     const state = currentData.prayers?.[prayer] || "";
     const meta = prayerStateMeta(state);
-    return `<div class="prayer-card prayer-card-compact" data-state="${escapeHTML(state)}">
+    const colors = PRAYER_COLOR_META[prayer] || { a: "#4D7EEA", b: "#27B9A9" };
+    return `<div class="prayer-card prayer-card-compact" data-state="${escapeHTML(state)}" style="--prayer-a:${colors.a};--prayer-b:${colors.b};--prayer-soft:${hexToRgba(colors.a,.13)};--prayer-soft-b:${hexToRgba(colors.b,.11)};--prayer-glow:${hexToRgba(colors.b,.28)}">
       <strong>${escapeHTML(prayer)}</strong>
       <button type="button" class="prayer-state-button" data-open-prayer="${escapeHTML(prayer)}" data-prayer-kind="obligatory" aria-label="Status ${escapeHTML(prayer)}: ${escapeHTML(meta.label)}">
         ${prayerStateIconHTML(state, "medium")}
@@ -1290,9 +1320,8 @@ function renderActivities() {
   const activities = currentData.activities || [];
   list.innerHTML = activities.length ? activities.map((activity, index) => {
     const role = getRole(activity.role);
-    return `<div class="activity-row tracking-activity" data-activity-index="${index}" style="--activity-color:${role.color}">
+    return `<div class="activity-row tracking-activity" data-activity-index="${index}" style="--activity-color:${role.color};--activity-soft:${hexToRgba(role.color,.10)};--activity-glow:${hexToRgba(role.color,.18)}">
       <div class="activity-main">
-        <span class="activity-role-bar" style="background:${role.color}"></span>
         <div class="activity-copy"><strong>${escapeHTML(activity.title)}</strong><small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</small></div>
       </div>
       <div class="activity-sort-actions" aria-label="Aktivität sortieren">
@@ -1552,7 +1581,7 @@ function exportCsv() {
     "Datum", "Tagesrolle", "Frühstück_Kategorie", "Frühstück", "Mittag_Kategorie", "Mittagessen", "Abend_Kategorie", "Abendessen", "Snack_Kategorie", "Snack", "Wasser_ml", "Schritte",
     "Morgenroutine", "Abendroutine", ...PRAYERS, ...SUNNAH_PRAYERS.map(prayer => `Sunnah_${prayer}`),
     "Ramadan_Tage", "Fastentag", "Schlafqualität", "Traumkategorie", "Traumnotiz",
-    "Checkins_Anzahl", "Letzter_Checkin", "Empfohlener_Rollenmodus", "Gewählter_Rollenmodus", "Abweichungsbegründung", "Energie", "Gefühl", "Belastung", "Kontextnotiz",
+    "Checkins_Anzahl", "Letzter_Checkin", "Empfohlener_Rollenmodus", "Gewählter_Rollenmodus", "Abweichungsbegründung", "Energie", "Laune", "Gefühl", "Belastung", "Kontextnotiz",
     "Dankbarkeit", "Bewusste_Wahrnehmung", "Name_Allahs",
     "Wichtigste_Verantwortung", "Anpassung_oder_Vermeidung", "Nächster_verantwortlicher_Schritt",
     ...STREAKS.flatMap(streak => [`${streak.label}_Tage`, `${streak.label}_Heute`]), "Aktivitäten", "Notizen"
@@ -1573,7 +1602,7 @@ function exportCsv() {
       TASK_STATE_META[data.morningRoutineState]?.label || "Offen", TASK_STATE_META[data.eveningRoutineState]?.label || "Offen",
       ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), ...SUNNAH_PRAYERS.map(prayer => data.sunnahPrayers?.[prayer] || ""),
       data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, dreamCategoryLabel(data.dreamCategory || ""), data.dreams,
-      data.stateCheckins?.length || 0, latest ? checkinSlot(latest.slot).label : "", recommended?.label || "", framework?.label || "", latest?.frameworkOverrideReason || "", latest?.energy ?? "", latest?.emotion || "", LOAD_OPTIONS[latest?.load]?.label || "", latest?.note || "",
+      data.stateCheckins?.length || 0, latest ? checkinSlot(latest.slot).label : "", recommended?.label || "", framework?.label || "", latest?.frameworkOverrideReason || "", latest?.energy ?? "", latest?.mood ?? "", latest?.emotion || "", LOAD_OPTIONS[latest?.load]?.label || "", latest?.note || "",
       data.gratitude1, data.gratitude2, data.allahName,
       data.responsibilityMain, data.responsibilityAdaptation, data.responsibilityNextStep,
       ...STREAKS.flatMap(streak => [Number(data.streaks?.[streak.key]?.days || 0), data.streaks?.[streak.key]?.todayStatus || ""]), activities, data.notes
@@ -2295,9 +2324,9 @@ function bindEvents() {
   $("cancelStateCheckin").addEventListener("click", () => $("stateCheckinDialog").close());
   $("stateCheckinDialog").addEventListener("cancel", event => { event.preventDefault(); $("stateCheckinDialog").close(); });
   $("stateCheckinForm").addEventListener("submit", saveStateCheckin);
-  ["stateEnergy", "stateEmotion", "stateSleepQuality", "stateDreamCategory", "stateDreamNote", "stateNote", "stateFrameworkReason"].forEach(id => {
+  ["stateEnergy", "stateMood", "stateEmotion", "stateSleepQuality", "stateDreamCategory", "stateDreamNote", "stateNote", "stateFrameworkReason"].forEach(id => {
     if (!$(id)) return;
-    $(id).addEventListener(["stateEnergy", "stateDreamNote", "stateNote", "stateFrameworkReason"].includes(id) ? "input" : "change", () => updateStateCheckinPreview());
+    $(id).addEventListener(["stateEnergy", "stateMood", "stateDreamNote", "stateNote", "stateFrameworkReason"].includes(id) ? "input" : "change", () => updateStateCheckinPreview());
   });
   const changeWater = delta => {
     currentData.water = String(Math.max(0, Math.min(10000, Number(currentData.water || 0) + delta)));
