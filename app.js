@@ -57,6 +57,8 @@ const EMOTIONS = [
   ...EMOTION_GROUPS.flatMap(group => group.options.map(([value, label]) => ({ value, label, group: group.label })))
 ];
 
+// Sichtbare Auswahl. Die Werte beschreiben nur Zusammenhänge mit Energie und Befinden,
+// sie sind keine moralische Bewertung der Mahlzeit.
 const MEAL_CATEGORY_META = {
   "": { label: "Kategorie auswählen …", score: null },
   none: { label: "Nichts gegessen", score: 28 },
@@ -65,12 +67,21 @@ const MEAL_CATEGORY_META = {
   protein: { label: "Eiweißreich", score: 84 },
   sweet: { label: "Süß", score: 52 },
   fatty: { label: "Fettig", score: 44 },
-  fastfood: { label: "Stark verarbeitet / Fast Food", score: 36 },
+  fastfood: { label: "Stark verarbeitet", score: 36 },
+  large: { label: "Sehr große Mahlzeit", score: 46 }
+};
+
+// Nicht mehr angebotene Kategorien aus älteren Versionen: bleiben lesbar und exportierbar,
+// erscheinen aber nur noch dann im Dropdown, wenn sie tatsächlich gespeichert sind.
+const LEGACY_MEAL_CATEGORY_META = {
   irregular: { label: "Unregelmäßig / nebenbei", score: 48 },
-  large: { label: "Sehr große Mahlzeit", score: 46 },
   mixed: { label: "Gemischt", score: 62 },
   other: { label: "Sonstiges", score: 60 }
 };
+
+function mealCategoryMeta(value) {
+  return MEAL_CATEGORY_META[value] || LEGACY_MEAL_CATEGORY_META[value] || null;
+}
 
 const DREAM_CATEGORIES = [
   ["", "Nicht erfasst"],
@@ -79,7 +90,7 @@ const DREAM_CATEGORIES = [
   ["neutral", "Neutral"],
   ["unusual", "Ungewöhnlich"],
   ["burdening", "Belastend"],
-  ["nightmare", "Albtraum"],
+  ["nightmare", "Alptraum"],
   ["relapse", "Konsum- oder Rückfalltraum"],
   ["wet", "Feuchter Traum"],
   ["spiritual", "Religiös oder bedeutsam empfunden"]
@@ -140,10 +151,10 @@ const SUPPORT_OPTIONS = {
 };
 
 const CHECKIN_SLOTS = [
-  { key: "night", label: "Letzte Nacht", icon: "🌙", time: "07:00", color: "#6256C7" },
-  { key: "morning", label: "Morgen", icon: "🌅", time: "08:00", color: "#F2A93B" },
-  { key: "midday", label: "Mittag", icon: "☀️", time: "13:00", color: "#E5B52E" },
-  { key: "evening", label: "Abend", icon: "🌇", time: "19:00", color: "#D36A67" }
+  { key: "night", label: "Nacht", icon: "🌙", time: "07:00", color: "#6256C7" },
+  { key: "morning", label: "Morgens", icon: "🌅", time: "08:00", color: "#F2A93B" },
+  { key: "midday", label: "Mittags", icon: "☀️", time: "13:00", color: "#E5B52E" },
+  { key: "evening", label: "Abends", icon: "🌇", time: "19:00", color: "#D36A67" }
 ];
 const CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "evening"];
 const LOAD_OPTIONS = {
@@ -169,12 +180,19 @@ const POSITIVE_EMOTIONS = new Set(["Euphorisch", "Erfüllt", "Freudig", "Begeist
 const HEAVY_EMOTIONS = new Set(["Ängstlich", "Panik", "Wütend", "Überfordert", "Überreizt", "Erschöpft", "Leer", "Hoffnungslos", "Verzweifelt", "Krank", "Schmerzen"]);
 
 const FRAMEWORKS = [
-  { min: 76, key: "development", label: "Gestaltungsmodus", icon: "✦", color: "#5B72FF", summary: "Der Handlungsspielraum erlaubt neben Kernverantwortungen auch Gestaltung und Entwicklung.", focus: ["Kernverantwortungen zuerst sichern", "Entwicklung gezielt auswählen", "Pausen und Grenzen trotz guter Kraft wahren"] },
-  { min: 56, key: "balance", label: "Regulärer Modus", icon: "◐", color: "#2EC4B6", summary: "Wesentliche Verantwortungen und begrenzte Entwicklung sind realistisch.", focus: ["Primäre Verantwortung klären", "Zusatzvorhaben bewusst begrenzen", "Zustand später erneut prüfen"] },
-  { min: 36, key: "maintenance", label: "Reduzierter Modus", icon: "⌁", color: "#E7A31A", summary: "Die Form der Rollenausübung sollte reduziert, vereinfacht oder unterstützt werden.", focus: ["Pflichten und Schutzgüter priorisieren", "Routinen anpassen statt starr erfüllen", "Unterstützung und Mindesthandlungen nutzen"] },
-  { min: 21, key: "recovery", label: "Sicherungsmodus", icon: "☾", color: "#E8798D", summary: "Sichere das Notwendige und schütze die weitere Handlungsfähigkeit.", focus: ["Unaufschiebbare Verantwortung absichern", "Kommunizieren, delegieren oder Hilfe holen", "Keine kompensierende Überforderung erzeugen"] },
-  { min: 0, key: "protection", label: "Schutz- & Regenerationsmodus", icon: "◇", color: "#C557B7", summary: "Sicherheit, Grundversorgung, Hilfe und Wiederherstellung haben Vorrang.", focus: ["Sicherheit und Grundversorgung", "Verantwortung geordnet übergeben oder Hilfe aktivieren", "Zusatzanforderungen innerhalb des zulässigen Spielraums aussetzen"] }
+  { min: 76, key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#5B72FF" },
+  { min: 56, key: "balance", label: "Regulärer Modus", icon: "◐", color: "#2EC4B6" },
+  { min: 33, key: "maintenance", label: "Reduzierter Modus", icon: "⌁", color: "#E7A31A" },
+  { min: 0, key: "stabilization", label: "Stabilisierungsmodus", icon: "☾", color: "#E8798D" }
 ];
+
+// Frühere Modus-Schlüssel werden auf die vier aktuellen Rollenmodi abgebildet.
+const LEGACY_FRAMEWORK_KEYS = { recovery: "stabilization", protection: "stabilization" };
+
+function frameworkKey(value) {
+  const mapped = LEGACY_FRAMEWORK_KEYS[value] || value;
+  return FRAMEWORKS.some(item => item.key === mapped) ? mapped : "";
+}
 
 const RESPONSIBILITY_KEYS = ["situationState", "responsibilityClarity", "roleScope", "appropriateness", "effectLearning"];
 const ROLE_REFLECTION_ORDER = ["", "fulfilled", "adapted", "deferred", "missed", "overextended"];
@@ -191,7 +209,7 @@ const ROUTINE_STATE_ORDER = ["", "done", "missed", "responsiblySkipped"];
 const TASK_STATE_META = {
   "": { label: "Offen", short: "Offen", icon: "–", score: null, className: "open" },
   done: { label: "Erledigt", short: "Erledigt", icon: "✓", score: 1, className: "done" },
-  responsiblySkipped: { label: "Gewissenhaft", short: "Gewissenhaft", icon: "◇", score: 1, className: "conscientious" },
+  responsiblySkipped: { label: "Gewissenhaft", short: "Gewissenhaft", icon: "✓", score: 1, className: "conscientious" },
   missed: { label: "Nicht erledigt", short: "Nicht erledigt", icon: "×", score: 0, className: "missed" }
 };
 
@@ -349,7 +367,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "4.0.4";
+const APP_VERSION = "4.1.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -403,25 +421,6 @@ function linkifyText(value = "") {
       return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${suffix}`;
     })
     .replace(/\n/g, "<br>");
-}
-
-function bytesToBase64Url(bytes) {
-  let binary = "";
-  new Uint8Array(bytes).forEach(byte => { binary += String.fromCharCode(byte); });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function base64UrlToBytes(value) {
-  const padLength = (4 - (value.length % 4)) % 4;
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(padLength);
-  const binary = atob(padded);
-  return Uint8Array.from(binary, char => char.charCodeAt(0));
-}
-
-function randomBytes(length = 32) {
-  const bytes = new Uint8Array(length);
-  crypto.getRandomValues(bytes);
-  return bytes;
 }
 
 function getRole(name) {
@@ -502,10 +501,14 @@ function normalizeReview(raw, date, hasStoredValue) {
   })).filter(item => item.title) : [];
   merged.mealCategories = Object.fromEntries(["breakfast", "lunch", "dinner", "snack"].map(key => {
     const value = raw?.mealCategories?.[key] || "";
-    return [key, MEAL_CATEGORY_META[value] ? value : ""];
+    return [key, mealCategoryMeta(value) ? value : ""];
   }));
   merged.dreamCategory = DREAM_CATEGORIES.some(([value]) => value === raw?.dreamCategory) ? raw.dreamCategory : "";
-  const normalizeRoutineState = value => value === "adapted" ? "responsiblySkipped" : (TASK_STATE_META[value] ? value : "");
+  const normalizeRoutineState = value => {
+    // "angepasst erfüllt" aus älteren Versionen wird zu "Gewissenhaft".
+    const migrated = ["adapted", "adaptedFulfilled", "responsibly-skipped", "angepasst"].includes(value) ? "responsiblySkipped" : value;
+    return TASK_STATE_META[migrated] ? migrated : "";
+  };
   const morningState = raw?.morningRoutineState || (raw?.morningRoutine ? "done" : "");
   const eveningState = raw?.eveningRoutineState || (raw?.eveningRoutine ? "done" : "");
   merged.morningRoutineState = normalizeRoutineState(morningState);
@@ -543,13 +546,35 @@ function normalizeReview(raw, date, hasStoredValue) {
       sleepQualityScore: entry.sleepQualityScore === "" || entry.sleepQualityScore === undefined || entry.sleepQualityScore === null ? "" : clamp(Number(entry.sleepQualityScore), 0, 6),
       dreamCategory: DREAM_CATEGORIES.some(([value]) => value === entry.dreamCategory) ? entry.dreamCategory : "",
       dreamNote: String(entry.dreamNote || ""),
-      selectedFrameworkKey: FRAMEWORKS.some(item => item.key === entry.selectedFrameworkKey) ? entry.selectedFrameworkKey : "",
-      recommendedFrameworkKey: FRAMEWORKS.some(item => item.key === entry.recommendedFrameworkKey) ? entry.recommendedFrameworkKey : "",
+      selectedFrameworkKey: frameworkKey(entry.selectedFrameworkKey),
+      recommendedFrameworkKey: frameworkKey(entry.recommendedFrameworkKey),
       frameworkOverrideReason: String(entry.frameworkOverrideReason || ""),
       note: String(entry.note || ""),
       createdAt: entry.createdAt || `${date}T${time}:00`
     };
   }).sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time)) : [];
+  // Migration: früher lag der Schlafbereich außerhalb der Check-ins. Vorhandene alte
+  // Schlafdaten werden einmalig in einen Nacht-Check-in überführt, sofern noch keiner existiert.
+  if (hasStoredValue && !merged.stateCheckins.some(entry => entry.slot === "night")) {
+    const legacySleep = merged.sleepQualityScore;
+    const legacyDream = merged.dreamCategory || "";
+    const legacyDreamNote = String(raw?.dreams || "");
+    if (legacySleep !== "" || legacyDream || legacyDreamNote) {
+      merged.stateCheckins = [{
+        id: `state-${date}-night-migrated`,
+        slot: "night", time: "07:00",
+        energy: null, load: "normal", body: "stable", mind: "normal", motivation: "available",
+        context: "normal", support: "available", emotion: "",
+        primaryRole: merged.role, responsibilitySource: "role", responsibility: "",
+        urgency: "medium", impact: "medium", flexibility: "medium", conflict: "no",
+        hydrationMl: Math.max(0, Number(raw?.water || 0)), nutritionScore: null,
+        sleepQualityScore: legacySleep, dreamCategory: legacyDream, dreamNote: legacyDreamNote,
+        selectedFrameworkKey: "", recommendedFrameworkKey: "", frameworkOverrideReason: "",
+        note: "", createdAt: `${date}T07:00:00`
+      }, ...merged.stateCheckins];
+    }
+  }
+
   const legacyResponsibility = raw?.responsibility || {};
   const migratedResponsibility = {
     situationState: legacyResponsibility.situationState ?? legacyResponsibility.stateHonesty,
@@ -598,7 +623,7 @@ function collectForm() {
   currentData.mealCategories = currentData.mealCategories || { breakfast: "", lunch: "", dinner: "", snack: "" };
   ["breakfast", "lunch", "dinner", "snack"].forEach(key => {
     const select = $(`${key}Category`);
-    if (select) currentData.mealCategories[key] = MEAL_CATEGORY_META[select.value] ? select.value : "";
+    if (select) currentData.mealCategories[key] = mealCategoryMeta(select.value) ? select.value : "";
   });
   currentData.ramadanDays = Number(currentData.ramadanDays || 0);
   currentData.role = $("dayRole")?.value || currentData.role;
@@ -653,7 +678,10 @@ function fillForm() {
   });
   ["breakfast", "lunch", "dinner", "snack"].forEach(key => {
     const select = $(`${key}Category`);
-    if (select) select.value = currentData.mealCategories?.[key] || "";
+    if (!select) return;
+    const value = currentData.mealCategories?.[key] || "";
+    select.innerHTML = mealCategoryOptionsHTML(value);
+    select.value = value;
   });
   updateMealSelectionStyles();
   $("dayRole").value = getRole(currentData.role).name;
@@ -713,40 +741,11 @@ function mealKeysForSlot(slot) {
 function mealContextScore(slot, data = currentData) {
   const values = mealKeysForSlot(slot).map(key => data?.mealCategories?.[key] || "").filter(Boolean);
   if (!values.length) return null;
-  return Math.round(values.reduce((sum, value) => sum + (MEAL_CATEGORY_META[value]?.score ?? 62), 0) / values.length);
+  return Math.round(values.reduce((sum, value) => sum + (mealCategoryMeta(value)?.score ?? 62), 0) / values.length);
 }
 
 function mealCategoryLabel(value) {
-  return MEAL_CATEGORY_META[value]?.label || "Noch offen";
-}
-
-function mealSummary(data, key, label = "") {
-  const category = data?.mealCategories?.[key] || "";
-  const note = String(data?.[key] || "").trim();
-  const prefix = label ? `${label}: ` : "";
-  if (!category && !note) return `${prefix}-`;
-  const categoryText = category ? mealCategoryLabel(category) : "Ohne Kategorie";
-  return `${prefix}${categoryText}${note ? ` · ${note}` : ""}`;
-}
-
-function hydrationContextScore(slot, ml) {
-  const target = { morning: 500, midday: 1000, evening: 1500, night: 2000 }[slot] || 1000;
-  const amount = Math.max(0, Number(ml || 0));
-  const ratio = Math.min(1.25, amount / target);
-  return Math.round(clamp(34 + ratio * 52, 34, 96));
-}
-
-function vitalityContextScore(checkin) {
-  if (!checkin) return null;
-  const values = [];
-  const hydration = hydrationContextScore(checkin.slot, checkin.hydrationMl);
-  if (Number.isFinite(hydration)) values.push({ value: hydration, weight: .42 });
-  const nutrition = Number.isFinite(Number(checkin.nutritionScore)) ? Number(checkin.nutritionScore) : null;
-  if (nutrition !== null) values.push({ value: nutrition, weight: .30 });
-  const sleep = sleepCapacityScore(checkin.sleepQualityScore);
-  if (sleep !== null) values.push({ value: sleep, weight: .28 });
-  if (!values.length) return 65;
-  return Math.round(values.reduce((sum, item) => sum + item.value * item.weight, 0) / values.reduce((sum, item) => sum + item.weight, 0));
+  return mealCategoryMeta(value)?.label || "Noch offen";
 }
 
 function latestNightCheckin(data = currentData) {
@@ -796,7 +795,7 @@ function recommendedFrameworkForCheckin(checkin, data = currentData) {
 function frameworkForCheckin(checkin, data = currentData) {
   const recommended = recommendedFrameworkForCheckin(checkin, data);
   if (!recommended) return null;
-  const chosen = FRAMEWORKS.find(item => item.key === checkin?.selectedFrameworkKey) || recommended;
+  const chosen = FRAMEWORKS.find(item => item.key === frameworkKey(checkin?.selectedFrameworkKey)) || recommended;
   return {
     ...chosen,
     capacity: recommended.capacity,
@@ -816,13 +815,30 @@ function recommendationForCheckin(checkin, framework = frameworkForCheckin(check
     return "Nimm die Schlafqualität als Ausgangslage, nicht als Urteil. Der Morgen-Check-in präzisiert den passenden Rollenmodus.";
   }
   const action = {
-    development: "Sichere zuerst das Wesentliche und wähle anschließend höchstens eine zusätzliche Entwicklungsaufgabe.",
+    development: "Sichere zuerst das Wesentliche und wähle danach höchstens eine zusätzliche Entwicklungsaufgabe.",
     balance: "Bearbeite deine wesentlichen Verantwortungen und begrenze zusätzliche Vorhaben bewusst.",
-    maintenance: "Reduziere Umfang und Komplexität. Sichere Pflichten und verschiebe nicht notwendige Zusatzaufgaben.",
-    recovery: "Sichere das Unaufschiebbare, nutze Unterstützung und plane bewusst Regeneration ein.",
-    protection: "Grundversorgung, Sicherheit, Hilfe und eine verantwortungssichernde Mindesthandlung haben Vorrang."
-  }[framework.key];
-  return `${action} Pflichtgebete bleiben unabhängig vom Rollenmodus als eigener Anker sichtbar.`;
+    maintenance: "Sichere heute das Wesentliche und plane keine zusätzliche Entwicklungsaufgabe ein.",
+    stabilization: "Sichere nur das Unaufschiebbare, hole Unterstützung und plane bewusst Erholung ein."
+  }[framework.key] || "";
+  const cause = stateCauseSentence(checkin, data);
+  return cause ? `${cause} ${action}` : action;
+}
+
+// Kurze, konkrete Begründung aus den tatsächlich erfassten Werten – ohne Punktzahl.
+function stateCauseSentence(checkin, data = currentData) {
+  if (!checkin) return "";
+  const low = [];
+  const high = [];
+  const sleep = sleepCapacityScore(latestNightCheckin(data)?.sleepQualityScore);
+  if (sleep !== null && sleep < 50) low.push("Schlaf");
+  if (sleep !== null && sleep >= 80) high.push("Schlaf");
+  const energy = checkin.energy === null || checkin.energy === undefined ? null : Number(checkin.energy);
+  if (energy !== null && energy < 45) low.push("Energie");
+  if (energy !== null && energy >= 75) high.push("Energie");
+  if (checkin.load === "high") return low.length ? `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig, die Belastung ist hoch.` : "Die Belastung ist heute hoch.";
+  if (low.length) return `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig.`;
+  if (high.length > 1) return `${high.join(" und ")} sind gut.`;
+  return "";
 }
 
 function checkinReasonFactors(checkin, data = currentData) {
@@ -848,22 +864,6 @@ function checkinReasonFactors(checkin, data = currentData) {
 function latestStateCheckin(data = currentData) {
   const entries = Array.isArray(data?.stateCheckins) ? data.stateCheckins : [];
   return [...entries].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time)).at(-1) || null;
-}
-
-function stateMetaLine(checkin) {
-  if (!checkin) return "";
-  const body = STATE_BODY_OPTIONS[checkin.body] || STATE_BODY_OPTIONS.stable;
-  const mind = STATE_MIND_OPTIONS[checkin.mind] || STATE_MIND_OPTIONS.normal;
-  const context = CONTEXT_OPTIONS[checkin.context] || CONTEXT_OPTIONS.normal;
-  const hydration = `${(Number(checkin.hydrationMl || 0) / 1000).toFixed(1).replace(".", ",")} L`;
-  return `${body.icon} ${body.label} · ${mind.icon} ${mind.label}${checkin.emotion ? ` · ${checkin.emotion}` : ""} · ${context.icon} ${context.label} · 💧 ${hydration}`;
-}
-
-function responsibilityFrameMeta(checkin) {
-  if (!checkin) return "";
-  const role = getRole(checkin.primaryRole);
-  const source = RESPONSIBILITY_SOURCE_LABELS[checkin.responsibilitySource] || RESPONSIBILITY_SOURCE_LABELS.role;
-  return `${role.emoji} ${role.name} · ${source} · Dringlichkeit ${URGENCY_LABELS[checkin.urgency] || "mittel"} · Anpassung ${FLEXIBILITY_LABELS[checkin.flexibility] || "mittel"}`;
 }
 
 function renderCheckinSlots() {
@@ -893,7 +893,6 @@ function renderStateOverview() {
   const latest = [...checkins].at(-1);
   const framework = frameworkForCheckin(latest);
   $("stateCheckinCount").textContent = `${checkins.length}/4 Check-ins`;
-  if ($("adaptiveRoutineHint")) $("adaptiveRoutineHint").hidden = true;
 
   if (!latest || !framework) {
     summary.className = "current-state-summary empty-state-summary compact-empty-state";
@@ -955,17 +954,6 @@ function populateStateCheckinEmotion() {
 
 function dreamCategoryLabel(value) {
   return DREAM_CATEGORIES.find(([key]) => key === value)?.[1] || "Nicht erfasst";
-}
-
-function renderSleepQualityChoices(selectedValue = "") {
-  const container = $("sleepQualityChoices");
-  if (!container) return;
-  container.innerHTML = SLEEP_CHOICES.map(value => `<button type="button" class="${String(selectedValue) === String(value) ? "active" : ""}" data-sleep-quality="${value}" aria-pressed="${String(selectedValue) === String(value)}">${escapeHTML(SLEEP_LABELS[value] || "-")}</button>`).join("");
-  container.querySelectorAll("[data-sleep-quality]").forEach(button => button.addEventListener("click", () => {
-    $("stateSleepQuality").value = button.dataset.sleepQuality;
-    renderSleepQualityChoices(button.dataset.sleepQuality);
-    updateStateCheckinPreview();
-  }));
 }
 
 function renderLoadChoices(selected = "normal") {
@@ -1069,10 +1057,8 @@ function updateStateCheckinPreview(preferredFrameworkKey = null) {
   draft.selectedFrameworkKey = selected.key;
   const framework = frameworkForCheckin(draft);
   $("stateEnergyValue").textContent = `${draft.energy ?? 0} %`;
-  $("stateFrameworkPreview").textContent = framework.label;
-  $("stateFrameworkPreview").style.setProperty("--framework-color", framework.color);
   $("stateFrameworkPreviewText").style.setProperty("--framework-color", framework.color);
-  $("stateFrameworkPreviewText").innerHTML = `<strong>${framework.icon} ${escapeHTML(recommended.label)}</strong><span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>`;
+  $("stateFrameworkPreviewText").innerHTML = `<strong>${framework.icon} ${escapeHTML(framework.label)}</strong><span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>${framework.isOverride ? `<small>Systemempfehlung: ${escapeHTML(recommended.label)}</small>` : ""}`;
   updateFrameworkOverrideVisibility(recommended.key);
   $("stateCheckinDialog").dataset.recommendedFramework = recommended.key;
 }
@@ -1105,64 +1091,8 @@ function saveStateCheckin(event) {
   renderStateOverview();
 }
 
-function responsibilityScore(data = currentData) {
-  if (!data) return null;
-  const questionValues = RESPONSIBILITY_KEYS.map(key => data.responsibility?.[key]).filter(value => [0, 1, 2].includes(Number(value))).map(Number);
-  const roleValues = ROLES.map(role => ROLE_REFLECTION_META[data.roleReflections?.[role.name]]?.score).filter(value => value !== null && value !== undefined);
-  const questionScore = questionValues.length ? questionValues.reduce((sum, value) => sum + value, 0) / (questionValues.length * 2) * 100 : null;
-  const roleScore = roleValues.length ? roleValues.reduce((sum, value) => sum + value, 0) / (roleValues.length * 2) * 100 : null;
-  if (questionScore === null && roleScore === null) return null;
-  if (questionScore === null) return Math.round(roleScore);
-  if (roleScore === null) return Math.round(questionScore);
-  return Math.round(questionScore * .7 + roleScore * .3);
-}
-
-function taskStateScore(value) {
-  return TASK_STATE_META[value]?.score ?? null;
-}
-
-function prayerCompletionScore(value) {
-  if (!value) return null;
-  return ({ Gemeinschaft: 1, Normal: 1, "Verspätet": .75, "Nachgeholt": .4, "Nicht gebetet": 0 })[value] ?? null;
-}
-
 function prayerWasPerformed(value) {
   return Boolean(value) && value !== "Nicht gebetet";
-}
-
-function averageKnown(values) {
-  const known = values.filter(value => value !== null && value !== undefined && Number.isFinite(Number(value))).map(Number);
-  return known.length ? known.reduce((sum, value) => sum + value, 0) / known.length : null;
-}
-
-function roleFidelityBreakdown(data = currentData) {
-  if (!data) return { score: null, prayers: null, routines: null, protection: null };
-  const prayers = averageKnown(PRAYERS.map(prayer => prayerCompletionScore(data.prayers?.[prayer] || "")));
-  const routines = averageKnown([taskStateScore(data.morningRoutineState), taskStateScore(data.eveningRoutineState)]);
-  const protection = averageKnown(STREAKS.map(streak => STREAK_DAILY_STATES[data.streaks?.[streak.key]?.todayStatus || ""]?.score ?? null));
-  const components = [
-    { value: prayers, weight: .50 },
-    { value: routines, weight: .25 },
-    { value: protection, weight: .25 }
-  ].filter(component => component.value !== null);
-  const score = components.length ? Math.round(components.reduce((sum, component) => sum + component.value * component.weight, 0) / components.reduce((sum, component) => sum + component.weight, 0) * 100) : null;
-  return { score, prayers, routines, protection };
-}
-
-function roleFidelityScore(data = currentData) {
-  return roleFidelityBreakdown(data).score;
-}
-
-function protectionVictories(data = currentData) {
-  return STREAKS.filter(streak => data?.streaks?.[streak.key]?.todayStatus === "resisted");
-}
-
-function responsibilityLabel(score) {
-  if (score === null) return { label: "Noch offen", tone: "open", text: "Die Prüfschleife bleibt offen, bis Situation, Verantwortung, Handlung und Wirkung ehrlich betrachtet wurden." };
-  if (score >= 85) return { label: "Sehr stimmig", tone: "strong", text: "Sachlage, Zustand, Verantwortung, Rolle, Angemessenheit und Wirkung wurden nach deiner Einschätzung sehr stimmig verbunden." };
-  if (score >= 65) return { label: "Verantwortungsvoll", tone: "good", text: "Die Entscheidung war überwiegend begründbar. Einzelne Spannungen werden zu konkreten Lernhinweisen." };
-  if (score >= 40) return { label: "Teilweise stimmig", tone: "mixed", text: "Ein Teil der Verantwortung wurde angemessen beantwortet; zugleich bleiben Restverantwortung oder Korrekturbedarf sichtbar." };
-  return { label: "Korrekturbedarf erkannt", tone: "warning", text: "Die Reflexion zeigt eine deutliche Lücke zwischen Verantwortung und Handlung. Erkenntnis, Korrektur und Hilfe sind selbst verantwortliche nächste Schritte." };
 }
 
 function renderResponsibilityReflection() {
@@ -1206,14 +1136,9 @@ function prayerStateIconHTML(value, size = "medium") {
   return statusCircle(meta.icon, "gradient", size);
 }
 
-function routineStateButtonHTML(value) {
-  const meta = TASK_STATE_META[value] || TASK_STATE_META[""];
-  return `${routineStateIconHTML(value, "small")}<strong class="routine-state-button-label">${escapeHTML(meta.label)}</strong>`;
-}
-
 function routineStateIconHTML(value, size = "small") {
   if (value === "done") return statusCircle("✓", "gradient", size);
-  if (value === "responsiblySkipped") return statusCircle("◇", "conscientious", size);
+  if (value === "responsiblySkipped") return statusCircle("✓", "conscientious", size);
   if (value === "missed") return statusCircle("✕", "missed", size);
   return statusCircle("–", "neutral", size);
 }
@@ -1451,28 +1376,12 @@ function weekDates(reference = selectedDate) {
   });
 }
 
-function prayerStatePoints(state) {
-  const points = {
-    "Gemeinschaft": 22,
-    "Normal": 20,
-    "Verspätet": 15,
-    "Nachgeholt": 8,
-    "Nicht gebetet": 0
-  };
-  return Object.prototype.hasOwnProperty.call(points, state) ? points[state] : null;
-}
-
-function prayerStateWeight(state) {
-  const points = prayerStatePoints(state);
-  return points === null ? 0 : points / 20;
-}
-
 function buildWeeklyTrendChart(labels, series, options = {}) {
-  const width = 430;
-  const height = 245;
-  const padX = 35;
-  const padTop = 20;
-  const padBottom = 38;
+  const width = 440;
+  const height = 250;
+  const padX = 34;
+  const padTop = 16;
+  const padBottom = 34;
   const chartW = width - padX * 2;
   const chartH = height - padTop - padBottom;
   const todayIndex = Number.isInteger(options.todayIndex) ? options.todayIndex : -1;
@@ -1486,26 +1395,37 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
       else current.push({ x: xFor(index), y: yFor(value) });
     });
     if (current.length) segments.push(current);
+    // Catmull-Rom → Bézier: echte, weich geglättete Kurve statt Treppenoptik.
+    const round = value => Number(value.toFixed(2));
     return segments.map(points => {
-      if (points.length === 1) return `M${points[0].x} ${points[0].y}`;
-      return points.reduce((path, point, index) => {
-        if (!index) return `M${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
-        const prev = points[index - 1];
-        const middle = (prev.x + point.x) / 2;
-        return `${path} C${middle.toFixed(1)} ${prev.y.toFixed(1)}, ${middle.toFixed(1)} ${point.y.toFixed(1)}, ${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
-      }, "");
+      if (points.length === 1) return `M${round(points[0].x)} ${round(points[0].y)}`;
+      let path = `M${round(points[0].x)} ${round(points[0].y)}`;
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const p0 = points[index - 1] || points[index];
+        const p1 = points[index];
+        const p2 = points[index + 1];
+        const p3 = points[index + 2] || p2;
+        const tension = 6;
+        const c1x = p1.x + (p2.x - p0.x) / tension;
+        const c1y = clamp(p1.y + (p2.y - p0.y) / tension, padTop, padTop + chartH);
+        const c2x = p2.x - (p3.x - p1.x) / tension;
+        const c2y = clamp(p2.y - (p3.y - p1.y) / tension, padTop, padTop + chartH);
+        path += ` C${round(c1x)} ${round(c1y)}, ${round(c2x)} ${round(c2y)}, ${round(p2.x)} ${round(p2.y)}`;
+      }
+      return path;
     }).join(" ");
   };
-  const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width-padX}" y2="${yFor(value)}"></line><text x="${padX-7}" y="${yFor(value)+4}" text-anchor="end">${value}</text></g>`).join("");
-  const xLabels = labels.map((label, index) => `<text class="${index === todayIndex ? "today" : ""}" x="${xFor(index)}" y="${height-10}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
+  const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width - padX}" y2="${yFor(value)}"></line><text x="${padX - 8}" y="${yFor(value) + 4}" text-anchor="end">${value}</text></g>`).join("");
+  const xLabels = labels.map((label, index) => `<text class="${index === todayIndex ? "today" : ""}" x="${xFor(index)}" y="${height - 11}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
   const lines = series.map(item => `<path class="wellbeing-line ${item.className}" d="${pathFor(item.values)}"></path>`).join("");
-  const dots = series.map(item => item.values.map((value,index) => value === null || value === undefined ? "" : `<circle class="wellbeing-dot ${item.className}" cx="${xFor(index)}" cy="${yFor(value)}" r="${index === todayIndex ? 5 : 4}"></circle>`).join("")).join("");
-  const legend = series.map(item => `<span class="${item.className}">${escapeHTML(item.label)}</span>`).join("");
+  const dots = series.map(item => item.values.map((value, index) => value === null || value === undefined ? "" : `<circle class="wellbeing-dot ${item.className}" cx="${xFor(index)}" cy="${yFor(value)}" r="${index === todayIndex ? 4.5 : 3.5}"></circle>`).join("")).join("");
+  const legend = series.map(item => `<span class="${item.className}"><i aria-hidden="true"></i>${escapeHTML(item.label)}</span>`).join("");
   return `<div class="trend-panel wellbeing-trend-panel">
-    <div class="trend-panel-head"><div class="trend-legend wellbeing-legend">${legend}</div></div>
-    <div class="trend-chart-scroll"><svg class="trend-chart wellbeing-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Verlauf von Energie und Belastung">
+    <div class="trend-legend wellbeing-legend">${legend}</div>
+    <svg class="trend-chart wellbeing-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7-Tage-Verlauf von Energie, Belastung und Pflichtgebeten in Prozent">
       <g class="trend-grid">${grid}</g>${lines}<g>${dots}</g><g class="trend-x-labels">${xLabels}</g>
-    </svg></div>
+    </svg>
+    <p class="trend-note">Der Verlauf zeigt Veränderungen deines Zustands und deiner Gebetspraxis, nicht den Wert eines Tages.</p>
   </div>`;
 }
 
@@ -1528,7 +1448,7 @@ function dailyPrayerProgress(data) {
 
 function buildPrayerWeekPanel(labels, counts) {
   return `<div class="prayer-week-panel" aria-label="Pflichtgebete pro Tag">
-    <strong>Gebete</strong>
+    <small class="panel-caption">Pflichtgebete pro Tag</small>
     <div class="prayer-week-grid">
       ${labels.map((label, index) => {
         const count = counts[index];
@@ -1547,23 +1467,17 @@ function renderStats() {
   const energy = reviews.map(item => item.stored ? dailyAverageEnergy(item.data) : null);
   const load = reviews.map(item => item.stored ? dailyAverageLoad(item.data) : null);
   const prayerCounts = reviews.map(item => item.stored ? dailyPrayerProgress(item.data).count : null);
+  // 0/5 = 0 %, 1/5 = 20 % … 5/5 = 100 % – gleiche Skala wie Energie und Belastung.
+  const prayerPercent = prayerCounts.map(count => count === null ? null : Math.round(count / PRAYERS.length * 100));
   $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
   $("statsGrid").innerHTML = `
     ${buildWeeklyTrendChart(labels, [
       { label: "Energie", className: "energy", values: energy },
-      { label: "Belastung", className: "load", values: load }
+      { label: "Belastung", className: "load", values: load },
+      { label: "Pflichtgebete", className: "prayers", values: prayerPercent }
     ], { todayIndex: dates.indexOf(todayISO()) })}
     ${buildPrayerWeekPanel(labels, prayerCounts)}`;
 }
-
-function responsibilityAnswerLabel(value) {
-  return Number(value) === 2 ? "Ja" : Number(value) === 1 ? "Teilweise" : Number(value) === 0 ? "Nein" : "-";
-}
-
-function statTile(value, label) {
-  return `<div class="stat-tile"><strong>${escapeHTML(value)}</strong><span>${escapeHTML(label)}</span></div>`;
-}
-
 
 function getAllReviews() {
   const reviews = [];
@@ -1668,318 +1582,6 @@ function exportCsv() {
   });
   downloadTextFile(`roleplay-export-${todayISO()}.csv`, `﻿${lines.join("\r\n")}`, "text/csv;charset=utf-8");
   $("backupStatus").textContent = "CSV-Export mit Check-ins, Gebeten und Reflexion wurde erstellt.";
-}
-
-function exportWeeklyPdf() {
-  saveReview(true);
-  const dates = weekDates();
-  const reviews = dates.map(date => ({ date, data: loadReview(date) }));
-  const pdfBytes = buildWeeklyPdf(reviews);
-  downloadBlob(`roleplay-wochenplan-${dates[0]}-${dates[6]}.pdf`, new Blob([pdfBytes], { type: "application/pdf" }));
-  $("backupStatus").textContent = `PDF-Wochenplan ${formatShortDate(dates[0])} – ${formatShortDate(dates[6])} erstellt.`;
-}
-
-function buildWeeklyPdf(reviews) {
-  const W = 1260, H = 842;
-  const margin = 10, gap = 5;
-  const commands = [];
-  const rect = (x, top, width, height, hex) => pdfFillRect(commands, x, H - top - height, width, height, hex);
-  const stroke = (x, top, width, height, hex, lw = 0.7) => pdfStrokeRect(commands, x, H - top - height, width, height, hex, lw);
-  const textAt = (value, x, top, size, bold, hex) => pdfText(commands, value, x, H - top - size, size, bold, hex);
-  const line = (x1, top1, x2, top2, hex, lw = 0.6) => pdfStrokeLine(commands, x1, H - top1, x2, H - top2, hex, lw);
-  const weekdayLabel = date => new Intl.DateTimeFormat("de-DE", { weekday: "long" }).format(new Date(`${date}T12:00:00`));
-
-  pdfFillRect(commands, 0, 0, W, H, "FFFFFF");
-  textAt("ROLEPLAY", margin, 8, 7.2, true, "758093");
-  textAt("Wochenplan", margin, 19, 16, true, "17181C");
-  textAt(`${formatLongDate(reviews[0].date)} - ${formatLongDate(reviews[6].date)}`, margin + 126, 22, 7.4, false, "6B7382");
-
-  const cardsTop = 42;
-  const cardW = (W - margin * 2 - gap * 6) / 7;
-  const cardH = H - cardsTop - 8;
-
-  reviews.forEach((item, index) => {
-    const role = getRole(item.data.role);
-    const data = item.data;
-    const latestState = latestStateCheckin(data);
-    const framework = frameworkForCheckin(latestState, data);
-    const x = margin + index * (cardW + gap);
-    const headerH = 40;
-    const bodyPad = 5;
-    const sectionGap = 4;
-    const innerX = x + bodyPad;
-    const innerW = cardW - bodyPad * 2;
-
-    rect(x, cardsTop, cardW, cardH, "FFFFFF");
-    stroke(x, cardsTop, cardW, cardH, "DCE2EC", 0.8);
-    rect(x, cardsTop, cardW, headerH, role.color.replace('#',''));
-    textAt(role.name, x + 7, cardsTop + 5, 8, true, pdfContrast(role.color));
-    textAt(weekdayLabel(item.date), x + 7, cardsTop + 16, 6.2, true, pdfContrast(role.color));
-    textAt(formatLongDate(item.date), x + 7, cardsTop + 27, 5.4, false, pdfContrast(role.color));
-
-    let cursorTop = cardsTop + headerH + 5;
-    const routineLabel = state => TASK_STATE_META[state]?.short || "Offen";
-    const prayerLine = name => {
-      const state = data.prayers?.[name] || "";
-      return `${name.replace("ʿ", "")}: ${prayerStateMeta(state).short}`;
-    };
-    const meal = (label, key) => mealSummary(data, key, label);
-    const compactWrap = value => pdfWrapText(value || "-", 31, 5);
-    const noteLines = pdfWrapText(data.notes || "-", 31, 55);
-    const reflexionLines = [
-      ...compactWrap(`Gefühl: ${latestState?.emotion || '-'}`),
-      ...compactWrap(`Träume: ${dreamCategoryLabel(data.dreamCategory || "")}${data.dreams ? ` · ${data.dreams}` : ""}`),
-      ...compactWrap(`Dankbar: ${[data.gratitude1, data.gratitude2].filter(Boolean).join(' / ') || '-'}`),
-      ...compactWrap(`Allah: ${latinAllahName(data.allahName) || '-'}`),
-      ...noteLines.map((value, noteIndex) => `${noteIndex === 0 ? 'Notiz: ' : ''}${value}`)
-    ];
-    const activityLines = (data.activities || []).length
-      ? (data.activities || []).slice(0, 18).flatMap(entry => pdfWrapText(`- ${entry.title}${entry.role ? ` (${entry.role})` : ""}`, 31, 3))
-      : ["- Keine Aktivitäten"];
-    const streakLines = STREAKS.map(streak => `${streak.label.replace("frei", "")}: ${Number(data.streaks?.[streak.key]?.days || 0)} / ${STREAK_DAILY_STATES[data.streaks?.[streak.key]?.todayStatus || ""]?.short || "Offen"}`);
-    const stateLines = latestState && framework ? [
-      `Modus: ${framework.label}${framework.isOverride ? " (angepasst)" : ""}`,
-      `Check-in: ${checkinSlot(latestState.slot).label} / ${latestState.time}`,
-      latestState.slot === "night" ? `Schlaf: ${SLEEP_LABELS[Number(latestState.sleepQualityScore)] || '-'}` : `Energie: ${latestState.energy ?? '-'}%`,
-      latestState.slot === "night" ? `Traum: ${dreamCategoryLabel(latestState.dreamCategory || '')}` : `Gefühl: ${latestState.emotion || '-'}`,
-      latestState.slot === "night" ? `Traumnotiz: ${latestState.dreamNote || '-'}` : `Belastung: ${LOAD_OPTIONS[latestState.load]?.label || '-'}`,
-      `Kontext: ${latestState.note || '-'}`,
-      framework.isOverride ? `Begründung: ${latestState.frameworkOverrideReason || '-'}` : `Empfehlung übernommen`
-    ] : ["Noch kein Check-in"];
-    const responsibilityLines = [
-      `Wichtigste Verantwortung: ${data.responsibilityMain || '-'}`,
-      `Anpassung / Vermeidung: ${data.responsibilityAdaptation || '-'}`,
-      `Nächster Schritt: ${data.responsibilityNextStep || '-'}`
-    ];
-
-    const sections = [
-      {
-        title: "Vitalität",
-        lines: [
-          meal("Frühstück", "breakfast"),
-          meal("Mittag", "lunch"),
-          meal("Abend", "dinner"),
-          meal("Snack", "snack"),
-          `Getrunken: ${(Number(data.water || 0) / 1000).toFixed(1).replace('.', ',')} L`,
-          `Schritte: ${data.steps ? Number(data.steps).toLocaleString('de-DE') : '-'}`
-        ],
-        height: 62
-      },
-      {
-        title: "Zustand",
-        lines: stateLines,
-        height: 84
-      },
-      {
-        title: "Routinen",
-        lines: [
-          `Morgen: ${routineLabel(data.morningRoutineState)}`,
-          `Abend: ${routineLabel(data.eveningRoutineState)}`,
-          `Schlaf: ${data.sleepQualityScore === '' || data.sleepQualityScore === undefined ? '-' : (SLEEP_LABELS[Number(data.sleepQualityScore)] || '-')}`,
-          `Fasten: ${data.fastingCompleted ? 'Geschafft' : `${Number(data.ramadanDays || 0)} offen`}`
-        ],
-        height: 46
-      },
-      {
-        title: "Gebete",
-        lines: [...PRAYERS.map(prayerLine), `Sunnah: ${SUNNAH_PRAYERS.filter(prayer => data.sunnahPrayers?.[prayer] === "Verrichtet").length}`],
-        height: 62
-      },
-      {
-        title: "Verantwortung",
-        lines: responsibilityLines,
-        height: 92
-      },
-      {
-        title: "Reflexion",
-        lines: reflexionLines,
-        height: 199,
-        lineHeight: 7.45,
-        fontSize: 6.25,
-        fitChars: 31,
-        padX: 4,
-        contentTop: 18
-      },
-      {
-        title: "Aktivitäten",
-        lines: activityLines,
-        height: 95,
-        lineHeight: 7.45,
-        fontSize: 6.25,
-        fitChars: 31,
-        padX: 4,
-        contentTop: 18
-      },
-      {
-        title: "Streaks",
-        lines: streakLines,
-        height: 45
-      }
-    ];
-
-    sections.forEach(section => {
-      rect(innerX, cursorTop, innerW, section.height, "F7F8FB");
-      stroke(innerX, cursorTop, innerW, section.height, "E5E9F0", 0.55);
-      const padX = section.padX ?? 4;
-      const contentTop = section.contentTop ?? 18;
-      const lineHeight = section.lineHeight ?? 7.45;
-      const fontSize = section.fontSize ?? 6.25;
-      const fitChars = section.fitChars ?? 31;
-      textAt(section.title, innerX + padX, cursorTop + 5, fontSize, true, "1E2330");
-      line(innerX + padX, cursorTop + 14.5, innerX + innerW - padX, cursorTop + 14.5, "EDF1F6", 0.35);
-      let lineTop = cursorTop + contentTop;
-      const maxLines = Math.floor((section.height - (contentTop + 3)) / lineHeight);
-      const renderedLines = section.lines.flatMap(lineText => pdfWrapText(lineText, fitChars, 8));
-      renderedLines.slice(0, maxLines).forEach(lineText => {
-        textAt(pdfFit(lineText, fitChars), innerX + padX, lineTop, fontSize, false, "404757");
-        lineTop += lineHeight;
-      });
-      cursorTop += section.height + sectionGap;
-    });
-  });
-
-  return assemblePdf(commands.join("\n"), W, H);
-}
-function pdfWrapText(value, maxChars = 24, maxLines = 3) {
-  const clean = pdfPlainText(value).replace(/\s+/g, ' ').trim();
-  if (!clean) return ["-"];
-  const words = clean.split(' ');
-  const lines = [];
-  let current = '';
-  words.forEach(word => {
-    const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length <= maxChars) current = candidate;
-    else {
-      if (current) lines.push(current);
-      current = word;
-    }
-  });
-  if (current) lines.push(current);
-  if (lines.length <= maxLines) return lines;
-  const trimmed = lines.slice(0, maxLines);
-  trimmed[maxLines - 1] = pdfFit(trimmed[maxLines - 1], Math.max(8, maxChars - 1));
-  return trimmed;
-}
-
-function pdfPlainText(value) {
-  return String(value ?? "")
-    .replace(/[–—]/g, "-")
-    .replace(/[ʿ‘’]/g, "'")
-    .replace(/[āĀ]/g, "a")
-    .replace(/[īĪ]/g, "i")
-    .replace(/[ūŪ]/g, "u")
-    .replace(/[^\x20-\x7E\xA0-\xFF]/g, "");
-}
-
-function weeklyPdfRows(reviews) {
-  const value = getter => reviews.map(item => getter(item.data));
-  const meals = data => [
-    mealSummary(data, "breakfast", "F"), mealSummary(data, "lunch", "M"), mealSummary(data, "dinner", "A"), mealSummary(data, "snack", "S")
-  ].filter(value => !value.endsWith(": -")).join(" / ") || "-";
-  const routineState = state => TASK_STATE_META[state]?.icon || "○";
-  const prayer = (data, name) => prayerStateMeta(data.prayers?.[name] || "").short;
-  const activity = data => (data.activities || []).map(item => item.title).join(" / ") || "-";
-  const streak = data => STREAKS.map(s => `${s.label}: ${Number(data.streaks?.[s.key]?.days || 0)}`).join(" · ");
-  return [
-    { label: "Rolle", values: value(data => data.role || "-"), maxChars: 16 },
-    { label: "Mahlzeiten", values: value(meals), maxChars: 22, fontSize: 4.8 },
-    { label: "Wasser", values: value(data => `${(Number(data.water || 0) / 1000).toFixed(1)} L`) },
-    { label: "Schritte", values: value(data => Number(data.steps || 0).toLocaleString("de-DE")) },
-    { label: "Schlaf", values: value(data => data.sleepQualityScore === "" || data.sleepQualityScore === undefined ? "-" : (SLEEP_LABELS[Number(data.sleepQualityScore)] || "-")) },
-    { label: "Morgen", values: value(data => routineState(data.morningRoutineState)) },
-    { label: "Abend", values: value(data => routineState(data.eveningRoutineState)) },
-    { label: "Gebete", values: value(data => PRAYERS.map(name => `${name}: ${prayer(data, name)}`).join(" · ")), maxChars: 32, fontSize: 4.6 },
-    { label: "Fasten", values: value(data => data.fastingCompleted ? `✓ (${Number(data.ramadanDays || 0)})` : `${Number(data.ramadanDays || 0)} offen`) },
-    { label: "Rollenmodus", values: value(data => { const framework = frameworkForCheckin(latestStateCheckin(data), data); return framework ? framework.label : "-"; }), maxChars: 18, fontSize: 4.8 },
-    { label: "Energie", values: value(data => { const latest = latestStateCheckin(data); return latest?.energy === null || latest?.energy === undefined ? "-" : `${latest.energy}%`; }) },
-    { label: "Belastung", values: value(data => { const latest = latestStateCheckin(data); return LOAD_OPTIONS[latest?.load]?.label || "-"; }) },
-    { label: "Gefühl", values: value(data => latestStateCheckin(data)?.emotion || "-") },
-    { label: "Dankbarkeit", values: value(data => data.gratitude1 || "-"), maxChars: 24, fontSize: 4.8 },
-    { label: "Achtsamkeit", values: value(data => data.gratitude2 || "-"), maxChars: 24, fontSize: 4.8 },
-    { label: "Nächster Schritt", values: value(data => data.responsibilityNextStep || "-"), maxChars: 24, fontSize: 4.8 },
-    { label: "Allah", values: value(data => latinAllahName(data.allahName) || "-"), maxChars: 14, fontSize: 4.8 },
-    { label: "Aktivitäten", values: value(activity), maxChars: 24, fontSize: 4.8 },
-    { label: "Streaks", values: value(streak), maxChars: 26, fontSize: 4.6 },
-    { label: "Notiz", values: value(data => data.notes || "-"), maxChars: 24, fontSize: 4.8 }
-  ];
-}
-
-function latinAllahName(value) {
-  if (!value) return "";
-  return value.includes("/") ? value.split("/").slice(1).join("/").trim() : value;
-}
-
-function pdfFit(value, maxChars) {
-  const clean = pdfSafeText(value).replace(/\s+/g, " ").trim();
-  return clean.length > maxChars ? `${clean.slice(0, Math.max(0, maxChars - 3))}...` : clean;
-}
-
-function pdfSafeText(value) {
-  return String(value ?? "")
-    .replace(/[–—]/g, "-")
-    .replace(/[ʿ‘’]/g, "'")
-    .replace(/[āĀ]/g, "a")
-    .replace(/[īĪ]/g, "i")
-    .replace(/[ūŪ]/g, "u")
-    .replace(/[^\x20-\x7E\xA0-\xFF]/g, "")
-    .replace(/\\/g, "\\\\")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)");
-}
-
-function pdfFillRect(commands, x, y, width, height, hex) {
-  const [r, g, b] = pdfRgb(hex);
-  commands.push(`q ${r} ${g} ${b} rg ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re f Q`);
-}
-function pdfStrokeRect(commands, x, y, width, height, hex, lineWidth) {
-  const [r, g, b] = pdfRgb(hex);
-  commands.push(`q ${r} ${g} ${b} RG ${lineWidth} w ${x.toFixed(2)} ${y.toFixed(2)} ${width.toFixed(2)} ${height.toFixed(2)} re S Q`);
-}
-function pdfStrokeLine(commands, x1, y1, x2, y2, hex, lineWidth) {
-  const [r, g, b] = pdfRgb(hex);
-  commands.push(`q ${r} ${g} ${b} RG ${lineWidth} w ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S Q`);
-}
-function pdfText(commands, text, x, y, size, bold, hex) {
-  const [r, g, b] = pdfRgb(hex);
-  commands.push(`BT /${bold ? "F2" : "F1"} ${size} Tf ${r} ${g} ${b} rg 1 0 0 1 ${x.toFixed(2)} ${y.toFixed(2)} Tm (${pdfSafeText(text)}) Tj ET`);
-}
-function pdfRgb(hex) {
-  const clean = hex.replace("#", "");
-  return [0, 2, 4].map(index => (parseInt(clean.slice(index, index + 2), 16) / 255).toFixed(3));
-}
-function pdfContrast(hex) {
-  const clean = hex.replace("#", "");
-  const r = parseInt(clean.slice(0, 2), 16), g = parseInt(clean.slice(2, 4), 16), b = parseInt(clean.slice(4, 6), 16);
-  return ((r * 299 + g * 587 + b * 114) / 1000) > 155 ? "17202A" : "FFFFFF";
-}
-
-function assemblePdf(content, width, height) {
-  const objects = [];
-  objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-  objects[2] = "<< /Type /Pages /Kids [5 0 R] /Count 1 >>";
-  objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
-  objects[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
-  objects[5] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>`;
-  objects[6] = `<< /Length ${binaryLength(content)} >>\nstream\n${content}\nendstream`;
-
-  let pdf = "%PDF-1.4\n%âãÏÓ\n";
-  const offsets = [0];
-  for (let index = 1; index < objects.length; index += 1) {
-    offsets[index] = binaryLength(pdf);
-    pdf += `${index} 0 obj\n${objects[index]}\nendobj\n`;
-  }
-  const xrefOffset = binaryLength(pdf);
-  pdf += `xref\n0 ${objects.length}\n0000000000 65535 f \n`;
-  for (let index = 1; index < objects.length; index += 1) pdf += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  pdf += `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
-  return binaryStringToUint8Array(pdf);
-}
-
-function binaryLength(text) { return text.length; }
-function binaryStringToUint8Array(text) {
-  const bytes = new Uint8Array(text.length);
-  for (let index = 0; index < text.length; index += 1) bytes[index] = text.charCodeAt(index) & 0xFF;
-  return bytes;
 }
 
 function hexToRgba(hex, alpha) {
@@ -2390,8 +1992,6 @@ function renderRoutineSession() {
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
   $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
-  const contextToggle = $("sessionContextToggle");
-  if (contextToggle) contextToggle.hidden = true;
   $("sessionContext").hidden = !item.context;
   $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
   const next = routine.items[routineSession.index + 1];
@@ -2590,8 +2190,12 @@ function updateMealSelectionStyles() {
   });
 }
 
-function mealCategoryOptionsHTML() {
-  return Object.entries(MEAL_CATEGORY_META).map(([value, meta]) => `<option value="${escapeHTML(value)}">${escapeHTML(meta.label)}</option>`).join("");
+function mealCategoryOptionsHTML(currentValue = "") {
+  const entries = Object.entries(MEAL_CATEGORY_META);
+  if (currentValue && LEGACY_MEAL_CATEGORY_META[currentValue]) {
+    entries.push([currentValue, LEGACY_MEAL_CATEGORY_META[currentValue]]);
+  }
+  return entries.map(([value, meta]) => `<option value="${escapeHTML(value)}">${escapeHTML(meta.label)}</option>`).join("");
 }
 
 function initOptions() {
@@ -2639,6 +2243,27 @@ function saveRoutineFromForm(event) {
   saveRoutines();
   $("routineDialog").close();
   renderRoutineCards();
+}
+
+// Beim Scrollen klappen Titel und Rollenwähler ein; sichtbar bleibt nur die kompakte
+// Datumsleiste. Zwei getrennte Schwellen verhindern Springen genau an der Grenze.
+function bindHeaderCollapse() {
+  const header = $("appHeader");
+  if (!header) return;
+  let collapsed = false;
+  let ticking = false;
+  const apply = () => {
+    ticking = false;
+    const offset = window.scrollY || document.documentElement.scrollTop || 0;
+    if (!collapsed && offset > 72) { collapsed = true; header.classList.add("compact"); }
+    else if (collapsed && offset < 28) { collapsed = false; header.classList.remove("compact"); }
+  };
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    window.requestAnimationFrame(apply);
+  }, { passive: true });
+  apply();
 }
 
 function bindEvents() {
@@ -2706,7 +2331,6 @@ function bindEvents() {
     $("activityDialog").close(); saveReview(true); renderActivities();
   });
 
-  $("exportPdf").addEventListener("click", exportWeeklyPdf);
   $("exportBackup").addEventListener("click", exportBackup);
   $("exportCsv").addEventListener("click", exportCsv);
   $("importBackupButton").addEventListener("click", () => $("importBackupInput").click());
@@ -2748,7 +2372,7 @@ function bindEvents() {
     if (event.target === $("sessionRoutineEditor")) toggleSessionRoutineEditor(false);
   });
 
-  window.addEventListener("scroll", () => $("appHeader").classList.toggle("compact", window.scrollY > 80), { passive: true });
+  bindHeaderCollapse();
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && routineSession) { syncRoutineSessionClock(); renderRoutineSession(); }
     persistRoutineSession();

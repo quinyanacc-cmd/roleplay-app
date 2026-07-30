@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f6fa">
+  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Roleplay">
@@ -15,8 +16,8 @@
 <body>
   <div class="app-shell">
     <header class="app-header" id="appHeader">
-      <div class="header-title-row">
-        <div>
+      <div class="header-title-row" id="headerTitleRow">
+        <div class="header-identity">
           <p class="eyebrow">ROLEPLAY</p>
           <h1 id="pageTitle">Tagesreflexion</h1>
         </div>
@@ -27,19 +28,18 @@
       </div>
 
       <div class="date-nav" id="dateNavigation">
-        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag"></button>
+        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag">‹</button>
         <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
-        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag"></button>
+        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag">›</button>
       </div>
     </header>
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
         <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
-          <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
+          <h2 id="stateOverviewTitle">Zustand und Verantwortung</h2>
           <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
-          <div id="adaptiveRoutineHint" class="adaptive-routine-hint" hidden></div>
           <details class="state-history-details">
             <summary><strong>Verlauf & Details</strong><small id="stateCheckinCount">Noch kein Check-in</small></summary>
             <div id="stateTimeline" class="state-timeline"></div>
@@ -49,9 +49,7 @@
         <section class="card">
           <h2>Vitalität</h2>
 
-          <div class="field-group compact-vitality-group">
-            <label>Mahlzeiten</label>
-            <div class="meal-grid meal-tracking-grid">
+          <div class="meal-list">
               <div class="meal-entry" data-meal-entry="breakfast">
                 <strong>Frühstück</strong>
                 <select id="breakfastCategory" class="meal-category-select" aria-label="Kategorie Frühstück"></select>
@@ -72,10 +70,9 @@
                 <select id="snackCategory" class="meal-category-select" aria-label="Kategorie Snacks"></select>
                 <input id="snack" placeholder="Optional: Was war es konkret?">
               </div>
-            </div>
           </div>
 
-          <div class="two-column">
+          <div class="vitality-metrics">
             <div class="field-group">
               <label for="water">Getrunken</label>
               <input id="water" type="hidden" value="0">
@@ -155,7 +152,7 @@
               <label for="gratitude2">Was habe ich heute bewusst wahrgenommen?</label>
               <textarea id="gratitude2" rows="2" placeholder="Ein Gedanke, ein Gefühl oder etwas in deiner Umgebung …"></textarea>
             </div>
-            <div class="field-group reflection-field allah-name-field">
+            <div class="field-group reflection-field">
               <label for="allahName">Welcher Name Allahs begleitet mich heute?</label>
               <select id="allahName" aria-label="Name Allahs auswählen"></select>
             </div>
@@ -192,7 +189,7 @@
 
         <details class="card stats-card week-course-card" open>
           <summary class="lean-card-summary week-course-summary">
-            <h2>7-Tage-Verlauf</h2>
+            <h2>7-Tage-Verlauf: Energie, Belastung und Gebete</h2>
             <span id="weekLabel" class="week-label"></span>
           </summary>
           <div id="statsGrid" class="stats-grid"></div>
@@ -201,7 +198,6 @@
         <section class="card">
           <h2>Export & Sicherung</h2>
           <div class="export-buttons">
-            <button id="exportPdf" class="small-button export-button" type="button">Wochenplan als PDF</button>
             <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
             <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
             <button id="exportCsv" class="small-button export-button" type="button">Excel / CSV exportieren</button>
@@ -321,7 +317,6 @@
           <textarea id="stateFrameworkReason" rows="2" placeholder="Warum passt der andere Modus besser?"></textarea>
         </div>
       </details>
-      <span id="stateFrameworkPreview" hidden></span>
 
       <div class="dialog-actions">
         <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>

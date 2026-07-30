@@ -1,11 +1,11 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "Schlanker Tages-, Routine- und Reflexionstracker mit adaptiven Empfehlungen",
+  "description": "Tagesreview, Routinen und Reflexion – lokal auf dem Gerät",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f4f5f9",
-  "theme_color": "#f4f5f9",
+  "background_color": "#f2f4f8",
+  "theme_color": "#f2f4f8",
   "icons": [
     {
       "src": "logo.jpeg",
