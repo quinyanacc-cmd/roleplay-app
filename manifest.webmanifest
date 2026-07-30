@@ -1,7 +1,7 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "Adaptives rollenbasiertes Orientierungs-, Entscheidungs- und Reflexionssystem für verantwortliches Handeln",
+  "description": "Schlanker Tages-, Routine- und Reflexionstracker mit adaptiven Empfehlungen",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f5f9",

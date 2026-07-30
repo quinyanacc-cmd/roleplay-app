@@ -1,24 +1,14 @@
-# ROLEPLAY App 4.0.3 – Adaptive Core
+# ROLEPLAY App 4.0.4 – Clean Core
 
-Diese Fassung übersetzt den Systemkern in eine schlanke Alltagsanwendung, ohne die Tagesreview in einen administrativen Fragebogen zu verwandeln.
+Diese Fassung reduziert die Tagesreview auf die wesentlichen Inhalte und vereinheitlicht die Gestaltung.
 
-## Zentrale Änderungen
-
-- ausgewogene, wieder stabile Kopf- und Navigationsgestaltung
-- vier große Check-ins: Letzte Nacht, Morgen, Mittag und Abend
-- vollständiger Schlafbereich im Nacht-Check-in
-- Traumkategorien einschließlich Konsum-/Rückfalltraum und feuchtem Traum
-- Tages-Check-ins nur mit Energie, Gefühl und Belastung
-- automatische, verständliche Rollenmodus-Empfehlung ohne sichtbaren Punktestand
-- Rollenmodus kann geändert werden; bei Abweichung ist eine Begründung erforderlich
-- feste Mahlzeitenfelder untereinander: Kategorie plus optionale Beschreibung
-- Trinkmenge und Mahlzeiten fließen vorsichtig als Kontext ein
-- Aktivitäten bleiben wertungsfrei und sind wieder sortierbar
-- Achtsamkeit und Dankbarkeit als zwei gleichwertige Freitextfelder plus Name Allahs
-- freiwillige Verantwortungsreflexion mit drei kurzen Fragen statt Rollenmatrix
-- Wochenbereich auf einen neutralen 7-Tage-Verlauf reduziert: Energie, Belastung und Pflichtgebete
-- Pflichtgebete bleiben von Routinen und Rollenmodus getrennt; Sunnah-Gebete bleiben zusätzlich dokumentierbar
-
-## Daten
-
-Der bestehende lokale Speicher `roleplay-v25` wird weiterverwendet. Alte Einträge werden beim Laden normalisiert. Vor einem Austausch der App sollte dennoch ein Backup erstellt werden.
+## Änderungen
+- vereinfachte Karten und Dialoge ohne doppelte Überschriften oder lange Erklärungstexte
+- Schlafqualität als Dropdown im Check-in „Letzte Nacht“
+- reparierte Trinkmengensteuerung
+- Routinen mit den Zuständen Offen, Erledigt, Nicht erledigt und Gewissenhaft
+- einheitliche Darstellung aller Gebetszustände
+- kompakte Achtsamkeits- und Dankbarkeitsfelder
+- glatter 7-Tage-Verlauf für Energie und Belastung
+- separater grafischer Gebetsverlauf mit Tageswerten
+- bestehende lokale Daten werden weiterverwendet; ältere „Angepasst“-Routinezustände werden als „Gewissenhaft“ übernommen

@@ -5257,3 +5257,668 @@ main { padding: 14px !important; }
   .checkin-slot.complete { background: color-mix(in srgb,var(--slot-color) 13%,var(--card)) !important; }
   .meal-entry.is-selected, .sleep-quality-choices button.active, .quick-choice-row button.active { background: color-mix(in srgb,#7758ff 12%,var(--card)) !important; }
 }
+
+/* ========================================================================== 
+   ROLEPLAY 4.0.4 — Clean Core
+   Einheitliche, ruhige Designsprache ohne dekorative Strahlen oder doppelte
+   Erklärungsebenen. Diese Regeln ersetzen die experimentellen 4.0.3-Overrides.
+   ========================================================================== */
+
+:root {
+  --radius: 22px;
+  --nav-height: 72px;
+  --control-height: 48px;
+  --soft-shadow: 0 10px 28px rgba(32, 38, 54, .07);
+  --selection-shadow: 0 7px 18px rgba(72, 91, 165, .13);
+}
+
+body { font-size: 16px; }
+main { padding: 14px 14px 24px !important; }
+.card {
+  padding: 17px !important;
+  margin-bottom: 12px !important;
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--soft-shadow) !important;
+  overflow: visible;
+}
+.card h2,
+.lean-card-summary h2 {
+  margin: 0 0 14px !important;
+  font-size: 20px !important;
+  line-height: 1.18 !important;
+  letter-spacing: -.015em;
+}
+label,
+.subheading,
+.field-group > label {
+  font-size: 14px !important;
+  line-height: 1.3 !important;
+  color: var(--text) !important;
+  font-weight: 720 !important;
+}
+input,
+select,
+textarea {
+  min-height: var(--control-height) !important;
+  margin-top: 7px !important;
+  padding: 12px 13px !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--line) !important;
+  background: color-mix(in srgb, var(--card) 90%, white) !important;
+  color: var(--text) !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  box-shadow: none !important;
+}
+textarea { min-height: 76px !important; resize: vertical; }
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+.section-hint,
+.card-eyebrow,
+.state-intro,
+.dialog-description,
+.checkin-section-head,
+.prayer-subheading,
+.vitality-hint,
+.routine-responsibility-hint,
+.responsibility-hint,
+.week-course-hint,
+.export-description { display: none !important; }
+
+/* Header: stabil statt beim Scrollen zu springen */
+.app-header,
+.app-header.compact {
+  padding: calc(10px + env(safe-area-inset-top)) 16px 12px !important;
+  border-bottom: 1px solid rgba(0,0,0,.055) !important;
+  box-shadow: 0 8px 22px rgba(40, 44, 57, .05) !important;
+}
+.header-title-row,
+.app-header.compact .header-title-row {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 12px !important;
+  align-items: center !important;
+  max-height: none !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+}
+.app-header .eyebrow,
+.app-header.compact .eyebrow {
+  display: block !important;
+  margin: 0 !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .18em !important;
+}
+.app-header h1,
+.app-header.compact h1 {
+  margin: 4px 0 0 !important;
+  font-size: clamp(23px, 6vw, 30px) !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+}
+.role-picker {
+  max-width: 190px !important;
+  min-height: 44px !important;
+  height: 44px !important;
+  padding: 0 34px 0 14px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.26) !important;
+}
+.date-nav,
+.app-header.compact .date-nav {
+  grid-template-columns: 44px minmax(0,1fr) 44px !important;
+  gap: 9px !important;
+  margin-top: 11px !important;
+}
+.app-header .icon-button,
+.app-header .date-button,
+.app-header.compact .icon-button,
+.app-header.compact .date-button {
+  min-height: 44px !important;
+  height: 44px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.38) !important;
+  border: 1px solid rgba(255,255,255,.45) !important;
+  box-shadow: none !important;
+}
+.app-header .icon-button { width: 44px !important; min-width: 44px !important; font-size: 23px !important; }
+.app-header .date-button { padding: 0 12px !important; font-size: clamp(14px, 4vw, 17px) !important; }
+
+/* Bottom navigation: nur der aktive Reiter leuchtet dezent */
+.bottom-nav {
+  min-height: var(--nav-height) !important;
+  height: calc(var(--nav-height) + env(safe-area-inset-bottom)) !important;
+  padding: 8px 24px calc(8px + env(safe-area-inset-bottom)) !important;
+  background: color-mix(in srgb, var(--card) 93%, transparent) !important;
+  border-top: 1px solid var(--line) !important;
+  backdrop-filter: blur(22px) saturate(1.25) !important;
+}
+.bottom-nav .nav-button,
+.bottom-nav .nav-button.active {
+  position: relative !important;
+  min-height: 46px !important;
+  padding: 6px 20px !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.bottom-nav .nav-button::before,
+.bottom-nav .nav-button::after { content: none !important; display: none !important; }
+.bottom-nav .nav-button .nav-symbol {
+  display: inline-grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  font-size: 24px !important;
+  border-radius: 14px !important;
+  opacity: .72 !important;
+  filter: saturate(.78) !important;
+  transition: transform .18s ease, opacity .18s ease, filter .18s ease, box-shadow .18s ease, background .18s ease !important;
+}
+.bottom-nav .nav-button.active .nav-symbol {
+  opacity: 1 !important;
+  filter: saturate(1.1) !important;
+  transform: translateY(-1px) !important;
+  background: color-mix(in srgb, var(--accent) 9%, var(--card)) !important;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 34%, transparent) !important;
+}
+
+/* Zustand & Verantwortung */
+.state-overview-card,
+.state-overview-card::before {
+  border-left: 1px solid var(--line) !important;
+  background-image: none !important;
+  box-shadow: var(--soft-shadow) !important;
+}
+.state-overview-card::before { content: none !important; display: none !important; }
+.state-overview-card > h2 { margin-bottom: 14px !important; }
+.checkin-slots {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 10px !important;
+  margin: 0 0 12px !important;
+}
+.checkin-slot,
+.checkin-slot.complete {
+  position: relative !important;
+  min-height: 84px !important;
+  padding: 13px !important;
+  display: grid !important;
+  grid-template-columns: 34px minmax(0,1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-align: left !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+.checkin-slot::before,
+.checkin-slot::after { content: none !important; display: none !important; }
+.checkin-slot > span { font-size: 25px !important; line-height: 1 !important; }
+.checkin-slot > div { min-width: 0; display: grid; gap: 4px; }
+.checkin-slot strong { font-size: 15px !important; line-height: 1.15 !important; }
+.checkin-slot small { font-size: 12px !important; line-height: 1.2 !important; color: var(--muted) !important; }
+.checkin-slot.complete {
+  border-color: color-mix(in srgb, var(--slot-color) 45%, var(--line)) !important;
+  background: color-mix(in srgb, var(--slot-color) 8%, var(--card)) !important;
+  box-shadow: 0 6px 17px color-mix(in srgb, var(--slot-color) 15%, transparent) !important;
+}
+.current-state-summary {
+  margin: 0 !important;
+  padding: 14px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--line) !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  box-shadow: none !important;
+}
+.compact-framework-main { gap: 11px !important; }
+.framework-icon {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 13px !important;
+  font-size: 18px !important;
+  background: color-mix(in srgb, var(--framework-color) 13%, var(--card)) !important;
+  color: var(--framework-color) !important;
+}
+.framework-copy strong { font-size: 18px !important; line-height: 1.15 !important; }
+.framework-copy p { margin: 5px 0 0 !important; font-size: 14px !important; line-height: 1.42 !important; color: var(--muted) !important; }
+.framework-copy > span { display: none !important; }
+.framework-details { margin-top: 10px !important; }
+.framework-details summary,
+.state-history-details summary,
+.checkin-context-details summary,
+.mode-adjustment-details summary,
+.sunnah-prayer-details summary {
+  min-height: 40px !important;
+  padding: 10px 2px !important;
+  font-size: 14px !important;
+  font-weight: 720 !important;
+  color: var(--text) !important;
+}
+.reason-factor-list span { font-size: 12px !important; }
+
+/* Check-in dialog */
+.state-checkin-dialog {
+  width: min(92vw, 430px) !important;
+  max-height: min(88vh, 760px) !important;
+  padding: 0 !important;
+  border-radius: 25px !important;
+  overflow: auto !important;
+}
+.state-checkin-dialog form { padding: 20px !important; }
+.state-checkin-dialog h3 { margin: 0 0 17px !important; font-size: 23px !important; }
+.checkin-form-section {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.checkin-form-section .field-group:first-child { margin-top: 0 !important; }
+.state-energy-field {
+  padding: 14px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 17px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+}
+.state-energy-field input[type="range"] { min-height: 32px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+.state-range-legend small { font-size: 11px !important; color: var(--muted) !important; }
+.quick-choice-row { gap: 8px !important; }
+.quick-choice-row button {
+  min-height: 46px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  color: var(--text) !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.quick-choice-row button::before,
+.quick-choice-row button::after { content: none !important; display: none !important; }
+.quick-choice-row button.active {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line)) !important;
+  background: color-mix(in srgb, var(--accent) 9%, var(--card)) !important;
+  box-shadow: var(--selection-shadow) !important;
+}
+.state-framework-preview-text {
+  margin-top: 15px !important;
+  padding: 14px !important;
+  display: grid !important;
+  gap: 5px !important;
+  border-radius: 17px !important;
+  border: 1px solid color-mix(in srgb, var(--framework-color) 42%, var(--line)) !important;
+  background: color-mix(in srgb, var(--framework-color) 7%, var(--card)) !important;
+  box-shadow: none !important;
+}
+.state-framework-preview-text strong { font-size: 16px !important; }
+.state-framework-preview-text span { font-size: 13px !important; line-height: 1.4 !important; color: var(--muted) !important; }
+.preview-factor-list { display: none !important; }
+.mode-adjustment-details { margin-top: 10px !important; border-top: 1px solid var(--line) !important; }
+.dialog-actions { margin-top: 16px !important; }
+.dialog-actions button { min-height: 46px !important; border-radius: 14px !important; font-size: 15px !important; }
+
+/* Vitalität */
+.compact-vitality-group { margin-top: 0 !important; }
+.meal-tracking-grid,
+.meal-grid { grid-template-columns: 1fr !important; gap: 9px !important; }
+.meal-entry,
+.meal-entry.is-selected,
+.meal-entry.ray-selected,
+.meal-entry.meal-none {
+  padding: 13px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.meal-entry::before,
+.meal-entry::after { content: none !important; display: none !important; }
+.meal-entry > strong {
+  display: block !important;
+  margin: 0 0 7px !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+}
+.meal-entry select,
+.meal-entry input { font-size: 15px !important; }
+.meal-entry.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--line)) !important;
+  background: color-mix(in srgb, var(--accent) 5%, var(--card)) !important;
+}
+.two-column { grid-template-columns: 1fr !important; gap: 3px !important; }
+.water-tracker {
+  min-height: 52px !important;
+  display: grid !important;
+  grid-template-columns: 46px minmax(0,1fr) 46px !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+.water-step-button {
+  width: 46px !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  color: var(--text) !important;
+  font-size: 23px !important;
+  font-weight: 780 !important;
+  box-shadow: none !important;
+}
+.water-step-button.gradient-action {
+  background: linear-gradient(135deg, #4f7dff, #b744e7) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+.water-display-wrap {
+  min-height: 46px !important;
+  padding: 8px 11px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 14px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+}
+.water-droplets { min-width: 0 !important; flex-wrap: nowrap !important; overflow: hidden !important; }
+.water-drop { font-size: 16px !important; }
+#waterTotalDisplay { white-space: nowrap; font-size: 14px !important; }
+
+/* Routinen: vier klare, einheitliche Zustände */
+.routine-review-section .section-title-row { margin-bottom: 12px !important; }
+.routine-review-grid { gap: 10px !important; }
+.routine-cycle-button,
+.routine-cycle-button.is-done,
+.routine-cycle-button.is-missed,
+.routine-cycle-button.is-adapted,
+.routine-cycle-button.is-responsible-skip,
+.routine-cycle-button.is-conscientious {
+  min-height: 38px !important;
+  padding: 6px 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 13px !important;
+  background: color-mix(in srgb, var(--card) 88%, transparent) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+.routine-cycle-button.is-done {
+  border-color: rgba(90,88,240,.32) !important;
+  background: rgba(103,89,244,.08) !important;
+}
+.routine-cycle-button.is-missed {
+  border-color: rgba(223,64,80,.30) !important;
+  background: rgba(223,64,80,.07) !important;
+}
+.routine-cycle-button.is-conscientious {
+  border-color: rgba(46,196,182,.34) !important;
+  background: rgba(46,196,182,.08) !important;
+}
+.routine-cycle-button span:not(.status-circle) { font-size: 12px !important; font-weight: 740 !important; }
+.status-circle {
+  border-radius: 50% !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
+.status-circle::before,
+.status-circle::after { content: none !important; display: none !important; }
+.status-circle.gradient {
+  background: linear-gradient(135deg,#517cff,#a74ce9) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+.status-circle.neutral {
+  background: color-mix(in srgb, var(--card) 90%, white) !important;
+  border-color: var(--line) !important;
+  color: var(--muted) !important;
+}
+.status-circle.missed {
+  background: rgba(223,64,80,.09) !important;
+  border-color: rgba(223,64,80,.35) !important;
+  color: var(--danger) !important;
+}
+.status-circle.conscientious {
+  background: rgba(46,196,182,.10) !important;
+  border-color: rgba(46,196,182,.38) !important;
+  color: #15988d !important;
+}
+
+/* Gebete: identische Karten und identischer Status-Rahmen */
+.prayer-strip {
+  grid-template-columns: repeat(5,minmax(0,1fr)) !important;
+  gap: 7px !important;
+  padding: 0 !important;
+}
+.prayer-card,
+.prayer-card-compact,
+.prayer-card[data-state=""],
+.prayer-card[data-state="Normal"],
+.prayer-card[data-state="Gemeinschaft"],
+.prayer-card[data-state="Verspätet"],
+.prayer-card[data-state="Nachgeholt"],
+.prayer-card[data-state="Nicht gebetet"] {
+  min-height: 94px !important;
+  padding: 11px 5px !important;
+  display: grid !important;
+  align-content: start !important;
+  justify-items: center !important;
+  gap: 9px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 17px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  box-shadow: none !important;
+}
+.prayer-card[data-state]:not([data-state=""]):not([data-state="Nicht gebetet"]) {
+  border-color: rgba(103,89,244,.28) !important;
+  background: rgba(103,89,244,.055) !important;
+}
+.prayer-card[data-state="Nicht gebetet"] {
+  border-color: rgba(223,64,80,.28) !important;
+  background: rgba(223,64,80,.055) !important;
+}
+.prayer-card strong { margin: 0 !important; font-size: 12px !important; line-height: 1.1 !important; }
+.prayer-card small { display: none !important; }
+.prayer-state-button,
+.prayer-card[data-state=""] .prayer-state-button {
+  width: 43px !important;
+  height: 43px !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.prayer-state-button .status-circle { width: 43px !important; height: 43px !important; font-size: 17px !important; }
+.sunnah-prayer-details { margin-top: 12px !important; border-top: 1px solid var(--line) !important; }
+.sunnah-prayer-grid { gap: 8px !important; }
+.sunnah-prayer-chip { min-height: 52px !important; border-radius: 15px !important; }
+
+/* Aktivitäten */
+.activity-list { margin-top: 10px !important; }
+.tracking-activity {
+  min-height: 62px !important;
+  padding: 10px !important;
+  border-radius: 17px !important;
+  border: 1px solid var(--line) !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+}
+.activity-sort-actions { display: flex !important; gap: 5px !important; }
+.activity-sort-actions button,
+.delete-button {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 11px !important;
+  border: 1px solid var(--line) !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  color: var(--text) !important;
+}
+.activity-copy strong { font-size: 15px !important; }
+.activity-copy small { font-size: 12px !important; }
+
+/* Achtsamkeit, Dankbarkeit und Reflexion */
+.reflection-stack { gap: 10px !important; }
+.reflection-field { margin-top: 0 !important; }
+.reflection-field textarea,
+.reflection-field select {
+  min-height: 78px !important;
+  height: 78px !important;
+}
+.reflection-field select { padding-top: 15px !important; padding-bottom: 15px !important; }
+.lean-reflection-card,
+.week-course-card {
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+.lean-card-summary {
+  min-height: 62px !important;
+  padding: 17px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+}
+.lean-card-summary h2 { margin: 0 !important; }
+.lean-card-summary > span { font-size: 12px !important; color: var(--muted) !important; }
+.lean-reflection-card > .reflection-stack,
+.week-course-card > .stats-grid {
+  margin: 0 17px 17px !important;
+}
+.notes-card textarea { min-height: 220px !important; }
+
+/* 7-Tage-Verlauf */
+.stats-grid { display: grid !important; gap: 12px !important; }
+.trend-panel,
+.prayer-week-panel {
+  padding: 13px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 18px !important;
+  background: color-mix(in srgb, var(--card) 94%, white) !important;
+  box-shadow: none !important;
+}
+.trend-panel-head { margin-bottom: 6px !important; }
+.trend-panel-head h3 { margin: 0 !important; font-size: 16px !important; }
+.trend-panel-head small { display: none !important; }
+.trend-legend { gap: 10px !important; }
+.trend-legend span { font-size: 11px !important; }
+.trend-chart-scroll { overflow: hidden !important; }
+.trend-chart {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  display: block !important;
+}
+.wellbeing-line {
+  fill: none !important;
+  stroke-width: 3.2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+.wellbeing-dot { stroke-width: 2 !important; }
+.prayer-week-panel > strong { display: block; margin-bottom: 12px; font-size: 16px; }
+.prayer-week-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7,minmax(0,1fr)) !important;
+  gap: 5px !important;
+}
+.prayer-week-day {
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px 2px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 62%, var(--card));
+}
+.prayer-week-day small { font-size: 10px !important; color: var(--muted) !important; }
+.prayer-week-day b { font-size: 11px !important; }
+.prayer-week-dots { display: flex; gap: 2px; }
+.prayer-week-dots i {
+  width: 5px;
+  height: 5px;
+  display: block;
+  border-radius: 50%;
+  background: var(--line);
+}
+.prayer-week-dots i.filled { background: linear-gradient(135deg,#517cff,#a74ce9); }
+.prayer-progress-row,
+.week-mode-strip { display: none !important; }
+
+/* Export kompakt */
+.export-buttons { gap: 8px !important; }
+.export-button { min-height: 44px !important; }
+.backup-status { font-size: 12px !important; }
+
+@media (max-width: 460px) {
+  .app-header,
+  .app-header.compact { padding-left: 13px !important; padding-right: 13px !important; }
+  .app-header h1,
+  .app-header.compact h1 { font-size: 22px !important; }
+  .role-picker { max-width: 170px !important; font-size: 13px !important; }
+  .checkin-slot { min-height: 80px !important; padding: 11px !important; grid-template-columns: 30px minmax(0,1fr) !important; gap: 8px !important; }
+  .checkin-slot > span { font-size: 22px !important; }
+  .checkin-slot strong { font-size: 14px !important; }
+  .prayer-card { min-height: 90px !important; padding-left: 3px !important; padding-right: 3px !important; }
+  .prayer-card strong { font-size: 10.5px !important; }
+  .prayer-state-button .status-circle { width: 40px !important; height: 40px !important; }
+  .prayer-week-dots { gap: 1px; }
+  .prayer-week-dots i { width: 4px; height: 4px; }
+  .prayer-week-day { padding-left: 0; padding-right: 0; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .card,
+  .checkin-slot,
+  .current-state-summary,
+  .meal-entry,
+  .water-display-wrap,
+  .water-step-button,
+  .quick-choice-row button,
+  .state-energy-field,
+  .tracking-activity,
+  .trend-panel,
+  .prayer-week-panel,
+  .prayer-card,
+  input,
+  select,
+  textarea {
+    background: color-mix(in srgb, var(--card) 95%, #0f131c) !important;
+    border-color: var(--line) !important;
+    color: var(--text) !important;
+  }
+  .checkin-slot.complete {
+    background: color-mix(in srgb, var(--slot-color) 11%, var(--card)) !important;
+    border-color: color-mix(in srgb, var(--slot-color) 42%, var(--line)) !important;
+  }
+  .bottom-nav .nav-button.active .nav-symbol {
+    background: color-mix(in srgb, var(--accent) 13%, var(--card)) !important;
+  }
+  .status-circle.neutral { background: #252b38 !important; }
+  .prayer-week-day { background: rgba(255,255,255,.035); }
+}
+
+/* Feinschliff für lange Rollennamen im mobilen Kopfbereich */
+@media (max-width: 460px) {
+  .app-header h1,
+  .app-header.compact h1 { font-size: 20.5px !important; }
+  .role-picker {
+    width: 188px !important;
+    max-width: 188px !important;
+    font-size: 12.5px !important;
+    padding-left: 12px !important;
+    padding-right: 30px !important;
+  }
+}
+.trend-panel-head { justify-content: flex-start !important; }

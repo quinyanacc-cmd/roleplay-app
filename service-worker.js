@@ -1,4 +1,4 @@
-const CACHE = "roleplay-v4-0-3-adaptive-core";
+const CACHE = "roleplay-v4-0-4-clean-core";
 const ASSETS = [
   "./",
   "./index.html",

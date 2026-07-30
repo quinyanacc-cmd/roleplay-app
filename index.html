@@ -36,13 +36,7 @@
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
         <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
-          <div class="section-title-row state-title-row">
-            <div>
-              <p class="card-eyebrow">ADAPTIVER RAHMEN</p>
-              <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
-            </div>
-          </div>
-          <p class="state-intro">Deine Check-ins verbinden Schlaf, Energie, Gefühle, Ernährung und Belastung zu einer einfachen Empfehlung für deinen nächsten Rollenmodus.</p>
+          <h2 id="stateOverviewTitle">Zustand & Verantwortung</h2>
           <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
           <div id="adaptiveRoutineHint" class="adaptive-routine-hint" hidden></div>
@@ -55,7 +49,6 @@
         <section class="card">
           <h2>Vitalität</h2>
 
-          <p class="section-hint vitality-hint">Mahlzeiten und Trinkmenge werden als Vitalitätskontext erfasst und fließen behutsam in den Check-in ein.</p>
           <div class="field-group compact-vitality-group">
             <label>Mahlzeiten</label>
             <div class="meal-grid meal-tracking-grid">
@@ -121,21 +114,13 @@
               <button class="routine-cycle-button" type="button" data-routine-cycle="evening" aria-label="Status Abendroutine ändern"></button>
             </article>
           </div>
-          <p class="section-hint routine-responsibility-hint">„Verantwortungsvoll nicht erledigt“ ist kein bequemes Überspringen: Es zählt vollwertig, wenn Verantwortung, Anpassungsspielraum und Folgen geprüft und das Notwendige abgesichert wurden.</p>
         </section>
 
         <section class="card">
-          <div class="section-title-row prayer-section-title">
-            <div>
-              <p class="card-eyebrow">GEBET & FREIWILLIGE NÄHE</p>
-              <h2>Islam</h2>
-            </div>
-          </div>
-          <span class="subheading prayer-subheading">Pflichtgebete</span>
+          <h2>Islam</h2>
           <div id="prayerList" class="prayer-strip"></div>
           <details class="sunnah-prayer-details">
             <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
-            <p class="section-hint">Freiwillige Gebete werden als zusätzliche Annäherung dokumentiert. Ihr Auslassen wird nicht als Misserfolg bewertet.</p>
             <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
           </details>
           <div class="ramadan-box">
@@ -156,7 +141,6 @@
             <h2>Aktivitäten</h2>
             <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
           </div>
-          <p class="section-hint">Aktivitäten werden nur dokumentiert – ohne Leistungs- oder Verantwortungsbewertung.</p>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
@@ -180,13 +164,9 @@
 
         <details class="card responsibility-card lean-reflection-card">
           <summary class="lean-card-summary">
-            <div>
-              <p class="card-eyebrow">FREIWILLIGER TAGESABSCHLUSS</p>
-              <h2>Verantwortungsreflexion</h2>
-            </div>
-            <span>Ausklappen</span>
+            <h2>Verantwortungsreflexion</h2>
+            <span>Öffnen</span>
           </summary>
-          <p class="section-hint responsibility-hint">Drei kurze Fragen genügen. Es geht nicht um eine Bewertung deiner Rollen, sondern um Klarheit für den nächsten verantwortlichen Schritt.</p>
           <div class="reflection-stack responsibility-reflection-stack">
             <div class="field-group reflection-field">
               <label for="responsibilityMain">Was war heute meine wichtigste Verantwortung?</label>
@@ -212,19 +192,14 @@
 
         <details class="card stats-card week-course-card" open>
           <summary class="lean-card-summary week-course-summary">
-            <div>
-              <p class="card-eyebrow">NEUTRALER VERLAUF</p>
-              <h2>7-Tage-Verlauf</h2>
-            </div>
+            <h2>7-Tage-Verlauf</h2>
             <span id="weekLabel" class="week-label"></span>
           </summary>
-          <p class="section-hint week-course-hint">Der Verlauf zeigt Veränderungen von Energie, Belastung und Pflichtgebeten – nicht den Wert oder Erfolg eines Tages.</p>
           <div id="statsGrid" class="stats-grid"></div>
         </details>
 
         <section class="card">
           <h2>Export & Sicherung</h2>
-          <p class="export-description">Der PDF-Export erstellt einen Wochenplan im Querformat – angelehnt an deine bisherige Vorlage, aber im neuen Roleplay-Design.</p>
           <div class="export-buttons">
             <button id="exportPdf" class="small-button export-button" type="button">Wochenplan als PDF</button>
             <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
@@ -283,48 +258,41 @@
 
   <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
     <form id="stateCheckinForm">
-      <div class="dialog-title-row">
-        <div>
-          <p class="card-eyebrow">KURZE MOMENTAUFNAHME</p>
-          <h3>Check-in</h3>
-        </div>
-        <span id="stateFrameworkPreview" class="framework-preview-badge">Regulärer Modus</span>
-      </div>
-      <p class="dialog-description" id="stateDialogDescription">Wenige Angaben genügen für eine einfache, nachvollziehbare Empfehlung.</p>
-
-      <div id="stateSlotDisplay" class="checkin-slot-display" aria-live="polite"></div>
+      <h3 id="stateDialogTitle">Check-in</h3>
+      <div id="stateSlotDisplay" hidden></div>
       <select id="stateSlot" hidden aria-hidden="true" tabindex="-1"></select>
       <input id="stateTime" type="hidden">
 
       <section id="nightCheckinSection" class="checkin-form-section night-checkin-section" hidden>
-        <div class="checkin-section-head"><span>🌙</span><div><strong>Schlaf & Träume</strong><small>Der vollständige Schlafbereich für die vergangene Nacht</small></div></div>
-        <div class="field-group compact-field">
-          <label>Schlafqualität</label>
-          <input id="stateSleepQuality" type="hidden" value="">
-          <div id="sleepQualityChoices" class="sleep-quality-choices" role="group" aria-label="Schlafqualität"></div>
+        <div class="field-group">
+          <label for="stateSleepQuality">Schlafqualität</label>
+          <select id="stateSleepQuality"></select>
         </div>
-        <div class="night-form-stack">
-          <label>Traumkategorie<select id="stateDreamCategory"></select></label>
-          <label>Traumnotiz<textarea id="stateDreamNote" rows="3" placeholder="Optional: Woran erinnerst du dich?"></textarea></label>
+        <div class="field-group">
+          <label for="stateDreamCategory">Traumkategorie</label>
+          <select id="stateDreamCategory"></select>
+        </div>
+        <div class="field-group">
+          <label for="stateDreamNote">Traumnotiz</label>
+          <textarea id="stateDreamNote" rows="3" placeholder="Optional"></textarea>
         </div>
       </section>
 
       <section id="dayCheckinSection" class="checkin-form-section day-checkin-section">
-        <div class="checkin-section-head"><span>●</span><div><strong>Wie ist es gerade?</strong><small>Energie, Gefühl und Belastung reichen aus.</small></div></div>
         <div class="field-group state-energy-field compact-energy-field">
           <div class="label-value-row">
             <label for="stateEnergy">Energie</label>
             <strong id="stateEnergyValue">60 %</strong>
           </div>
           <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
-          <div class="state-range-legend"><small>kaum verfügbar</small><small>sehr verfügbar</small></div>
+          <div class="state-range-legend"><small>niedrig</small><small>hoch</small></div>
         </div>
         <div class="field-group">
-          <label for="stateEmotion">Vorherrschendes Gefühl</label>
+          <label for="stateEmotion">Gefühl</label>
           <select id="stateEmotion"></select>
         </div>
         <div class="field-group">
-          <label>Aktuelle Belastung</label>
+          <label>Belastung</label>
           <input id="stateLoad" type="hidden" value="normal">
           <div id="stateLoadChoices" class="quick-choice-row" role="group" aria-label="Aktuelle Belastung">
             <button type="button" data-state-load="low">Niedrig</button>
@@ -333,10 +301,9 @@
           </div>
         </div>
         <details class="checkin-context-details">
-          <summary>Kurzen Kontext ergänzen <small>optional</small></summary>
-          <div class="field-group compact-field">
-            <label for="stateNote">Was prägt diesen Moment?</label>
-            <textarea id="stateNote" rows="2" placeholder="Zum Beispiel: schlecht geschlafen, Arbeit angespannt, ruhiger Nachmittag …"></textarea>
+          <summary>Kontext ergänzen</summary>
+          <div class="field-group">
+            <textarea id="stateNote" rows="2" placeholder="Optionaler kurzer Kontext"></textarea>
           </div>
         </details>
       </section>
@@ -344,17 +311,17 @@
       <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
 
       <details class="mode-adjustment-details">
-        <summary>Rollenmodus anpassen <small>optional</small></summary>
-        <p>Die App gibt eine Empfehlung. Du kannst sie verändern; bei einer Abweichung ist eine kurze Begründung erforderlich.</p>
+        <summary>Rollenmodus ändern</summary>
         <div class="field-group">
-          <label for="stateSelectedFramework">Gewählter Rollenmodus</label>
+          <label for="stateSelectedFramework">Rollenmodus</label>
           <select id="stateSelectedFramework"></select>
         </div>
         <div id="frameworkOverrideReasonWrap" class="field-group" hidden>
-          <label for="stateFrameworkReason">Warum passt ein anderer Modus besser?</label>
-          <textarea id="stateFrameworkReason" rows="2" placeholder="Kurze Begründung …"></textarea>
+          <label for="stateFrameworkReason">Begründung</label>
+          <textarea id="stateFrameworkReason" rows="2" placeholder="Warum passt der andere Modus besser?"></textarea>
         </div>
       </details>
+      <span id="stateFrameworkPreview" hidden></span>
 
       <div class="dialog-actions">
         <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>
