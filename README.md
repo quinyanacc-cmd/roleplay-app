@@ -1,94 +1,76 @@
-# ROLEPLAY App 5.1.3
+# ROLEPLAY App 5.2.0
 
-Lokale iPhone-PWA für Tagesreview, Routinen und adaptive Reflexion. Alle Daten bleiben im Browser des Geräts (`localStorage`); es gibt keine Serververbindung.
+Lokale iPhone-PWA für Tagesreview, Routinen und adaptive Reflexion. Alle Daten
+bleiben im Browser des Geräts (`localStorage`); es gibt keine Serververbindung.
 
-## Installation
+## Was diese Version ist
 
-Dateien entpacken und den Ordner ausliefern, beispielsweise über GitHub Pages. Auf dem iPhone in Safari öffnen und über **Teilen → Zum Home-Bildschirm** installieren.
+Zusammenführung zweier Stände:
 
-## Version 5.1.3 – Reparaturversion
+- **Funktionsbasis:** Version 5.1.2 mit den vier Tages-Check-ins, Laune-Regler,
+  Mahlzeitenkategorien und Rollenmodus-Logik – vollständig repariert.
+- **Designsprache:** Version 3.10, die optisch gelungene frühere Fassung.
 
-### Ursache der Ausfälle in 5.1.2
+## Reparaturen aus 5.1.2
 
-Im Wochenrückblick fehlten sechs Funktionen vollständig: `weekDates`,
-`dailyAverageEnergy`, `dailyAverageLoad`, `dailyPrayerProgress`,
-`buildWeeklyTrendChart` und `buildPrayerWeekPanel`. Das zugehörige CSS war
-unversehrt, nur das JavaScript war verlorengegangen.
+In 5.1.2 fehlten sechs Funktionen des Wochenrückblicks vollständig
+(`weekDates`, `dailyAverageEnergy`, `dailyAverageLoad`, `dailyPrayerProgress`,
+`buildWeeklyTrendChart`, `buildPrayerWeekPanel`). Dadurch warf `renderStats()`
+bei jedem Aufruf einen Fehler – und sowohl `saveReview()` als auch `setDate()`
+rufen diese Funktion mitten in ihrer Ablaufkette auf. Alles danach wurde nie
+ausgeführt.
 
-Dadurch warf `renderStats()` bei jedem Aufruf einen Fehler. Sowohl `saveReview()`
-als auch `setDate()` rufen `renderStats()` mitten in ihrer Ablaufkette auf –
-alles danach wurde nie ausgeführt:
+Gespeichert wurde dabei immer korrekt; ausgefallen war ausschließlich die
+Aktualisierung der Anzeige. Behoben sind damit unter anderem:
 
-    saveReview()  ->  localStorage.setItem() OK  ->  renderStats() ABBRUCH
-                                                     renderRoutineCards()  nie
-                                                     Speicherbestaetigung  nie
+- Check-in speichern aktualisiert die Karte wieder unmittelbar
+- Gebetsdialog schließt und schreibt den Status auf die Karte
+- Aktivitäten erscheinen nach dem Hinzufügen, Löschen und Sortieren sofort
+- "Tagesreview speichern" zeigt die Bestätigung wieder an
+- Plus-Zeichen der Trinkmenge war weiß auf weißem Grund
+- Maghrib wird ohne Auslassungspunkte vollständig angezeigt
+- gesamte Gebetskarte ist antippbar, nicht nur der kleine Statuskreis
 
-Gespeicherte Daten waren dabei nie gefährdet, weil `localStorage.setItem` vor
-dem Abbruch steht. Ausgefallen ist ausschließlich die Aktualisierung der
-Anzeige. Das erklärt den Großteil der gemeldeten Fehler.
+## Designsprache aus 3.10 übernommen
 
-### Reparierte Funktionen
+- violetter Akzent `#9a6dff` statt Blau, im Dark Mode `#76a7ff`
+- Grundschrift 16 px statt 15 px; verhindert zugleich das automatische
+  Hineinzoomen von iOS beim Antippen von Eingabefeldern
+- Überschriften in 700 statt 800, ohne negative Laufweite
+- Kartenrundung 18 px, weicherer und tieferer Schatten
+- untere Navigation 66 px statt 50 px, Emojis 24 px
+- Kopfzeilen-Glas `blur(24px) saturate(1.3)`
+- Wochenkurven als weiche Bézier-Segmente statt harter Knicke
+- ruhige Markierung des heutigen Tages im Verlauf
 
-- Wochenrückblick-Modul wiederhergestellt, passend zum vorhandenen CSS.
-- Check-in speichern: Karte aktualisiert sich wieder unmittelbar.
-- Gebetsdialog: schließt nach der Auswahl und schreibt den Status auf die Karte.
-- Gebetskarte: die gesamte Karte ist antippbar, nicht nur der Statuskreis.
-- Aktivität hinzufügen, löschen und sortieren erscheinen wieder sofort.
-- "Tagesreview speichern" zeigt die Bestätigung wieder an.
-- `switchPage()` und `restoreRoutineSession()` laufen beim Start wieder durch.
-- Trinkmenge: Plus-Zeichen war weiß auf weißem Grund und damit unsichtbar.
-- Wassertropfen werden nicht mehr abgeschnitten.
-- Maghrib wird ohne Auslassungspunkte vollständig angezeigt.
+Nicht übernommen wurde die Erfolgsquoten-Kurve aus 3.10: Der Wochenrückblick
+zeigt weiterhin Energie, Belastung und Pflichtgebete – ohne Gesamtscore.
 
-### Rollenmodus-Logik neu aufgebaut
+## Rollenmodus-Logik
 
-Statt eines einzelnen Mittelwerts gilt jetzt ein zweistufiges Verfahren:
+Zweistufig statt einfacher Mittelwertbildung:
 
 1. Gesamtlage – gewichtete Mischung aller Angaben.
 2. Obergrenze je Einzelwert – Energie, Laune, Belastung, Gefühl und Schlaf
    legen jeweils fest, welcher Modus höchstens noch vertretbar ist.
 
-Ein Einzelwert kann den Modus dadurch nur noch begrenzen, nie anheben:
-
-- Energie 10 % mit Laune 100 % ergibt Stabilisierungsmodus.
-- Hohe Belastung deckelt trotz sehr guter Werte auf Reduzierten Modus.
-- Die obersten beiden Modi setzen geringe Belastung voraus.
-
-Die Begründung nennt den tatsächlich ausschlaggebenden Wert, zum Beispiel
-"Begrenzend wirkt, dass die Energie bei 30 % liegt." Eine Punktzahl wird
-nirgends angezeigt.
-
-### Gestaltung
-
-- Check-in-Karten tragen die Farbe ihrer Tageszeit statt der Modusfarbe und
-  bleiben ohne gespeicherten Eintrag neutral und ohne Glow.
-- Abend-Farbwelt von Rot auf Violett/Rosa umgestellt.
-- Gebetsfarben folgen dem Status, nicht dem Namen des Gebets. Offene Karten sind
-  vollständig neutral. Verspätet ist orange, Nachgeholt rötlich.
-- Aktivitäten-Rollenstreifen liegt sauber innerhalb der Karte.
-- Unterbrochene Streaks erhalten eine rote Kontur.
-
-### Aufgeräumt
-
-Die am Dateiende angehängten Hotfix-Blöcke wurden aufgelöst und in die
-jeweiligen Komponenten eingearbeitet:
-
-- `#waterPlus { display:grid !important; visibility:visible !important; ... }`
-  entfernt – die Ursache war die Textfarbe, nicht die Sichtbarkeit.
-- `.streak-card .streak-daily-actions button:not(.danger) { display:none }`
-  entfernt – die betroffenen Buttons werden ohnehin nicht mehr gerendert.
-- Doppelte `.checkin-slot`- und `.checkin-slot.complete`-Regeln zusammengeführt.
-- Achtsamkeits- und Verantwortungsregeln in ihre Komponenten verschoben.
-
-Verbliebene `!important`-Deklarationen sind ausschließlich die dokumentierten
-Standardfälle: `[hidden]`, die `.sr-only`-Hilfsklasse und die
-`prefers-reduced-motion`-Regel. Der Hack `#waterPlus { ... !important }` ist
-entfernt.
+Ein Einzelwert kann den Modus dadurch nur begrenzen, nie anheben. Energie 10 %
+mit Laune 100 % ergibt Stabilisierungsmodus; hohe Belastung deckelt trotz sehr
+guter Werte auf den Reduzierten Modus. Die Begründung benennt den
+ausschlaggebenden Wert. Eine Punktzahl wird nirgends angezeigt.
 
 ## Datenkompatibilität
 
 Der Speicherschlüssel bleibt `roleplay-v25`. Bestehende Tagesreviews, Routinen,
 Check-ins, Gebete, Aktivitäten und Streaks werden unverändert weiterverwendet.
-Geprüft mit Altdatensätzen: alte Rollennamen, Check-ins ohne Launenwert, der
-entfernte Routinenstatus "angepasst erfüllt" und alte Modus-Schlüssel werden
-migriert, ohne Fehler auszulösen.
+Geprüft mit Altdatensätzen aus 3.x: alte Rollennamen, Check-ins ohne
+Launenwert, der entfernte Routinenstatus "angepasst erfüllt" und alte
+Modus-Schlüssel werden migriert, ohne Fehler auszulösen.
+
+## Aktualisierung
+
+1. In der bisherigen App ein Backup speichern.
+2. Den Inhalt dieses Ordners auf dem bisherigen Hosting vollständig ersetzen.
+3. Die App vollständig schließen und erneut öffnen.
+4. Das Backup nur importieren, falls die bisherigen Einträge nicht
+   automatisch erscheinen.

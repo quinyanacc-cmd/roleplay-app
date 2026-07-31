@@ -378,7 +378,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.1.3";
+const APP_VERSION = "5.2.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1574,6 +1574,8 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
   }).join("");
 
   // Lücken (Tage ohne Eintrag) unterbrechen die Linie, statt sie zu erfinden.
+  // Die Kurvenführung ist aus der früheren Designsprache übernommen: weiche
+  // Bézier-Segmente statt harter Knicke.
   const paths = series.map(item => {
     const segments = [];
     let current = [];
@@ -1583,18 +1585,32 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
         current = [];
         return;
       }
-      current.push(`${xFor(index).toFixed(1)},${yFor(value).toFixed(1)}`);
+      current.push({ x: xFor(index), y: yFor(value) });
     });
     if (current.length) segments.push(current);
     return segments
       .filter(segment => segment.length > 1)
-      .map(segment => `<polyline class="wellbeing-line ${item.className}" points="${segment.join(" ")}"></polyline>`)
+      .map(points => {
+        let d = `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+        for (let i = 1; i < points.length; i += 1) {
+          const prev = points[i - 1];
+          const point = points[i];
+          const mid = (prev.x + point.x) / 2;
+          d += ` C${mid.toFixed(1)} ${prev.y.toFixed(1)}, ${mid.toFixed(1)} ${point.y.toFixed(1)}, ${point.x.toFixed(1)} ${point.y.toFixed(1)}`;
+        }
+        return `<path class="wellbeing-line ${item.className}" d="${d}"></path>`;
+      })
       .join("");
   }).join("");
 
   const dots = series.map(item => item.values.map((value, index) => value === null || value === undefined
     ? ""
-    : `<circle class="wellbeing-dot ${item.className}" cx="${xFor(index).toFixed(1)}" cy="${yFor(value).toFixed(1)}" r="3.4"></circle>`).join("")).join("");
+    : `<circle class="wellbeing-dot ${item.className} ${index === todayIndex ? "today" : ""}" cx="${xFor(index).toFixed(1)}" cy="${yFor(value).toFixed(1)}" r="${index === todayIndex ? 4.6 : 3.4}"></circle>`).join("")).join("");
+
+  // Ruhige Markierung des heutigen Tages – ohne Wertung, nur zur Orientierung.
+  const bandWidth = labels.length > 1 ? plotWidth / (labels.length - 1) * 0.64 : 40;
+  const todayBand = todayIndex < 0 ? "" :
+    `<rect class="trend-today-band" x="${(xFor(todayIndex) - bandWidth / 2).toFixed(1)}" y="${padTop}" width="${bandWidth.toFixed(1)}" height="${plotHeight}" rx="10"></rect>`;
 
   const xLabels = labels.map((label, index) =>
     `<text x="${xFor(index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="${index === todayIndex ? "today" : ""}">${escapeHTML(label)}</text>`).join("");
@@ -1605,6 +1621,7 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
   return `<div class="trend-panel">
     <div class="trend-legend">${legend}</div>
     <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Wochenverlauf von Energie, Belastung und Pflichtgebeten">
+      ${todayBand}
       <g class="trend-grid">${grid}</g>
       ${paths}
       ${dots}
