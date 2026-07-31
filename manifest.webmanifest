@@ -1,11 +1,11 @@
 {
-  "name": "ROLEPLAY",
-  "short_name": "ROLEPLAY",
-  "description": "ROLEPLAY 5.0 – Tagesreview, Routinen und adaptive Reflexion – lokal auf dem Gerät",
+  "name": "Roleplay",
+  "short_name": "Roleplay",
+  "description": "Tagesreflexion, geführte Routinen, geschützte Streaks und Wochenstatistik",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f2f4f8",
-  "theme_color": "#f2f4f8",
+  "background_color": "#f4f5f9",
+  "theme_color": "#f4f5f9",
   "icons": [
     {
       "src": "logo.jpeg",

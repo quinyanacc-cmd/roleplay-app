@@ -1,44 +1,72 @@
-# ROLEPLAY App 5.0.0
+# Roleplay App 3.10
 
-Lokale iPhone-PWA für Tagesreview, Routinen und adaptive Reflexion. Alle Daten bleiben im Browser des Geräts (`localStorage`); es gibt keine Serververbindung.
+Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
 
-## Installation
+## Neu in Version 3.4
 
-Dateien entpacken und den Ordner ausliefern, beispielsweise über GitHub Pages. Auf dem iPhone in Safari öffnen und über **Teilen → Zum Home-Bildschirm** installieren.
+- Dark-Mode-Kopfzeile wieder dezent in der Farbe der ausgewählten Tagesrolle.
+- Wochenstatistik ohne zusätzliche Balken- oder Kreisvisualisierung unterhalb der Erfolgskurve.
+- Wochenplan-PDF mit größerer, einheitlicher Schrift und besserer Nutzung der verfügbaren Textflächen.
 
-## Änderungen in Version 5.0
+- Intelligente Erfolgsquote mit differenzierter Gebetsqualität:
+  - Gemeinschaftsgebet: 22 Punkte
+  - pünktlich gebetet: 20 Punkte
+  - verspätet gebetet: 15 Punkte
+  - nachgeholt: 8 Punkte
+  - nicht gebetet: 0 Punkte
+  - Morgen- und Abendroutine: jeweils 10 Punkte
+- Fünf pünktliche Gebete und beide Routinen ergeben 100 Prozent; Gemeinschaftsgebete ermöglichen einen Bonus bis 108 Prozent.
+- Noch offene Gebete werden am laufenden Tag neutral behandelt und erst an vergangenen Tagen mit 0 bewertet.
+- Geglättete Wochenkurve mit Montag bis Sonntag, 80-Prozent-Zielgrenze und Markierung des heutigen Tages.
+- Korrigierter Überblick in der Wochenstatistik ohne überlappende Werte.
+- Streak-Seite mit schlankem Einleitungstext statt einer zusätzlichen Informationskarte.
+- Kompaktere Streak-Karten, kleinere Statuschips sowie sauber ausgerichtete Tagesangabe.
+- Schutzdialog mit gleich breiten Schaltflächen: Abbrechen links, Öffnen rechts.
+- Leicht verfeinerte Routine-Karten und Navigation.
+- Neu gewichteter Wochenplan-PDF:
+  - kompaktere Kopf-, Vitalitäts-, Routine- und Gebetsbereiche
+  - wesentlich mehr Platz für Reflexion und Notizen
+  - mehr Platz für Aktivitäten
+  - kompakter Streak-Bereich mit allen vier Einträgen
+  - weißer Hintergrund und korrekte deutsche Umlaute
 
-### Gestaltung
-- Appweite Schriftfamilie auf Futura mit systemnahen Fallbacks umgestellt.
-- Farbliche Seitenstreifen aus Check-ins, Rollenmodus-Empfehlung, Dialogen und Aktivitäten entfernt.
-- Auswahlzustände nutzen nun dezente Farbverläufe und weiche Glow-Effekte statt linker Markierungen.
-- Abrundungen von Feldern, Chips und Statuskarten vereinheitlicht.
-- Untere Navigation auf 54 px verschlankt; aktive Emojis leuchten ohne zusätzlichen Kreis.
-- Routinenstatus-Kreise besitzen klare Hell-Dunkel-Verläufe.
+## Aktualisierung
 
-### Zustand und Verantwortung
-- Zusätzlicher Regler **Laune** ergänzt; das qualitative Gefühls-Dropdown bleibt erhalten.
-- Laune beeinflusst die Rollenmodus-Empfehlung neben Energie, Belastung und Gefühl.
-- Sieben differenzierte Rollenmodi: Entwicklungs-, Gestaltungs-, Fokus-, regulärer, reduzierter, Schon- und Stabilisierungsmodus.
-- Check-in-Karten und Rollenmodus-Empfehlung verwenden die jeweilige Tageszeit- beziehungsweise Modusfarbe als ruhigen Glow.
+1. In der bisherigen App ein Backup speichern.
+2. Den Inhalt dieses Ordners auf dem bisherigen Hosting vollständig ersetzen.
+3. Die App vollständig schließen und erneut öffnen.
+4. Falls weiterhin eine ältere Version erscheint, die Web-App vom Home-Bildschirm entfernen und über Safari erneut hinzufügen oder den Browser-Cache leeren.
+5. Das Backup nur importieren, wenn die bisherigen Einträge nicht automatisch erscheinen.
 
-### Gebete und Fastentage
-- Pflichtgebete erhalten individuelle, harmonische Farbverläufe.
-- Erfasste Gebete leuchten dezent; nicht gebetete Gebete bleiben klar rot markiert.
-- Sunnah-Gebete werden bei Verrichtung türkis hervorgehoben.
-- Offene Fastentage sind rot; erst bei 0 wird die Zahl grün.
+Die Daten werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. Die Bestätigungsabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die lokal gespeicherten Daten jedoch nicht.
 
-### Streaks
-- Karten und Bedienelemente kompakter gestaltet.
-- Die Tageszahl wird farblich und mit Glow hervorgehoben.
-- Schutzentscheidungen bleiben unverändert funktionsfähig.
 
-### Verlauf
-- Energie: dunkelblau.
-- Belastung: rot.
-- Pflichtgebete: türkis.
-- Türkise Punkte auch in der separaten Gebetsübersicht.
+## Version 3.6
+- Der Timer aktualisiert sich während geöffneter App wieder sichtbar und synchronisiert sich weiterhin nach dem Zurückkehren.
+- Die nicht zuverlässig nutzbare Benachrichtigungsabfrage wurde vollständig entfernt.
+- „Routine anpassen“ befindet sich gut sichtbar unter dem laufenden Timer; dort können Schritte verschoben, bearbeitet und ergänzt werden.
+- Zurück-, Vorwärts- und Kalenderpfeile sind einheitlich kreisrund und exakt zentriert.
 
-## Datenkompatibilität
 
-Der Speicherschlüssel bleibt `roleplay-v25`. Bestehende Tagesreviews, Routinen, Check-ins, Gebete, Aktivitäten und Streaks werden weiterverwendet. Alte Check-ins ohne Launenwert bleiben gültig; beim erneuten Öffnen wird ein neutraler Ausgangswert angeboten.
+## Version 3.7
+- „Anpassen“ öffnet während der laufenden Routine ein eigenes Bottom-Sheet in der bestehenden Roleplay-Designsprache.
+- Schritte lassen sich am Griff per Touch oder Maus direkt umsortieren.
+- Jeder andere Schritt kann über die Play-Schaltfläche unmittelbar gestartet werden; der bisherige Schritt bleibt dabei unbewertet.
+- „Erledigt“ schließt nur das Anpassungsfenster und lässt die Routine weiterlaufen.
+- Die Hinzufügen-Funktion wurde aus dem laufenden Anpassungsfenster entfernt.
+- Tages-, Monats- und Zurück-Pfeile sind kreisrund, optisch zentriert und exakt so hoch wie die Datumsleiste.
+
+## Version 3.8
+- Der Timerbereich in der laufenden Routine ist kompakter: kleineres Timerfeld, kleinerer Timer und geringere vertikale Abstände schaffen mehr Luft für Kontext, Steuerung und „Anpassen“.
+- Der aktuell ausgewählte Schritt im Anpassungsfenster erhält einen weichen violetten Lichtschein in der Designsprache der aktiven Hauptnavigation.
+- Die Tagesnavigation wurde auf schlanke, einheitliche 44-Pixel-Steuerelemente reduziert: Kreise und Datumsleiste liegen bündig auf einer Höhe, die Pfeile sind fein und exakt zentriert.
+
+
+## Version 3.10
+
+- Kopfzeile auf die stabile Gestaltung vor Version 3.9 zurückgesetzt.
+- Pfeile ohne Schriftzeichen oder doppelte Ebenen exakt im Kreis zentriert.
+- Timer- und Kontextfeld innerhalb einer geführten Routine gleich breit.
+- Leere Kontextfelder werden vollständig ausgeblendet.
+- Mehr vertikaler Freiraum in der Routineansicht.
+- Der Button „Anpassen“ bleibt am unteren Ende der Routineansicht.
