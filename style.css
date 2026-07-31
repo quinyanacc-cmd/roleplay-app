@@ -738,8 +738,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   transition: border-color .16s ease, background .16s ease;
 }
 .meal-entry > strong { font-size: var(--fs-label); font-weight: 750; }
-.meal-entry.is-selected { background: linear-gradient(145deg, rgba(255,255,255,.44), var(--tint-accent) 24%, var(--field-2) 84%); border-color: var(--tint-accent-line); box-shadow: 0 8px 20px var(--tint-accent-glow); }
-.meal-entry.meal-none { background: var(--tint-neutral); border-color: var(--line-strong); }
+.meal-entry.is-selected { background: var(--card-solid); border-color: var(--tint-accent-line); box-shadow: none; }
+.meal-entry.meal-none { background: var(--card-solid); border-color: var(--line-strong); }
 
 .vitality-metrics { display: grid; gap: var(--sp-3); margin-top: var(--sp-4); }
 
@@ -979,8 +979,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 }
 .prayer-option strong { font-size: var(--fs-body); font-weight: 700; }
 .prayer-option.active { background: linear-gradient(145deg, rgba(255,255,255,.60), var(--option-soft, var(--tint-accent)) 26%, var(--field-2) 100%); border-color: var(--option-line, var(--tint-accent-line)); box-shadow: 0 6px 18px var(--option-glow, transparent); }
-.prayer-option.state-normal.active,
-.prayer-option.state-open.active { --option-soft: rgba(76,120,255,.18); --option-line: rgba(82,102,232,.55); --option-glow: rgba(82,102,232,.22); }
+.prayer-option.state-open.active { --option-soft: rgba(255,255,255,.02); --option-line: rgba(120,128,150,.45); --option-glow: transparent; }
+.prayer-option.state-normal.active { --option-soft: rgba(76,120,255,.18); --option-line: rgba(82,102,232,.55); --option-glow: rgba(82,102,232,.22); }
 .prayer-option.state-gemeinschaft.active { --option-soft: rgba(89,215,247,.20); --option-line: rgba(89,215,247,.58); --option-glow: rgba(89,215,247,.26); }
 .prayer-option.state-verspaetet.active { --option-soft: rgba(243,161,59,.18); --option-line: rgba(243,161,59,.52); --option-glow: rgba(243,161,59,.24); }
 .prayer-option.state-nachgeholt.active,
@@ -1737,3 +1737,9 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 }
 
 .streak-card .streak-daily-actions button:not(.danger){ display:none; }
+
+#waterPlus { display:grid !important; visibility:visible !important; opacity:1 !important; }
+#waterPlus::before { content:none; }
+
+.checkin-slot { box-shadow: none; }
+.checkin-slot.complete { box-shadow: 0 0 0 1px var(--slot-soft, transparent), 0 8px 18px rgba(24,30,48,.08); }
