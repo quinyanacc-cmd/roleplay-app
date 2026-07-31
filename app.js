@@ -378,7 +378,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.0.2";
+const APP_VERSION = "5.1.1";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1166,12 +1166,30 @@ function prayerStateMeta(value) {
   return PRAYER_STATES.find(option => option.value === value) || PRAYER_STATES[0];
 }
 
+function prayerStateTheme(value) {
+  switch (value) {
+    case "Normal":
+      return { a: "#6A76F8", b: "#5BA2FF", softA: .16, softB: .13, glow: .26 };
+    case "Gemeinschaft":
+      return { a: "#59D7F7", b: "#3FC4E8", softA: .18, softB: .14, glow: .24 };
+    case "Verspätet":
+      return { a: "#F6B14A", b: "#F08A35", softA: .18, softB: .14, glow: .24 };
+    case "Nachgeholt":
+      return { a: "#FF7A86", b: "#E05261", softA: .18, softB: .14, glow: .24 };
+    case "Nicht gebetet":
+      return { a: "#E05A66", b: "#B54A5A", softA: .18, softB: .14, glow: .18 };
+    default:
+      return { a: "#7A839A", b: "#5C6478", softA: .09, softB: .06, glow: .0 };
+  }
+}
+
 function prayerStateIconHTML(value, size = "medium") {
   const meta = prayerStateMeta(value);
   if (value === "") return statusCircle("", "neutral", size);
-  if (value === "Normal") return statusCircle("✓", "gradient", size);
   if (value === "Nicht gebetet") return statusCircle("✕", "missed", size);
-  return statusCircle(meta.icon, "gradient", size);
+  if (value === "Nachgeholt") return statusCircle(meta.icon, "missed", size);
+  if (value === "Gemeinschaft") return statusCircle(meta.icon, "conscientious", size);
+  return statusCircle(value === "Normal" ? "✓" : meta.icon, "gradient", size);
 }
 
 function routineStateIconHTML(value, size = "small") {
@@ -1225,8 +1243,8 @@ function renderPrayers() {
   $("prayerList").innerHTML = PRAYERS.map(prayer => {
     const state = currentData.prayers?.[prayer] || "";
     const meta = prayerStateMeta(state);
-    const colors = PRAYER_COLOR_META[prayer] || { a: "#4D7EEA", b: "#27B9A9" };
-    return `<div class="prayer-card prayer-card-compact" data-state="${escapeHTML(state)}" style="--prayer-a:${colors.a};--prayer-b:${colors.b};--prayer-soft:${hexToRgba(colors.a,.13)};--prayer-soft-b:${hexToRgba(colors.b,.11)};--prayer-glow:${hexToRgba(colors.b,.28)}">
+    const theme = prayerStateTheme(state);
+    return `<div class="prayer-card prayer-card-compact" data-state="${escapeHTML(state)}" style="--prayer-a:${theme.a};--prayer-b:${theme.b};--prayer-soft:${hexToRgba(theme.a, theme.softA)};--prayer-soft-b:${hexToRgba(theme.b, theme.softB)};--prayer-glow:${hexToRgba(theme.b, theme.glow)}">
       <strong>${escapeHTML(prayer)}</strong>
       <button type="button" class="prayer-state-button" data-open-prayer="${escapeHTML(prayer)}" data-prayer-kind="obligatory" aria-label="Status ${escapeHTML(prayer)}: ${escapeHTML(meta.label)}">
         ${prayerStateIconHTML(state, "medium")}
@@ -1255,11 +1273,14 @@ function openPrayerDialog(prayer, kind = "obligatory") {
   const states = kind === "sunnah" ? SUNNAH_PRAYER_STATES : PRAYER_STATES;
   const store = kind === "sunnah" ? currentData.sunnahPrayers : currentData.prayers;
   const current = store?.[prayer] || "";
-  $("prayerStateOptions").innerHTML = states.map(option => `
-    <button type="button" class="prayer-option ${current === option.value ? "active" : ""}" data-prayer-option="${escapeHTML(option.value)}">
+  $("prayerStateOptions").innerHTML = states.map(option => {
+    const stateClass = (option.value || "open").toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss");
+    return `
+    <button type="button" class="prayer-option state-${stateClass} ${current === option.value ? "active" : ""}" data-prayer-option="${escapeHTML(option.value)}">
       ${kind === "sunnah" ? statusCircle(option.value === "Verrichtet" ? "✓" : option.value === "Nicht vorgesehen" ? "–" : "", option.value === "Verrichtet" ? "gradient" : "neutral", "medium") : prayerStateIconHTML(option.value, "medium")}
       <strong>${escapeHTML(option.label)}</strong>
-    </button>`).join("");
+    </button>`;
+  }).join("");
   document.querySelectorAll("[data-prayer-option]").forEach(button => button.addEventListener("click", () => {
     const prayerName = $("prayerDialog").dataset.prayer;
     const prayerKind = $("prayerDialog").dataset.kind;
@@ -1366,22 +1387,19 @@ function renderStreaks() {
     const state = currentData.streaks?.[streak.key] || { days: 0, broken: false, todayStatus: "" };
     const isActive = !state.broken && Number(state.days || 0) > 0;
     const daily = STREAK_DAILY_STATES[state.todayStatus || ""] || STREAK_DAILY_STATES[""];
-    const resistedLabel = streak.key === "compulsionFree" ? "Begierde widerstanden" : "Herausforderung widerstanden";
+    const statusText = state.todayStatus === "lapse" ? "Unterbrochen" : isActive ? "Aktiv" : "Offen";
     return `<div class="streak-card ${state.broken ? "streak-broken" : ""} ${isActive ? "streak-active" : ""} ${state.todayStatus === "resisted" ? "streak-victory" : ""}">
       <div class="streak-card-head">
         <div><strong>${escapeHTML(streak.label)}</strong><small>${escapeHTML(daily.label)}</small></div>
-        <span class="streak-status">${state.todayStatus === "resisted" ? "Starker Schutzsieg" : state.broken ? "Unterbrochen" : isActive ? "Aktiv" : "Offen"}</span>
+        <span class="streak-status">${statusText}</span>
       </div>
       <div class="streak-input-wrap">
         <input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${streak.key}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage">
         <span class="streak-unit">Tage</span>
       </div>
-      <div class="streak-daily-actions" role="group" aria-label="Heutige Schutzentscheidung">
-        <button type="button" class="${state.todayStatus === "protected" ? "active" : ""}" data-streak-daily="protected" data-streak-key="${streak.key}">Geschützt</button>
-        <button type="button" class="victory ${state.todayStatus === "resisted" ? "active" : ""}" data-streak-daily="resisted" data-streak-key="${streak.key}">${escapeHTML(resistedLabel)}</button>
+      <div class="streak-daily-actions" role="group" aria-label="Unterbrechung erfassen">
         <button type="button" class="danger ${state.todayStatus === "lapse" ? "active" : ""}" data-streak-daily="lapse" data-streak-key="${streak.key}">Unterbrechung</button>
       </div>
-      ${state.todayStatus === "resisted" ? `<p class="streak-victory-note">Das Widerstehen einer realen Begierde wird als eigenständiger Verantwortungserfolg hervorgehoben – unabhängig davon, wie viele Routinen heute erledigt wurden.</p>` : ""}
     </div>`;
   }).join("");
 
@@ -1394,107 +1412,11 @@ function renderStreaks() {
   }));
   document.querySelectorAll("[data-streak-daily]").forEach(button => button.addEventListener("click", () => {
     const state = currentData.streaks[button.dataset.streakKey];
-    const next = button.dataset.streakDaily;
-    state.todayStatus = state.todayStatus === next ? "" : next;
-    if (state.todayStatus === "lapse") { state.days = 0; state.broken = true; }
-    else if (state.todayStatus) { state.broken = false; if (Number(state.days || 0) === 0) state.days = 1; }
+    state.todayStatus = state.todayStatus === "lapse" ? "" : "lapse";
+    state.broken = state.todayStatus === "lapse";
+    if (state.broken) state.days = 0;
     saveReview(true); propagateStreaksForward(selectedDate); renderStreaks(); renderStats();
   }));
-}
-
-function weekDates(reference = selectedDate) {
-  const base = new Date(`${reference}T12:00:00`);
-  const day = (base.getDay() + 6) % 7;
-  const monday = new Date(base);
-  monday.setDate(base.getDate() - day);
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(monday);
-    date.setDate(monday.getDate() + index);
-    return dateToISO(date);
-  });
-}
-
-function buildWeeklyTrendChart(labels, series, options = {}) {
-  const width = 440;
-  const height = 250;
-  const padX = 34;
-  const padTop = 16;
-  const padBottom = 34;
-  const chartW = width - padX * 2;
-  const chartH = height - padTop - padBottom;
-  const todayIndex = Number.isInteger(options.todayIndex) ? options.todayIndex : -1;
-  const xFor = index => labels.length <= 1 ? padX + chartW / 2 : padX + (index / (labels.length - 1)) * chartW;
-  const yFor = value => padTop + chartH - (clamp(Number(value || 0), 0, 100) / 100) * chartH;
-  const pathFor = values => {
-    const segments = [];
-    let current = [];
-    values.forEach((value, index) => {
-      if (value === null || value === undefined) { if (current.length) segments.push(current); current = []; }
-      else current.push({ x: xFor(index), y: yFor(value) });
-    });
-    if (current.length) segments.push(current);
-    // Catmull-Rom → Bézier: echte, weich geglättete Kurve statt Treppenoptik.
-    const round = value => Number(value.toFixed(2));
-    return segments.map(points => {
-      if (points.length === 1) return `M${round(points[0].x)} ${round(points[0].y)}`;
-      let path = `M${round(points[0].x)} ${round(points[0].y)}`;
-      for (let index = 0; index < points.length - 1; index += 1) {
-        const p0 = points[index - 1] || points[index];
-        const p1 = points[index];
-        const p2 = points[index + 1];
-        const p3 = points[index + 2] || p2;
-        const tension = 6;
-        const c1x = p1.x + (p2.x - p0.x) / tension;
-        const c1y = clamp(p1.y + (p2.y - p0.y) / tension, padTop, padTop + chartH);
-        const c2x = p2.x - (p3.x - p1.x) / tension;
-        const c2y = clamp(p2.y - (p3.y - p1.y) / tension, padTop, padTop + chartH);
-        path += ` C${round(c1x)} ${round(c1y)}, ${round(c2x)} ${round(c2y)}, ${round(p2.x)} ${round(p2.y)}`;
-      }
-      return path;
-    }).join(" ");
-  };
-  const grid = [0, 25, 50, 75, 100].map(value => `<g><line x1="${padX}" y1="${yFor(value)}" x2="${width - padX}" y2="${yFor(value)}"></line><text x="${padX - 8}" y="${yFor(value) + 4}" text-anchor="end">${value}</text></g>`).join("");
-  const xLabels = labels.map((label, index) => `<text class="${index === todayIndex ? "today" : ""}" x="${xFor(index)}" y="${height - 11}" text-anchor="middle">${escapeHTML(label)}</text>`).join("");
-  const lines = series.map(item => `<path class="wellbeing-line ${item.className}" d="${pathFor(item.values)}"></path>`).join("");
-  const dots = series.map(item => item.values.map((value, index) => value === null || value === undefined ? "" : `<circle class="wellbeing-dot ${item.className}" cx="${xFor(index)}" cy="${yFor(value)}" r="${index === todayIndex ? 4.5 : 3.5}"></circle>`).join("")).join("");
-  const legend = series.map(item => `<span class="${item.className}"><i aria-hidden="true"></i>${escapeHTML(item.label)}</span>`).join("");
-  return `<div class="trend-panel wellbeing-trend-panel">
-    <div class="trend-legend wellbeing-legend">${legend}</div>
-    <svg class="trend-chart wellbeing-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="7-Tage-Verlauf von Energie, Belastung und Pflichtgebeten in Prozent">
-      <g class="trend-grid">${grid}</g>${lines}<g>${dots}</g><g class="trend-x-labels">${xLabels}</g>
-    </svg>
-    <p class="trend-note">Der Verlauf zeigt Veränderungen deines Zustands und deiner Gebetspraxis, nicht den Wert eines Tages.</p>
-  </div>`;
-}
-
-function dailyAverageEnergy(data) {
-  const values = (data.stateCheckins || []).filter(entry => entry.slot !== "night" && entry.energy !== null && entry.energy !== undefined).map(entry => Number(entry.energy));
-  return values.length ? Math.round(values.reduce((sum,value)=>sum+value,0)/values.length) : null;
-}
-
-function dailyAverageLoad(data) {
-  const values = (data.stateCheckins || []).filter(entry => entry.slot !== "night").map(entry => ({ low: 25, normal: 55, high: 85 }[entry.load] ?? 55));
-  return values.length ? Math.round(values.reduce((sum,value)=>sum+value,0)/values.length) : null;
-}
-
-function dailyPrayerProgress(data) {
-  const states = PRAYERS.map(prayer => data.prayers?.[prayer] || "");
-  if (!states.some(Boolean)) return { value: null, count: null };
-  const count = states.filter(prayerWasPerformed).length;
-  return { value: Math.round(count / PRAYERS.length * 100), count };
-}
-
-function buildPrayerWeekPanel(labels, counts) {
-  return `<div class="prayer-week-panel" aria-label="Pflichtgebete pro Tag">
-    <small class="panel-caption">Pflichtgebete pro Tag</small>
-    <div class="prayer-week-grid">
-      ${labels.map((label, index) => {
-        const count = counts[index];
-        const dots = Array.from({ length: 5 }, (_, dot) => `<i class="${count !== null && dot < count ? "filled" : ""}"></i>`).join("");
-        return `<div class="prayer-week-day"><small>${escapeHTML(label)}</small><span class="prayer-week-dots">${dots}</span><b>${count === null ? "–" : `${count}/5`}</b></div>`;
-      }).join("")}
-    </div>
-  </div>`;
 }
 
 function renderStats() {

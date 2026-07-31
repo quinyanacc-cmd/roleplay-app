@@ -61,7 +61,7 @@
   --conscientious: #2aa89c;
   --energy-chart: #183E96;
   --load-chart: #E04F59;
-  --prayer-chart: #1FD7D0;
+  --prayer-chart: #59D7F7;
   --glow-blue: rgba(68,125,255,.28);
   --glow-turquoise: rgba(31,215,208,.32);
   --glow-red: rgba(224,79,89,.25);
@@ -112,7 +112,7 @@
     --conscientious: #4fd7c6;
     --energy-chart: #6388F0;
     --load-chart: #FF6D78;
-    --prayer-chart: #53E8E1;
+    --prayer-chart: #71E2FF;
     --glow-blue: rgba(99,136,240,.34);
     --glow-turquoise: rgba(83,232,225,.36);
     --glow-red: rgba(255,109,120,.30);
@@ -900,7 +900,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 }
 .prayer-card > strong {
   width: 100%;
-  font-size: var(--fs-tiny);
+  font-size: 13px;
   font-weight: 750;
   line-height: 1.2;
   white-space: nowrap;
@@ -978,7 +978,14 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   text-align: left;
 }
 .prayer-option strong { font-size: var(--fs-body); font-weight: 700; }
-.prayer-option.active { background: var(--tint-accent); border-color: var(--tint-accent-line); }
+.prayer-option.active { background: linear-gradient(145deg, rgba(255,255,255,.60), var(--option-soft, var(--tint-accent)) 26%, var(--field-2) 100%); border-color: var(--option-line, var(--tint-accent-line)); box-shadow: 0 6px 18px var(--option-glow, transparent); }
+.prayer-option.state-normal.active,
+.prayer-option.state-open.active { --option-soft: rgba(76,120,255,.18); --option-line: rgba(82,102,232,.55); --option-glow: rgba(82,102,232,.22); }
+.prayer-option.state-gemeinschaft.active { --option-soft: rgba(89,215,247,.20); --option-line: rgba(89,215,247,.58); --option-glow: rgba(89,215,247,.26); }
+.prayer-option.state-verspaetet.active { --option-soft: rgba(243,161,59,.18); --option-line: rgba(243,161,59,.52); --option-glow: rgba(243,161,59,.24); }
+.prayer-option.state-nachgeholt.active,
+.prayer-option.state-nicht-gebetet.active { --option-soft: rgba(224,79,89,.18); --option-line: rgba(224,79,89,.58); --option-glow: rgba(224,79,89,.26); }
+.prayer-option.state-nicht-gebetet.active { color: #ffd6db; }
 
 /* Fastentage -------------------------------------------------------------- */
 .ramadan-box {
@@ -1002,16 +1009,27 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
    10. Aktivitäten
    -------------------------------------------------------------------------- */
 .activity-row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   min-height: 62px;
-  padding: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
   border-radius: var(--r-field);
-  border: 1px solid var(--activity-soft, var(--line));
-  background: linear-gradient(145deg, rgba(255,255,255,.46), var(--activity-soft, var(--field-2)) 26%, var(--field-2) 84%);
-  box-shadow: 0 6px 18px var(--activity-glow, transparent);
+  border: 1px solid var(--line);
+  background: var(--card-solid);
+  box-shadow: none;
   overflow: hidden;
+}
+.activity-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--activity-color, var(--accent));
 }
 .activity-main { display: flex; align-items: center; gap: var(--sp-2); flex: 1 1 auto; min-width: 0; }
 .activity-role-bar { display: none; }
@@ -1027,7 +1045,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   padding: 0;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--card-solid);
+  background: var(--field-2);
   color: var(--text);
   font-size: 13px;
   line-height: 1;
@@ -1086,7 +1104,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 .wellbeing-line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .wellbeing-line.energy { stroke: var(--energy-chart); filter: drop-shadow(0 0 3px var(--glow-blue)); }
 .wellbeing-line.load { stroke: var(--load-chart); filter: drop-shadow(0 0 3px var(--glow-red)); }
-.wellbeing-line.prayers { stroke: var(--prayer-chart); filter: drop-shadow(0 0 3px var(--glow-turquoise)); }
+.wellbeing-line.prayers { stroke: var(--prayer-chart); filter: drop-shadow(0 0 3px rgba(89,215,247,.35)); }
 .wellbeing-dot.energy { fill: var(--energy-chart); }
 .wellbeing-dot.load { fill: var(--load-chart); }
 .wellbeing-dot.prayers { fill: var(--prayer-chart); }
@@ -1121,7 +1139,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   background: var(--tint-neutral);
   border: 1px solid var(--line);
 }
-.prayer-week-dots i.filled { background: var(--prayer-chart); border-color: transparent; box-shadow: 0 0 8px var(--glow-turquoise); }
+.prayer-week-dots i.filled { background: var(--prayer-chart); border-color: transparent; box-shadow: 0 0 8px rgba(89,215,247,.35); }
 
 /* --------------------------------------------------------------------------
    13. Export
@@ -1155,18 +1173,18 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   font-weight: 750;
   color: var(--muted);
 }
-.streak-card.streak-active { border-color: var(--tint-conscientious-line); background: linear-gradient(145deg, var(--tint-conscientious), var(--card) 72%); box-shadow: 0 7px 22px var(--glow-turquoise); }
-.streak-card.streak-active .streak-status { background: var(--tint-success); color: var(--success); box-shadow: 0 0 12px rgba(63,197,132,.22); }
-.streak-card.streak-broken .streak-status { background: var(--tint-danger); color: var(--danger); }
-.streak-card.streak-victory { border-color: #9B63E8; background: linear-gradient(145deg, rgba(134,91,225,.14), var(--card) 74%); box-shadow: 0 7px 24px rgba(134,91,225,.24); }
+.streak-card.streak-active { border-color: #7FE7A2; background: var(--card); box-shadow: none; }
+.streak-card.streak-active .streak-status { background: linear-gradient(145deg, rgba(171,255,201,.24), rgba(127,231,162,.12)); color: #95EDB4; box-shadow: none; }
+.streak-card.streak-broken .streak-status { background: linear-gradient(145deg, rgba(255,153,162,.18), rgba(224,79,89,.10)); color: #FF8F99; }
+.streak-card.streak-victory { border-color: #7FE7A2; background: var(--card); box-shadow: none; }
 
 .streak-input-wrap { display: flex; align-items: center; gap: var(--sp-2); }
-.streak-days-large { max-width: 116px; min-height: 44px; font-size: 22px; font-weight: 800; text-align: center; color: var(--accent); background: linear-gradient(145deg, var(--tint-accent), var(--field)); border-color: var(--tint-accent-line); box-shadow: 0 0 16px var(--tint-accent-glow); text-shadow: 0 0 10px var(--tint-accent-glow); }
-.streak-card.streak-active .streak-days-large { color: var(--conscientious); border-color: var(--tint-conscientious-line); box-shadow: 0 0 18px var(--glow-turquoise); text-shadow: 0 0 10px var(--glow-turquoise); }
-.streak-card.streak-broken .streak-days-large { color: var(--danger); border-color: var(--tint-danger-line); box-shadow: 0 0 16px var(--glow-red); text-shadow: 0 0 10px var(--glow-red); }
+.streak-days-large { max-width: 116px; min-height: 44px; font-size: 22px; font-weight: 800; text-align: center; color: var(--accent); background: var(--field); border-color: var(--line); box-shadow: none; text-shadow: none; }
+.streak-card.streak-active .streak-days-large { color: #8FE8B1; border-color: rgba(127,231,162,.55); background: linear-gradient(145deg, rgba(171,255,201,.20), rgba(127,231,162,.08)); box-shadow: none; text-shadow: none; }
+.streak-card.streak-broken .streak-days-large { color: #FF8F99; border-color: var(--tint-danger-line); background: linear-gradient(145deg, rgba(255,153,162,.18), rgba(224,79,89,.08)); box-shadow: none; text-shadow: none; }
 .streak-unit { font-size: var(--fs-label); color: var(--muted); font-weight: 650; }
 
-.streak-daily-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-1); }
+.streak-daily-actions { display: grid; grid-template-columns: 1fr; gap: var(--sp-1); }
 .streak-daily-actions button {
   min-height: 42px;
   padding: 0 var(--sp-1);
@@ -1177,9 +1195,10 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   font-weight: 700;
   font-size: var(--fs-small);
 }
-.streak-daily-actions button.active { background: var(--tint-accent); border-color: var(--tint-accent-line); }
+.streak-daily-actions button.active { background: var(--field-2); border-color: var(--line); }
 .streak-daily-actions button.victory.active { background: var(--tint-conscientious); border-color: var(--tint-conscientious-line); }
-.streak-daily-actions button.danger.active { background: var(--tint-danger); border-color: var(--tint-danger-line); color: var(--danger); }
+.streak-daily-actions button.danger { color: var(--danger); border-color: var(--tint-danger-line); }
+.streak-daily-actions button.danger.active { background: linear-gradient(145deg, rgba(255,153,162,.18), rgba(224,79,89,.08)); border-color: var(--tint-danger-line); color: #FF8F99; }
 .streak-victory-note { font-size: var(--fs-small); color: var(--muted); line-height: 1.45; }
 
 /* --------------------------------------------------------------------------
@@ -1716,3 +1735,5 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   color: #6A63DA;
   text-shadow: 0 0 10px rgba(106,99,218,.18);
 }
+
+.streak-card .streak-daily-actions button:not(.danger){ display:none; }
