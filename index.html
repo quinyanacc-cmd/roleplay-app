@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f6fa">
+  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Roleplay">
@@ -15,8 +16,8 @@
 <body>
   <div class="app-shell">
     <header class="app-header" id="appHeader">
-      <div class="header-title-row">
-        <div>
+      <div class="header-title-row" id="headerTitleRow">
+        <div class="header-identity">
           <p class="eyebrow">ROLEPLAY</p>
           <h1 id="pageTitle">Tagesreflexion</h1>
         </div>
@@ -27,28 +28,51 @@
       </div>
 
       <div class="date-nav" id="dateNavigation">
-        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag"></button>
+        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag">‹</button>
         <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
-        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag"></button>
+        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag">›</button>
       </div>
     </header>
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
+        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
+          <h2 id="stateOverviewTitle">Zustand und Verantwortung</h2>
+          <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
+          <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
+          <details class="state-history-details">
+            <summary><strong>Verlauf & Details</strong><small id="stateCheckinCount">Noch kein Check-in</small></summary>
+            <div id="stateTimeline" class="state-timeline"></div>
+          </details>
+        </section>
+
         <section class="card">
           <h2>Vitalität</h2>
 
-          <div class="field-group">
-            <label>Mahlzeiten</label>
-            <div class="meal-grid">
-              <input id="breakfast" placeholder="Frühstück – was hast du gegessen?">
-              <input id="lunch" placeholder="Mittagessen – was hast du gegessen?">
-              <input id="dinner" placeholder="Abendessen – was hast du gegessen?">
-              <input id="snack" placeholder="Snack – optional">
-            </div>
+          <div class="meal-list">
+              <div class="meal-entry" data-meal-entry="breakfast">
+                <strong>Frühstück</strong>
+                <select id="breakfastCategory" class="meal-category-select" aria-label="Kategorie Frühstück"></select>
+                <input id="breakfast" placeholder="Optional: Was war es konkret?">
+              </div>
+              <div class="meal-entry" data-meal-entry="lunch">
+                <strong>Mittagessen</strong>
+                <select id="lunchCategory" class="meal-category-select" aria-label="Kategorie Mittagessen"></select>
+                <input id="lunch" placeholder="Optional: Was war es konkret?">
+              </div>
+              <div class="meal-entry" data-meal-entry="dinner">
+                <strong>Abendessen</strong>
+                <select id="dinnerCategory" class="meal-category-select" aria-label="Kategorie Abendessen"></select>
+                <input id="dinner" placeholder="Optional: Was war es konkret?">
+              </div>
+              <div class="meal-entry" data-meal-entry="snack">
+                <strong>Snacks</strong>
+                <select id="snackCategory" class="meal-category-select" aria-label="Kategorie Snacks"></select>
+                <input id="snack" placeholder="Optional: Was war es konkret?">
+              </div>
           </div>
 
-          <div class="two-column">
+          <div class="vitality-metrics">
             <div class="field-group">
               <label for="water">Getrunken</label>
               <input id="water" type="hidden" value="0">
@@ -92,6 +116,10 @@
         <section class="card">
           <h2>Islam</h2>
           <div id="prayerList" class="prayer-strip"></div>
+          <details class="sunnah-prayer-details">
+            <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
+            <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
+          </details>
           <div class="ramadan-box">
             <div>
               <span class="subheading">Fastentage</span>
@@ -106,62 +134,51 @@
         </section>
 
         <section class="card">
-          <h2>Schlaf</h2>
-          <div class="field-group sleep-quality-field">
-            <div class="label-value-row">
-              <label for="sleepQuality">Schlafqualität</label>
-              <strong id="sleepQualityLabel">–</strong>
-            </div>
-            <div class="sleep-meter" aria-hidden="true">
-              <div id="sleepMeterFill" class="sleep-meter-fill"></div>
-            </div>
-            <div class="sleep-slider-row">
-              <span aria-hidden="true">😴</span>
-              <input id="sleepQuality" type="range" min="0" max="6" step="1" value="3">
-              <span aria-hidden="true">🥱</span>
-            </div>
-            <div class="sleep-legend-row">
-              <small>Sehr erholsam</small>
-              <span id="sleepMeterPill" class="sleep-meter-pill">–</span>
-              <small>Kein Schlaf</small>
-            </div>
-          </div>
-          <div class="field-group">
-            <label for="dreams">Träume</label>
-            <textarea id="dreams" rows="4" placeholder="Woran erinnerst du dich?"></textarea>
-          </div>
-        </section>
-
-        <section class="card">
           <div class="section-title-row">
             <h2>Aktivitäten</h2>
             <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
           </div>
-          <p class="section-hint">Per Pfeilen oder Halten und Ziehen kannst du die Reihenfolge deiner Aktivitäten anpassen.</p>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
-        <section class="card">
-          <h2>Achtsamkeit</h2>
-          <div class="field-group">
-            <label for="mood">Wie fühlst du dich?</label>
-            <select id="mood"></select>
-          </div>
-          <div class="gratitude-grid gratitude-field">
-            <div class="field-group compact-field">
-              <label for="gratitude1">Dankbar für …</label>
-              <input id="gratitude1" placeholder="Wofür bist du heute dankbar?">
+        <section class="card mindfulness-card">
+          <h2>Achtsamkeit & Dankbarkeit</h2>
+          <div class="reflection-stack">
+            <div class="field-group reflection-field">
+              <label for="gratitude1">Wofür bin ich heute dankbar?</label>
+              <textarea id="gratitude1" rows="2"></textarea>
             </div>
-            <div class="field-group compact-field">
-              <label for="gratitude2" class="sr-only">Zweite Dankbarkeit</label>
-              <input id="gratitude2" placeholder="Ein zweiter Dankbarkeitsmoment …">
+            <div class="field-group reflection-field">
+              <label for="gratitude2">Was habe ich heute bewusst wahrgenommen?</label>
+              <textarea id="gratitude2" rows="2"></textarea>
             </div>
-          </div>
-          <div class="field-group">
-            <label class="sr-only" for="allahName">Name Allahs auswählen</label>
-            <select id="allahName" aria-label="Name Allahs auswählen"></select>
+            <div class="field-group reflection-field">
+              <label for="allahName">Welcher Name Allahs begleitet mich heute?</label>
+              <select id="allahName" aria-label="Name Allahs auswählen"></select>
+            </div>
           </div>
         </section>
+
+        <details class="card responsibility-card lean-reflection-card">
+          <summary class="lean-card-summary">
+            <h2>Verantwortungsreflexion</h2>
+            <span>Öffnen</span>
+          </summary>
+          <div class="reflection-stack responsibility-reflection-stack">
+            <div class="field-group reflection-field">
+              <label for="responsibilityMain">Was war heute meine wichtigste Verantwortung?</label>
+              <textarea id="responsibilityMain" rows="2" placeholder="Die Verantwortung, die heute wirklich getragen werden musste …"></textarea>
+            </div>
+            <div class="field-group reflection-field">
+              <label for="responsibilityAdaptation">Wo habe ich angemessen angepasst – und wo möglicherweise vermieden?</label>
+              <textarea id="responsibilityAdaptation" rows="3" placeholder="Ehrlich unterscheiden: Anpassung, Grenze, Unterstützung oder Ausweichen …"></textarea>
+            </div>
+            <div class="field-group reflection-field">
+              <label for="responsibilityNextStep">Was ist mein nächster verantwortlicher Schritt?</label>
+              <textarea id="responsibilityNextStep" rows="2" placeholder="Klein, konkret und ausführbar …"></textarea>
+            </div>
+          </div>
+        </details>
 
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
@@ -170,19 +187,17 @@
 
         <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
 
-        <section class="card stats-card">
-          <div class="section-title-row">
-            <h2>Wochenstatistik</h2>
+        <details class="card stats-card week-course-card" open>
+          <summary class="lean-card-summary week-course-summary">
+            <h2>Wochenrückblick</h2>
             <span id="weekLabel" class="week-label"></span>
-          </div>
+          </summary>
           <div id="statsGrid" class="stats-grid"></div>
-        </section>
+        </details>
 
         <section class="card">
           <h2>Export & Sicherung</h2>
-          <p class="export-description">Der PDF-Export erstellt einen Wochenplan im Querformat – angelehnt an deine bisherige Vorlage, aber im neuen Roleplay-Design.</p>
           <div class="export-buttons">
-            <button id="exportPdf" class="small-button export-button" type="button">Wochenplan als PDF</button>
             <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
             <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
             <button id="exportCsv" class="small-button export-button" type="button">Excel / CSV exportieren</button>
@@ -219,7 +234,7 @@
       </section>
 
       <section id="streaksPage" class="app-page" aria-label="Streaks">
-        <p class="page-lead streaks-page-lead">Verwalte deine persönlichen Streaks. Dieser Bereich ist bewusst geschützt und muss vor dem Öffnen bestätigt werden.</p>
+        <p class="page-lead streaks-page-lead">Dokumentiere nicht nur Unterbrechungen, sondern auch Schutzentscheidungen. Einer starken Begierde zu widerstehen ist ein eigenständiger Verantwortungserfolg – nicht bloß ein weiterer gezählter Tag.</p>
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
     </main>
@@ -236,6 +251,87 @@
       </button>
     </nav>
   </div>
+
+  <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
+    <form id="stateCheckinForm">
+      <h3 id="stateDialogTitle">Check-in</h3>
+      <div id="stateSlotDisplay" hidden></div>
+      <select id="stateSlot" hidden aria-hidden="true" tabindex="-1"></select>
+      <input id="stateTime" type="hidden">
+
+      <section id="nightCheckinSection" class="checkin-form-section night-checkin-section" hidden>
+        <div class="field-group">
+          <label for="stateSleepQuality">Schlafqualität</label>
+          <select id="stateSleepQuality"></select>
+        </div>
+        <div class="field-group">
+          <label for="stateDreamCategory">Traumkategorie</label>
+          <select id="stateDreamCategory"></select>
+        </div>
+        <div class="field-group">
+          <label for="stateDreamNote">Traumnotiz</label>
+          <textarea id="stateDreamNote" rows="3" placeholder="Optional"></textarea>
+        </div>
+      </section>
+
+      <section id="dayCheckinSection" class="checkin-form-section day-checkin-section">
+        <div class="field-group state-energy-field compact-energy-field">
+          <div class="label-value-row">
+            <label for="stateEnergy">Energie</label>
+            <strong id="stateEnergyValue">60 %</strong>
+          </div>
+          <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
+          <div class="state-range-legend"><small>niedrig</small><small>hoch</small></div>
+        </div>
+        <div class="field-group state-mood-field compact-mood-field">
+          <div class="label-value-row">
+            <label for="stateMood">Laune</label>
+            <strong id="stateMoodValue">60 %</strong>
+          </div>
+          <input id="stateMood" type="range" min="0" max="100" step="5" value="60">
+          <div class="state-range-legend"><small>gedrückt</small><small>sehr gut</small></div>
+        </div>
+        <div class="field-group">
+          <label for="stateEmotion">Gefühl</label>
+          <select id="stateEmotion"></select>
+        </div>
+        <div class="field-group">
+          <label>Belastung</label>
+          <input id="stateLoad" type="hidden" value="normal">
+          <div id="stateLoadChoices" class="quick-choice-row" role="group" aria-label="Aktuelle Belastung">
+            <button type="button" data-state-load="low">Niedrig</button>
+            <button type="button" data-state-load="normal">Normal</button>
+            <button type="button" data-state-load="high">Hoch</button>
+          </div>
+        </div>
+        <details class="checkin-context-details">
+          <summary>Kontext ergänzen</summary>
+          <div class="field-group">
+            <textarea id="stateNote" rows="2" placeholder="Optionaler kurzer Kontext"></textarea>
+          </div>
+        </details>
+      </section>
+
+      <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
+
+      <details class="mode-adjustment-details">
+        <summary>Rollenmodus ändern</summary>
+        <div class="field-group">
+          <label for="stateSelectedFramework">Rollenmodus</label>
+          <select id="stateSelectedFramework"></select>
+        </div>
+        <div id="frameworkOverrideReasonWrap" class="field-group" hidden>
+          <label for="stateFrameworkReason">Begründung</label>
+          <textarea id="stateFrameworkReason" rows="2" placeholder="Warum passt der andere Modus besser?"></textarea>
+        </div>
+      </details>
+
+      <div class="dialog-actions">
+        <button id="cancelStateCheckin" type="button" class="secondary-button">Abbrechen</button>
+        <button type="submit" class="primary-button compact">Speichern</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="calendarDialog" class="calendar-dialog">
     <div class="calendar-header">

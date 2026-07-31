@@ -1,72 +1,94 @@
-# Roleplay App 3.10
+# ROLEPLAY App 5.1.3
 
-Version 3.4 baut auf Version 3.1 auf. Der bestehende lokale Datenspeicher (`roleplay-v25`) bleibt unverändert, sodass vorhandene Einträge und importierte Backups weiterhin kompatibel sind. Vor dem Austausch der Dateien wird dennoch ein aktuelles Backup empfohlen.
+Lokale iPhone-PWA für Tagesreview, Routinen und adaptive Reflexion. Alle Daten bleiben im Browser des Geräts (`localStorage`); es gibt keine Serververbindung.
 
-## Neu in Version 3.4
+## Installation
 
-- Dark-Mode-Kopfzeile wieder dezent in der Farbe der ausgewählten Tagesrolle.
-- Wochenstatistik ohne zusätzliche Balken- oder Kreisvisualisierung unterhalb der Erfolgskurve.
-- Wochenplan-PDF mit größerer, einheitlicher Schrift und besserer Nutzung der verfügbaren Textflächen.
+Dateien entpacken und den Ordner ausliefern, beispielsweise über GitHub Pages. Auf dem iPhone in Safari öffnen und über **Teilen → Zum Home-Bildschirm** installieren.
 
-- Intelligente Erfolgsquote mit differenzierter Gebetsqualität:
-  - Gemeinschaftsgebet: 22 Punkte
-  - pünktlich gebetet: 20 Punkte
-  - verspätet gebetet: 15 Punkte
-  - nachgeholt: 8 Punkte
-  - nicht gebetet: 0 Punkte
-  - Morgen- und Abendroutine: jeweils 10 Punkte
-- Fünf pünktliche Gebete und beide Routinen ergeben 100 Prozent; Gemeinschaftsgebete ermöglichen einen Bonus bis 108 Prozent.
-- Noch offene Gebete werden am laufenden Tag neutral behandelt und erst an vergangenen Tagen mit 0 bewertet.
-- Geglättete Wochenkurve mit Montag bis Sonntag, 80-Prozent-Zielgrenze und Markierung des heutigen Tages.
-- Korrigierter Überblick in der Wochenstatistik ohne überlappende Werte.
-- Streak-Seite mit schlankem Einleitungstext statt einer zusätzlichen Informationskarte.
-- Kompaktere Streak-Karten, kleinere Statuschips sowie sauber ausgerichtete Tagesangabe.
-- Schutzdialog mit gleich breiten Schaltflächen: Abbrechen links, Öffnen rechts.
-- Leicht verfeinerte Routine-Karten und Navigation.
-- Neu gewichteter Wochenplan-PDF:
-  - kompaktere Kopf-, Vitalitäts-, Routine- und Gebetsbereiche
-  - wesentlich mehr Platz für Reflexion und Notizen
-  - mehr Platz für Aktivitäten
-  - kompakter Streak-Bereich mit allen vier Einträgen
-  - weißer Hintergrund und korrekte deutsche Umlaute
+## Version 5.1.3 – Reparaturversion
 
-## Aktualisierung
+### Ursache der Ausfälle in 5.1.2
 
-1. In der bisherigen App ein Backup speichern.
-2. Den Inhalt dieses Ordners auf dem bisherigen Hosting vollständig ersetzen.
-3. Die App vollständig schließen und erneut öffnen.
-4. Falls weiterhin eine ältere Version erscheint, die Web-App vom Home-Bildschirm entfernen und über Safari erneut hinzufügen oder den Browser-Cache leeren.
-5. Das Backup nur importieren, wenn die bisherigen Einträge nicht automatisch erscheinen.
+Im Wochenrückblick fehlten sechs Funktionen vollständig: `weekDates`,
+`dailyAverageEnergy`, `dailyAverageLoad`, `dailyPrayerProgress`,
+`buildWeeklyTrendChart` und `buildPrayerWeekPanel`. Das zugehörige CSS war
+unversehrt, nur das JavaScript war verlorengegangen.
 
-Die Daten werden ausschließlich lokal im Browser beziehungsweise in der installierten Web-App gespeichert. Die Bestätigungsabfrage vor den Streaks verhindert versehentliche Einsicht, verschlüsselt die lokal gespeicherten Daten jedoch nicht.
+Dadurch warf `renderStats()` bei jedem Aufruf einen Fehler. Sowohl `saveReview()`
+als auch `setDate()` rufen `renderStats()` mitten in ihrer Ablaufkette auf –
+alles danach wurde nie ausgeführt:
 
+    saveReview()  ->  localStorage.setItem() OK  ->  renderStats() ABBRUCH
+                                                     renderRoutineCards()  nie
+                                                     Speicherbestaetigung  nie
 
-## Version 3.6
-- Der Timer aktualisiert sich während geöffneter App wieder sichtbar und synchronisiert sich weiterhin nach dem Zurückkehren.
-- Die nicht zuverlässig nutzbare Benachrichtigungsabfrage wurde vollständig entfernt.
-- „Routine anpassen“ befindet sich gut sichtbar unter dem laufenden Timer; dort können Schritte verschoben, bearbeitet und ergänzt werden.
-- Zurück-, Vorwärts- und Kalenderpfeile sind einheitlich kreisrund und exakt zentriert.
+Gespeicherte Daten waren dabei nie gefährdet, weil `localStorage.setItem` vor
+dem Abbruch steht. Ausgefallen ist ausschließlich die Aktualisierung der
+Anzeige. Das erklärt den Großteil der gemeldeten Fehler.
 
+### Reparierte Funktionen
 
-## Version 3.7
-- „Anpassen“ öffnet während der laufenden Routine ein eigenes Bottom-Sheet in der bestehenden Roleplay-Designsprache.
-- Schritte lassen sich am Griff per Touch oder Maus direkt umsortieren.
-- Jeder andere Schritt kann über die Play-Schaltfläche unmittelbar gestartet werden; der bisherige Schritt bleibt dabei unbewertet.
-- „Erledigt“ schließt nur das Anpassungsfenster und lässt die Routine weiterlaufen.
-- Die Hinzufügen-Funktion wurde aus dem laufenden Anpassungsfenster entfernt.
-- Tages-, Monats- und Zurück-Pfeile sind kreisrund, optisch zentriert und exakt so hoch wie die Datumsleiste.
+- Wochenrückblick-Modul wiederhergestellt, passend zum vorhandenen CSS.
+- Check-in speichern: Karte aktualisiert sich wieder unmittelbar.
+- Gebetsdialog: schließt nach der Auswahl und schreibt den Status auf die Karte.
+- Gebetskarte: die gesamte Karte ist antippbar, nicht nur der Statuskreis.
+- Aktivität hinzufügen, löschen und sortieren erscheinen wieder sofort.
+- "Tagesreview speichern" zeigt die Bestätigung wieder an.
+- `switchPage()` und `restoreRoutineSession()` laufen beim Start wieder durch.
+- Trinkmenge: Plus-Zeichen war weiß auf weißem Grund und damit unsichtbar.
+- Wassertropfen werden nicht mehr abgeschnitten.
+- Maghrib wird ohne Auslassungspunkte vollständig angezeigt.
 
-## Version 3.8
-- Der Timerbereich in der laufenden Routine ist kompakter: kleineres Timerfeld, kleinerer Timer und geringere vertikale Abstände schaffen mehr Luft für Kontext, Steuerung und „Anpassen“.
-- Der aktuell ausgewählte Schritt im Anpassungsfenster erhält einen weichen violetten Lichtschein in der Designsprache der aktiven Hauptnavigation.
-- Die Tagesnavigation wurde auf schlanke, einheitliche 44-Pixel-Steuerelemente reduziert: Kreise und Datumsleiste liegen bündig auf einer Höhe, die Pfeile sind fein und exakt zentriert.
+### Rollenmodus-Logik neu aufgebaut
 
+Statt eines einzelnen Mittelwerts gilt jetzt ein zweistufiges Verfahren:
 
-## Version 3.10
+1. Gesamtlage – gewichtete Mischung aller Angaben.
+2. Obergrenze je Einzelwert – Energie, Laune, Belastung, Gefühl und Schlaf
+   legen jeweils fest, welcher Modus höchstens noch vertretbar ist.
 
-- Kopfzeile auf die stabile Gestaltung vor Version 3.9 zurückgesetzt.
-- Pfeile ohne Schriftzeichen oder doppelte Ebenen exakt im Kreis zentriert.
-- Timer- und Kontextfeld innerhalb einer geführten Routine gleich breit.
-- Leere Kontextfelder werden vollständig ausgeblendet.
-- Mehr vertikaler Freiraum in der Routineansicht.
-- Der Button „Anpassen“ bleibt am unteren Ende der Routineansicht.
+Ein Einzelwert kann den Modus dadurch nur noch begrenzen, nie anheben:
+
+- Energie 10 % mit Laune 100 % ergibt Stabilisierungsmodus.
+- Hohe Belastung deckelt trotz sehr guter Werte auf Reduzierten Modus.
+- Die obersten beiden Modi setzen geringe Belastung voraus.
+
+Die Begründung nennt den tatsächlich ausschlaggebenden Wert, zum Beispiel
+"Begrenzend wirkt, dass die Energie bei 30 % liegt." Eine Punktzahl wird
+nirgends angezeigt.
+
+### Gestaltung
+
+- Check-in-Karten tragen die Farbe ihrer Tageszeit statt der Modusfarbe und
+  bleiben ohne gespeicherten Eintrag neutral und ohne Glow.
+- Abend-Farbwelt von Rot auf Violett/Rosa umgestellt.
+- Gebetsfarben folgen dem Status, nicht dem Namen des Gebets. Offene Karten sind
+  vollständig neutral. Verspätet ist orange, Nachgeholt rötlich.
+- Aktivitäten-Rollenstreifen liegt sauber innerhalb der Karte.
+- Unterbrochene Streaks erhalten eine rote Kontur.
+
+### Aufgeräumt
+
+Die am Dateiende angehängten Hotfix-Blöcke wurden aufgelöst und in die
+jeweiligen Komponenten eingearbeitet:
+
+- `#waterPlus { display:grid !important; visibility:visible !important; ... }`
+  entfernt – die Ursache war die Textfarbe, nicht die Sichtbarkeit.
+- `.streak-card .streak-daily-actions button:not(.danger) { display:none }`
+  entfernt – die betroffenen Buttons werden ohnehin nicht mehr gerendert.
+- Doppelte `.checkin-slot`- und `.checkin-slot.complete`-Regeln zusammengeführt.
+- Achtsamkeits- und Verantwortungsregeln in ihre Komponenten verschoben.
+
+Verbliebene `!important`-Deklarationen sind ausschließlich die dokumentierten
+Standardfälle: `[hidden]`, die `.sr-only`-Hilfsklasse und die
+`prefers-reduced-motion`-Regel. Der Hack `#waterPlus { ... !important }` ist
+entfernt.
+
+## Datenkompatibilität
+
+Der Speicherschlüssel bleibt `roleplay-v25`. Bestehende Tagesreviews, Routinen,
+Check-ins, Gebete, Aktivitäten und Streaks werden unverändert weiterverwendet.
+Geprüft mit Altdatensätzen: alte Rollennamen, Check-ins ohne Launenwert, der
+entfernte Routinenstatus "angepasst erfüllt" und alte Modus-Schlüssel werden
+migriert, ohne Fehler auszulösen.
