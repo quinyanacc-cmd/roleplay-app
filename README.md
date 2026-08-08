@@ -1,76 +1,136 @@
-# ROLEPLAY App 5.2.0
+# ROLEPLAY App 5.3.0
 
-Lokale iPhone-PWA für Tagesreview, Routinen und adaptive Reflexion. Alle Daten
-bleiben im Browser des Geräts (`localStorage`); es gibt keine Serververbindung.
+Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
+Alle Daten bleiben im Browser des Geräts (`localStorage`), es gibt keine
+Serververbindung.
 
-## Was diese Version ist
+## Die zentrale Logik
 
-Zusammenführung zweier Stände:
+    ENERGIE + LAUNE  →  Zustand  →  Rollenmodus  →  Tagesrolle  →  Handlung
 
-- **Funktionsbasis:** Version 5.1.2 mit den vier Tages-Check-ins, Laune-Regler,
-  Mahlzeitenkategorien und Rollenmodus-Logik – vollständig repariert.
-- **Designsprache:** Version 3.10, die optisch gelungene frühere Fassung.
+Nicht maximale Leistung entscheidet über einen guten Tag, sondern
+verantwortliches Handeln unter den realen Bedingungen.
 
-## Reparaturen aus 5.1.2
+## Neu in 5.3.0
 
-In 5.1.2 fehlten sechs Funktionen des Wochenrückblicks vollständig
-(`weekDates`, `dailyAverageEnergy`, `dailyAverageLoad`, `dailyPrayerProgress`,
-`buildWeeklyTrendChart`, `buildPrayerWeekPanel`). Dadurch warf `renderStats()`
-bei jedem Aufruf einen Fehler – und sowohl `saveReview()` als auch `setDate()`
-rufen diese Funktion mitten in ihrer Ablaufkette auf. Alles danach wurde nie
-ausgeführt.
+### Zustandscheck vereinfacht
 
-Gespeichert wurde dabei immer korrekt; ausgefallen war ausschließlich die
-Aktualisierung der Anzeige. Behoben sind damit unter anderem:
+Der Check-in fragt nur noch Energie und Laune ab. Entfernt wurden Belastung,
+Gefühl, Kontext-Freitext und die manuelle Rollenmodus-Auswahl. Alle vier
+Check-ins – auch die Nacht – erfassen jetzt Energie und Laune; die Nacht
+zusätzlich Schlafqualität und Traum.
 
-- Check-in speichern aktualisiert die Karte wieder unmittelbar
-- Gebetsdialog schließt und schreibt den Status auf die Karte
-- Aktivitäten erscheinen nach dem Hinzufügen, Löschen und Sortieren sofort
-- "Tagesreview speichern" zeigt die Bestätigung wieder an
-- Plus-Zeichen der Trinkmenge war weiß auf weißem Grund
-- Maghrib wird ohne Auslassungspunkte vollständig angezeigt
-- gesamte Gebetskarte ist antippbar, nicht nur der kleine Statuskreis
+### Automatischer Rollenmodus
 
-## Designsprache aus 3.10 übernommen
+Der Modus entsteht ausschließlich aus Energie und Laune. Laune wiegt bewusst
+etwas schwerer (0,58 gegenüber 0,42), ein sehr niedriger Einzelwert wird aber
+nicht wegkompensiert:
 
-- violetter Akzent `#9a6dff` statt Blau, im Dark Mode `#76a7ff`
-- Grundschrift 16 px statt 15 px; verhindert zugleich das automatische
-  Hineinzoomen von iOS beim Antippen von Eingabefeldern
-- Überschriften in 700 statt 800, ohne negative Laufweite
-- Kartenrundung 18 px, weicherer und tieferer Schatten
-- untere Navigation 66 px statt 50 px, Emojis 24 px
-- Kopfzeilen-Glas `blur(24px) saturate(1.3)`
-- Wochenkurven als weiche Bézier-Segmente statt harter Knicke
-- ruhige Markierung des heutigen Tages im Verlauf
+    Energie 12 %, Laune 100 %   →  Stabilisierungsmodus
+    Energie 100 %, Laune 12 %   →  Stabilisierungsmodus
+    Energie 30 %, Laune 60 %    →  Reduzierter Modus
+    Energie 30 %, Laune 85 %    →  Regulärer Modus  (Ausnahme greift)
+    Energie 50 %, Laune 80 %    →  Regulärer Modus
+    Energie 80 %, Laune 50 %    →  Regulärer Modus
 
-Nicht übernommen wurde die Erfolgsquoten-Kurve aus 3.10: Der Wochenrückblick
-zeigt weiterhin Energie, Belastung und Pflichtgebete – ohne Gesamtscore.
+### Tageskreis
 
-## Rollenmodus-Logik
+Die vier rechteckigen Karten sind einem gefüllten Kreis mit vier Segmenten
+gewichen. Jedes Segment ist eine echte Schaltfläche und öffnet den jeweiligen
+Check-in. Ohne Eintrag bleibt das Segment neutral, danach trägt es die
+Modusfarbe.
 
-Zweistufig statt einfacher Mittelwertbildung:
+### Feste Tagesrollen
 
-1. Gesamtlage – gewichtete Mischung aller Angaben.
-2. Obergrenze je Einzelwert – Energie, Laune, Belastung, Gefühl und Schlaf
-   legen jeweils fest, welcher Modus höchstens noch vertretbar ist.
+Montag Ich · Dienstag Vitalist · Mittwoch Absolvent · Donnerstag Unternehmer ·
+Freitag Muslim · Samstag Wirt · Sonntag Familienmensch.
 
-Ein Einzelwert kann den Modus dadurch nur begrenzen, nie anheben. Energie 10 %
-mit Laune 100 % ergibt Stabilisierungsmodus; hohe Belastung deckelt trotz sehr
-guter Werte auf den Reduzierten Modus. Die Begründung benennt den
-ausschlaggebenden Wert. Eine Punktzahl wird nirgends angezeigt.
+Die Empfehlung nennt Rolle und Modus zusammen, dazu die konkrete Priorität:
+
+    Vitalist · Fokusmodus
+    Priorität heute: Gym · ca. 2 Stunden.
+
+In den beiden Schutzstufen lautet sie schlicht "Heute nur die Gebete." – ohne
+Zusatzaufgabe und ohne schuldinduzierende Sprache.
+
+### Wochenrückblick
+
+Immer eine vollständige Kalenderwoche von Montag bis Sonntag, kein gleitendes
+Fenster mehr. Der Graph zeigt Energie, Laune und Pflichtgebete; Belastung ist
+entfallen. Blättern per Wischgeste oder über die Pfeile, eine Bewegung
+entspricht genau einer Woche. Zukünftige Wochen sind nicht erreichbar.
+
+Unter der Gebetsübersicht steht eine zweite Wochenmatrix mit exakt zwei roten
+Punkten je Tag: erster Punkt Morgenroutine, zweiter Punkt Abendroutine.
+
+Bei fünf von fünf Pflichtgebeten erscheint ein kleiner Stern. Bei weniger
+erscheint nichts – kein Minuswert, kein Warnsymbol.
+
+### Routinen
+
+Zwei Fehler behoben:
+
+- Das Umsortieren während eines laufenden Durchlaufs veränderte bisher das
+  dauerhaft gespeicherte Routine-Template (`saveRoutines()` wurde aufgerufen).
+  Die Session arbeitet jetzt auf einer eigenen Kopie. Dauerhafte Änderungen
+  laufen ausschließlich über "Routine bearbeiten".
+- `completeSessionItem` las weiterhin das Template statt der Session. Nach
+  einem Umsortieren wäre die alte Reihenfolge abgearbeitet worden.
+
+Neu: verbleibende Dauer und voraussichtliche Endzeit, bei jedem Rendern neu
+berechnet – also auch nach Erledigen, Überspringen und Umsortieren.
+
+Die Karten auf der Hauptseite sind kompakter. Der Lesbarkeitsverlauf lag wegen
+`z-index: -1` hinter dem Hintergrundbild und wirkte deshalb nicht – weiße
+Schrift stand ungeschützt auf dem hellen Morgenbild. Gemessener Textkontrast
+jetzt 6,13:1 (Morgen) und 10,78:1 (Abend) in beiden Modi.
+
+### Sunnah-Gebete
+
+Antippen wechselt unmittelbar zum nächsten Status, ohne Dialog. Die
+vorhandenen Statuswerte und gespeicherten Daten bleiben unverändert:
+Offen → Verrichtet → Heute nicht vorgesehen → Offen.
+
+### Aufgeräumt
+
+Dankbarkeit ohne Leitfragen (zwei Freitextfelder plus Namen Allahs),
+Verantwortungsreflexion aus der Oberfläche entfernt, beide Erklärungstexte
+gestrichen, Hauptüberschriften responsiv verkleinert.
+
+## Zentrale Konfiguration
+
+Alle Grenzwerte, Gewichtungen und Rollentexte stehen am Anfang von `app.js` an
+genau einer Stelle:
+
+    STATE_WEIGHTS      Gewichtung von Laune und Energie
+    MODE_THRESHOLDS    Untergrenze je Modus
+    MODE_RULES         Schutzregeln und die Laune-Ausnahme
+    MODE_LADDER        Reihenfolge der sieben Modi
+    MODE_LEVEL_MAP     Modus → Handlungsebene
+    DAY_ROLE_MAP       Wochentag → Rolle
+    ROLE_CONFIG        Aufgaben je Rolle und Ebene
+
+Grenzwerte lassen sich dort nach einigen Wochen echter Nutzung anpassen, ohne
+die Oberfläche anzufassen. Der Absolvent trägt einen eigenen Hinweis für den
+späteren Studienbeginn.
 
 ## Datenkompatibilität
 
-Der Speicherschlüssel bleibt `roleplay-v25`. Bestehende Tagesreviews, Routinen,
-Check-ins, Gebete, Aktivitäten und Streaks werden unverändert weiterverwendet.
-Geprüft mit Altdatensätzen aus 3.x: alte Rollennamen, Check-ins ohne
-Launenwert, der entfernte Routinenstatus "angepasst erfüllt" und alte
+Der Speicherschlüssel bleibt `roleplay-v25`. Alte Felder (`load`, `emotion`,
+`note`, `selectedFrameworkKey`, `frameworkOverrideReason`) bleiben in
+bestehenden Datensätzen vollständig erhalten und werden lediglich nicht mehr
+gelesen. Geprüft mit Altdatensätzen aus 3.x und 5.x: alte Rollennamen,
+Check-ins ohne Launenwert, der entfernte Status "angepasst erfüllt" und alte
 Modus-Schlüssel werden migriert, ohne Fehler auszulösen.
+
+Neu hinzugekommen ist `roleplay-v25-weekly-tasks` für wöchentliche
+Mindestverantwortungen wie "Post & E-Mails". Additiv – bestehende Daten bleiben
+unberührt.
 
 ## Aktualisierung
 
 1. In der bisherigen App ein Backup speichern.
 2. Den Inhalt dieses Ordners auf dem bisherigen Hosting vollständig ersetzen.
 3. Die App vollständig schließen und erneut öffnen.
-4. Das Backup nur importieren, falls die bisherigen Einträge nicht
-   automatisch erscheinen.
+4. Das Backup nur importieren, falls die bisherigen Einträge nicht automatisch
+   erscheinen.

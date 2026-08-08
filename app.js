@@ -187,6 +187,274 @@ const FLEXIBILITY_LABELS = { high: "hoch", medium: "mittel", low: "gering", none
 const POSITIVE_EMOTIONS = new Set(["Euphorisch", "Erfüllt", "Freudig", "Begeistert", "Inspiriert", "Stolz", "Zufrieden", "Dankbar", "Hoffnungsvoll", "Zuversichtlich", "Motiviert", "Fokussiert", "Neugierig", "Verbunden", "Liebevoll", "Sicher", "Erleichtert", "Friedlich", "Gelassen", "Ruhig", "Geerdet", "Klar", "Ausgeglichen", "Gottesfürchtig"]);
 const HEAVY_EMOTIONS = new Set(["Ängstlich", "Panik", "Wütend", "Überfordert", "Überreizt", "Erschöpft", "Leer", "Hoffnungslos", "Verzweifelt", "Krank", "Schmerzen"]);
 
+/* ==========================================================================
+   ZENTRALE KONFIGURATION DER ROLLENLOGIK
+   Alle Grenzwerte, Gewichtungen und Rollentexte stehen ausschließlich hier.
+   Die Oberfläche liest daraus – nirgends sonst werden diese Zahlen wiederholt.
+   ========================================================================== */
+
+// Modus-Leiter, aufsteigend: Index 0 ist der schonendste Modus.
+const MODE_LADDER = ["stabilization", "gentle", "maintenance", "balance", "focus", "design", "development"];
+
+// Gewichtung des Zustands. Laune zählt bewusst etwas stärker als Energie.
+const STATE_WEIGHTS = {
+  mood: 0.58,
+  energy: 0.42
+};
+
+// Untergrenze je Modus, bezogen auf den gewichteten Wert 0–100.
+const MODE_THRESHOLDS = {
+  stabilization: 0,
+  gentle: 25,
+  maintenance: 40,
+  balance: 55,
+  focus: 70,
+  design: 82,
+  development: 92
+};
+
+/* Schutzregeln. Sie können den Modus ausschließlich begrenzen, nie anheben –
+   damit ein sehr niedriger Einzelwert nicht durch einen hohen anderen Wert
+   wegkompensiert wird.
+
+   floor  = erzwingt genau diesen Modus
+   cap    = höchstens dieser Modus
+   lift   = Ausnahme, die eine Begrenzung um n Stufen anheben darf          */
+const MODE_RULES = {
+  // Ein extrem niedriger Einzelwert bedeutet immer Stabilisierung.
+  hardFloor: { threshold: 15, mode: "stabilization" },
+
+  caps: [
+    { when: { energyBelow: 25 }, cap: "gentle", reason: "Energie" },
+    { when: { moodBelow: 25 }, cap: "gentle", reason: "Laune" },
+    { when: { moodBelow: 35 }, cap: "maintenance", reason: "Laune" },
+    { when: { energyBelow: 35 }, cap: "maintenance", reason: "Energie" }
+  ],
+
+  // Sehr gute Laune darf eine energiebedingte Begrenzung um eine Stufe anheben.
+  lift: {
+    when: { energyFrom: 25, energyTo: 34, moodFrom: 80 },
+    steps: 1
+  }
+};
+
+// Feste Tagesrollen. Schlüssel entspricht getDay() (0 = Sonntag).
+const DAY_ROLE_MAP = {
+  1: "ich",
+  2: "vitalist",
+  3: "absolvent",
+  4: "unternehmer",
+  5: "muslim",
+  6: "wirt",
+  0: "familienmensch"
+};
+
+// Zuordnung Modus → Handlungsebene der Rollenleiter.
+const MODE_LEVEL_MAP = {
+  stabilization: "base",
+  gentle: "base",
+  maintenance: "minimum",
+  balance: "standard",
+  focus: "focus",
+  design: "design",
+  development: "peak"
+};
+
+/* Rollenmatrix. Jede Ebene beschreibt den heutigen Rahmen – nicht eine Summe
+   von Aufgaben. Höhere Ebenen ersetzen die niedrigere Form, wo es semantisch
+   sinnvoll ist (Spaziergang → Gym 1 h → Gym 2 h). */
+const ROLE_CONFIG = {
+  ich: {
+    label: "Ich",
+    roleName: "Ich-Person",
+    levels: {
+      minimum: { tasks: ["Post & E-Mails"], text: "Post & E-Mails." },
+      standard: { tasks: ["Post & E-Mails", "Search"], text: "Post & E-Mails und Search." },
+      focus: { tasks: ["Post & E-Mails", "Search", "Lernen"], text: "Post & E-Mails, Search und Lernen." },
+      design: { tasks: ["Post & E-Mails", "Search", "Lernen"], text: "Post & E-Mails, Search und Lernen." },
+      peak: { tasks: ["Post & E-Mails", "Search", "Lernen", "Entwicklungsblock"], text: "Post & E-Mails, Search, Lernen und ein Entwicklungsblock." }
+    },
+    // Wöchentliche Mindestverantwortung: einmal pro Woche genügt.
+    weeklyTasks: [{ id: "post", label: "Post & E-Mails" }]
+  },
+  vitalist: {
+    label: "Vitalist",
+    roleName: "Vitalist",
+    levels: {
+      minimum: { tasks: ["Spaziergang"], text: "Ein kurzer Spaziergang." },
+      standard: { tasks: ["Gym"], text: "Gym · ca. 1 Stunde." },
+      focus: { tasks: ["Gym"], text: "Gym · ca. 2 Stunden." },
+      design: { tasks: ["Gym", "Search"], text: "Gym und Search." },
+      peak: { tasks: ["Gym", "Search", "Entwicklungsblock"], text: "Gym, Search und ein Entwicklungsblock." }
+    }
+  },
+  absolvent: {
+    label: "Absolvent",
+    roleName: "Absolvent",
+    // Vorbereitungsphase – nach Studienbeginn hier anpassen.
+    levels: {
+      minimum: { tasks: ["Lesen"], text: "Lesen." },
+      standard: { tasks: ["Lesen", "Arabisch"], text: "Lesen und Arabisch lernen." },
+      focus: { tasks: ["Lesen", "Arabisch", "Lernblock"], text: "Lesen, Arabisch und ein längerer Lernblock." },
+      design: { tasks: ["Lernblock", "Arabisch", "Search"], text: "Lern- und Lesebasis plus Search." },
+      peak: { tasks: ["Lernblock", "Arabisch", "Search", "Lernkapazität"], text: "Voller Lernblock, Search und zusätzliche Lernkapazität." }
+    }
+  },
+  unternehmer: {
+    label: "Unternehmer",
+    roleName: "Unternehmer",
+    levels: {
+      minimum: { tasks: ["Buch"], text: "Bucharbeit." },
+      standard: { tasks: ["Buch", "Search"], text: "Buch und Search." },
+      focus: { tasks: ["Buch", "Search"], text: "Buch als geschützter Fokusblock, dazu Search." },
+      design: { tasks: ["Buch", "Search", "Gestaltung"], text: "Buch, Search und zusätzliche Gestaltungsarbeit." },
+      peak: { tasks: ["Buch", "Search", "Entwicklungsblock"], text: "Buch, Search und ein Entwicklungsblock." }
+    }
+  },
+  muslim: {
+    label: "Muslim",
+    roleName: "Muslim",
+    // Bewusst auf allen Stufen gleich – keine religiöse Leistungsskala.
+    levels: {
+      minimum: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
+      standard: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
+      focus: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
+      design: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
+      peak: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." }
+    },
+    // Verpflichtung, unabhängig vom Zustand – keine Leistungsstufe.
+    obligations: ["Jumuʿah"]
+  },
+  wirt: {
+    label: "Wirt",
+    roleName: "Wirt",
+    levels: {
+      minimum: { tasks: ["CleanUp Basic"], text: "CleanUp Basic." },
+      standard: { tasks: ["CleanUp"], text: "CleanUp." },
+      focus: { tasks: ["CleanUp", "Search"], text: "CleanUp und Search." },
+      design: { tasks: ["CleanUp", "Search", "Haushaltsaufgabe"], text: "CleanUp, Search und eine umfangreichere Haushaltsaufgabe." },
+      peak: { tasks: ["CleanUp", "Search", "Entwicklungsblock"], text: "CleanUp, Search und ein Entwicklungsblock." }
+    }
+  },
+  familienmensch: {
+    label: "Familienmensch",
+    roleName: "Familienmensch",
+    levels: {
+      minimum: { tasks: ["Weekly Family light"], text: "Weekly Family light – kurzer bewusster Kontakt." },
+      standard: { tasks: ["Weekly Family"], text: "Weekly Family." },
+      focus: { tasks: ["Weekly Family", "Search", "Gym"], text: "Weekly Family, Search und Gym." },
+      design: { tasks: ["Weekly Family", "Search", "Gym", "Familienaktivität"], text: "Weekly Family, Search, Gym und eine größere Familienaktivität." },
+      peak: { tasks: ["Weekly Family", "Search", "Gym", "Entwicklungsblock"], text: "Weekly Family, Search, Gym und ein Entwicklungsblock." }
+    }
+  }
+};
+
+// Text der beiden Schutzstufen. Bewusst ohne fordernde oder schuldinduzierende Sprache.
+const PROTECTIVE_LEVEL_TEXT = {
+  stabilization: "Heute nur die Gebete.",
+  gentle: "Heute nur die Gebete."
+};
+
+/* --------------------------------------------------------------------------
+   Berechnung
+   -------------------------------------------------------------------------- */
+
+function modeIndex(key) {
+  const i = MODE_LADDER.indexOf(key);
+  return i < 0 ? MODE_LADDER.indexOf("balance") : i;
+}
+
+// Gewichteter Zustandswert aus Energie und Laune.
+function stateScore(energy, mood) {
+  if (energy === null || energy === undefined || mood === null || mood === undefined) return null;
+  const e = clamp(Number(energy), 0, 100);
+  const m = clamp(Number(mood), 0, 100);
+  return Math.round(m * STATE_WEIGHTS.mood + e * STATE_WEIGHTS.energy);
+}
+
+// Modus aus dem Zustandswert, bevor Schutzregeln greifen.
+function modeFromScore(score) {
+  let result = MODE_LADDER[0];
+  MODE_LADDER.forEach(key => { if (score >= MODE_THRESHOLDS[key]) result = key; });
+  return result;
+}
+
+/* Ermittelt den Rollenmodus aus Energie und Laune.
+   Rückgabe enthält zusätzlich, welche Regel begrenzt hat – damit die
+   Begründung den tatsächlichen Grund benennen kann. */
+function resolveMode(energy, mood) {
+  const score = stateScore(energy, mood);
+  if (score === null) return null;
+  const e = clamp(Number(energy), 0, 100);
+  const m = clamp(Number(mood), 0, 100);
+
+  // Harte Untergrenze: ein extrem niedriger Wert bedeutet immer Stabilisierung.
+  const floor = MODE_RULES.hardFloor;
+  if (e <= floor.threshold || m <= floor.threshold) {
+    return {
+      key: floor.mode,
+      score,
+      limitedBy: e <= floor.threshold && m <= floor.threshold ? ["Energie", "Laune"] : e <= floor.threshold ? ["Energie"] : ["Laune"],
+      lifted: false
+    };
+  }
+
+  const base = modeFromScore(score);
+  let index = modeIndex(base);
+  let limitedBy = [];
+
+  // Obergrenzen anwenden: die strengste gewinnt.
+  MODE_RULES.caps.forEach(rule => {
+    const hit = (rule.when.energyBelow !== undefined && e < rule.when.energyBelow)
+      || (rule.when.moodBelow !== undefined && m < rule.when.moodBelow);
+    if (!hit) return;
+    const capIndex = modeIndex(rule.cap);
+    if (capIndex < index) { index = capIndex; limitedBy = [rule.reason]; }
+    else if (capIndex === index && !limitedBy.includes(rule.reason)) limitedBy.push(rule.reason);
+  });
+
+  // Ausnahme: sehr gute Laune hebt eine energiebedingte Begrenzung um eine Stufe.
+  const lift = MODE_RULES.lift;
+  let lifted = false;
+  if (limitedBy.length
+      && e >= lift.when.energyFrom && e <= lift.when.energyTo
+      && m >= lift.when.moodFrom) {
+    const raised = Math.min(index + lift.steps, modeIndex(base));
+    if (raised > index) { index = raised; lifted = true; }
+  }
+
+  return { key: MODE_LADDER[index], score, limitedBy, lifted };
+}
+
+// Tagesrolle aus dem Datum – fest zugeordnet, unabhängig vom Zustand.
+function dayRoleKey(iso = selectedDate) {
+  return DAY_ROLE_MAP[new Date(`${iso}T12:00:00`).getDay()] || "ich";
+}
+
+function dayRoleConfig(iso = selectedDate) {
+  return ROLE_CONFIG[dayRoleKey(iso)] || ROLE_CONFIG.ich;
+}
+
+/* Konkrete Handlungsempfehlung aus Tagesrolle und Modus.
+   Kurze, klare Sprache – keine Motivationsrede, keine Bewertung. */
+function dayPriorityText(modeKey, iso = selectedDate, options = {}) {
+  const level = MODE_LEVEL_MAP[modeKey];
+  if (level === "base") return PROTECTIVE_LEVEL_TEXT[modeKey] || PROTECTIVE_LEVEL_TEXT.gentle;
+  const role = dayRoleConfig(iso);
+  const entry = role.levels[level] || role.levels.standard;
+  if (!entry) return "";
+  // Bereits in dieser Woche erfüllte Wochenaufgaben nicht erneut verlangen.
+  const done = options.completedWeeklyTasks || [];
+  if (role.weeklyTasks?.length && done.length) {
+    const drop = role.weeklyTasks.filter(t => done.includes(t.id)).map(t => t.label);
+    const rest = entry.tasks.filter(t => !drop.includes(t));
+    if (rest.length && rest.length !== entry.tasks.length) {
+      return rest.length === 1 ? `${rest[0]}.` : `${rest.slice(0, -1).join(", ")} und ${rest.at(-1)}.`;
+    }
+  }
+  return entry.text;
+}
+
 const FRAMEWORKS = [
   { min: 88, key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#7258E8" },
   { min: 76, key: "design", label: "Gestaltungsmodus", icon: "◆", color: "#4D7EEA" },
@@ -378,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.2.0";
+const APP_VERSION = "5.3.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -412,6 +680,40 @@ function addDays(iso, amount) {
   const d = new Date(`${iso}T12:00:00`);
   d.setDate(d.getDate() + amount);
   return dateToISO(d);
+}
+
+/* --------------------------------------------------------------------------
+   Kalenderwochen
+   Die Woche läuft immer von Montag bis Sonntag – kein gleitendes Fenster.
+   -------------------------------------------------------------------------- */
+function mondayOf(iso) {
+  const d = new Date(`${iso}T12:00:00`);
+  const shift = (d.getDay() + 6) % 7;   // Montag = 0
+  d.setDate(d.getDate() - shift);
+  return dateToISO(d);
+}
+
+// Stabiler Schlüssel einer Kalenderwoche: das Datum ihres Montags.
+function weekKey(iso) {
+  return mondayOf(iso);
+}
+
+const WEEKLY_TASKS_KEY = `${STORAGE_NAMESPACE}-weekly-tasks`;
+
+// Erledigte Wochenaufgaben je Kalenderwoche. Additiv – bestehende Daten bleiben unberührt.
+function completedWeeklyTasks(iso = selectedDate) {
+  const store = safeParse(localStorage.getItem(WEEKLY_TASKS_KEY)) || {};
+  const entry = store[weekKey(iso)];
+  return Array.isArray(entry) ? entry : [];
+}
+
+function setWeeklyTaskDone(taskId, done, iso = selectedDate) {
+  const store = safeParse(localStorage.getItem(WEEKLY_TASKS_KEY)) || {};
+  const key = weekKey(iso);
+  const list = new Set(Array.isArray(store[key]) ? store[key] : []);
+  if (done) list.add(taskId); else list.delete(taskId);
+  store[key] = [...list];
+  localStorage.setItem(WEEKLY_TASKS_KEY, JSON.stringify(store));
 }
 
 function firstOfMonth(iso) {
@@ -674,6 +976,7 @@ function formatShortDate(iso) {
 }
 
 function setDate(date) {
+  weekOffset = 0;
   selectedDate = date;
   calendarCursor = firstOfMonth(date);
   currentData = loadReview(date);
@@ -800,166 +1103,79 @@ function stateCapacity(checkin, data = currentData) {
 
 /* --------------------------------------------------------------------------
    Rollenmodus-Empfehlung
-   FRAMEWORKS ist absteigend sortiert: Index 0 ist der anspruchsvollste Modus,
-   Index 6 der schonendste. Die Empfehlung entsteht aus zwei Schritten:
+   Der Modus entsteht ausschließlich aus Energie und Laune. Die Gewichtung,
+   die Schwellen und die Schutzregeln stehen zentral in STATE_WEIGHTS,
+   MODE_THRESHOLDS und MODE_RULES – hier werden keine Zahlen wiederholt.
 
-   1. Eine gewichtete Gesamtlage über alle Angaben (Mischung).
-   2. Obergrenzen je Einzelwert. Jeder Einzelwert kann den Modus nur noch
-      begrenzen, nie anheben. Dadurch kann eine sehr gute Laune eine sehr
-      geringe Energie nicht mehr ausgleichen, und eine hohe Belastung wird
-      nicht durch gute Werte an anderer Stelle überstimmt.
-
-   Der bindende Faktor wird mitgegeben, damit die Begründung benennen kann,
-   woran es tatsächlich lag. Eine Punktzahl wird nirgends angezeigt.
+   Eine manuelle Auswahl gibt es nicht mehr; der Modus ist immer automatisch.
    -------------------------------------------------------------------------- */
-const FRAMEWORK_INDEX = {
-  development: 0, design: 1, focus: 2, balance: 3, maintenance: 4, gentle: 5, stabilization: 6
-};
 
-// Gibt den anspruchsvollsten Modus zurück, der bei diesem Wert noch vertretbar ist.
-function energyCeiling(energy) {
-  if (energy === null) return 0;
-  if (energy < 15) return FRAMEWORK_INDEX.stabilization;
-  if (energy < 30) return FRAMEWORK_INDEX.gentle;
-  if (energy < 45) return FRAMEWORK_INDEX.maintenance;
-  if (energy < 60) return FRAMEWORK_INDEX.balance;
-  if (energy < 75) return FRAMEWORK_INDEX.focus;
-  if (energy < 88) return FRAMEWORK_INDEX.design;
-  return FRAMEWORK_INDEX.development;
-}
-
-function moodCeiling(mood) {
-  if (mood === null) return 0;
-  if (mood < 15) return FRAMEWORK_INDEX.stabilization;
-  if (mood < 28) return FRAMEWORK_INDEX.gentle;
-  if (mood < 42) return FRAMEWORK_INDEX.maintenance;
-  if (mood < 55) return FRAMEWORK_INDEX.balance;
-  if (mood < 70) return FRAMEWORK_INDEX.focus;
-  return FRAMEWORK_INDEX.development;
-}
-
-// Nur geringe Belastung lässt die beiden obersten Modi überhaupt zu.
-function loadCeiling(load) {
-  if (load === "high") return FRAMEWORK_INDEX.maintenance;
-  if (load === "low") return FRAMEWORK_INDEX.development;
-  return FRAMEWORK_INDEX.focus;
-}
-
-function emotionCeiling(emotion) {
-  if (HEAVY_EMOTIONS.has(emotion)) return FRAMEWORK_INDEX.maintenance;
-  if (["Traurig", "Besorgt", "Enttäuscht", "Frustriert", "Gestresst", "Gereizt", "Ärgerlich", "Scham", "Reue", "Schuldig", "Einsam", "Unruhig", "Versucht", "Begehrlich"].includes(emotion)) return FRAMEWORK_INDEX.balance;
-  return FRAMEWORK_INDEX.development;
+// Liefert Energie und Laune eines Check-ins, oder null wenn nicht erfasst.
+function checkinValues(checkin) {
+  if (!checkin) return null;
+  const e = checkin.energy === null || checkin.energy === undefined ? null : clamp(Number(checkin.energy), 0, 100);
+  const m = checkin.mood === null || checkin.mood === undefined ? null : clamp(Number(checkin.mood), 0, 100);
+  if (e === null || m === null) return null;
+  return { energy: e, mood: m };
 }
 
 function recommendedFrameworkForCheckin(checkin, data = currentData) {
-  const capacity = stateCapacity(checkin, data);
-  if (capacity === null) return null;
-
-  // Schritt 1: Gesamtlage.
-  const blendIndex = FRAMEWORKS.findIndex(item => capacity >= item.min);
-  const limits = [{ key: "blend", label: "Gesamtlage", index: blendIndex < 0 ? FRAMEWORKS.length - 1 : blendIndex }];
-
-  // Schritt 2: Obergrenzen der Einzelwerte.
-  if (checkin.slot === "night") {
-    const sleep = sleepCapacityScore(checkin.sleepQualityScore);
-    if (sleep !== null) limits.push({ key: "sleep", label: "Schlaf", index: energyCeiling(sleep) });
-  } else {
-    const energy = checkin?.energy === null || checkin?.energy === undefined ? null : clamp(Number(checkin.energy), 0, 100);
-    const mood = checkin?.mood === null || checkin?.mood === undefined ? null : clamp(Number(checkin.mood), 0, 100);
-    const sleep = sleepCapacityScore(latestNightCheckin(data)?.sleepQualityScore);
-    limits.push({ key: "energy", label: "Energie", index: energyCeiling(energy) });
-    limits.push({ key: "mood", label: "Laune", index: moodCeiling(mood) });
-    limits.push({ key: "load", label: "Belastung", index: loadCeiling(checkin?.load || "normal") });
-    limits.push({ key: "emotion", label: "Gefühl", index: emotionCeiling(checkin?.emotion || "") });
-    if (sleep !== null && sleep < 40) limits.push({ key: "sleep", label: "Schlaf", index: FRAMEWORK_INDEX.maintenance });
-  }
-
-  // Der schonendste geforderte Modus setzt sich durch.
-  const finalIndex = Math.max(...limits.map(item => item.index));
-  // Beim anspruchsvollsten Modus hat nichts begrenzt – dann bleibt die Begründung positiv.
-  const binding = finalIndex === 0 ? [] : limits
-    .filter(item => item.index === finalIndex && item.key !== "blend")
-    .map(item => item.label);
-
+  const values = checkinValues(checkin);
+  if (!values) return null;
+  const resolved = resolveMode(values.energy, values.mood);
+  if (!resolved) return null;
+  const framework = FRAMEWORKS.find(item => item.key === resolved.key) || FRAMEWORKS.at(-1);
   return {
-    ...FRAMEWORKS[finalIndex],
-    capacity,
-    limitedBy: binding,
-    blendIndex: limits[0].index
+    ...framework,
+    score: resolved.score,
+    limitedBy: resolved.limitedBy || [],
+    lifted: Boolean(resolved.lifted),
+    energy: values.energy,
+    mood: values.mood
   };
 }
 
+// Ohne manuelle Auswahl ist der empfohlene Modus zugleich der gültige.
 function frameworkForCheckin(checkin, data = currentData) {
   const recommended = recommendedFrameworkForCheckin(checkin, data);
   if (!recommended) return null;
-  const chosen = FRAMEWORKS.find(item => item.key === frameworkKey(checkin?.selectedFrameworkKey)) || recommended;
-  return {
-    ...chosen,
-    capacity: recommended.capacity,
-    limitedBy: recommended.limitedBy || [],
-    recommendedKey: recommended.key,
-    recommendedLabel: recommended.label,
-    isOverride: chosen.key !== recommended.key,
-    overrideReason: checkin?.frameworkOverrideReason || ""
-  };
+  return { ...recommended, recommendedKey: recommended.key, recommendedLabel: recommended.label, isOverride: false };
 }
 
+
+/* Konkrete Handlungsempfehlung: Tagesrolle plus heutige Priorität.
+   Kurze, klare Sprache – keine Motivationsrede, keine Bewertung.
+   Die Aufgaben stammen ausschließlich aus ROLE_CONFIG. */
 function recommendationForCheckin(checkin, framework = frameworkForCheckin(checkin), data = currentData) {
   if (!checkin || !framework) return "";
-  if (checkin.slot === "night") {
-    const sleep = sleepCapacityScore(checkin.sleepQualityScore);
-    if (sleep !== null && sleep < 40) return "Die Nacht war wenig erholsam. Beginne den Morgen reduziert, sichere Grundversorgung und Pflichtgebete und prüfe deine Energie nach dem Morgen-Check-in erneut.";
-    if (sleep !== null && sleep >= 80) return "Die Nacht war erholsam. Nutze den Morgen für das Wesentliche und prüfe erst danach, ob Raum für zusätzliche Entwicklung besteht.";
-    return "Nimm die Schlafqualität als Ausgangslage, nicht als Urteil. Der Morgen-Check-in präzisiert den passenden Rollenmodus.";
-  }
-  const action = {
-    development: "Sichere zuerst das Wesentliche und nutze den verbleibenden Raum für eine anspruchsvolle Entwicklungsaufgabe.",
-    design: "Die Lage wirkt tragfähig. Gestalte neben dem Wesentlichen eine klar priorisierte Aufgabe aktiv weiter.",
-    focus: "Arbeite fokussiert an den wesentlichen Verantwortungen und halte zusätzliche Vorhaben bewusst begrenzt.",
-    balance: "Bearbeite deine wesentlichen Verantwortungen in einem normalen Tempo und plane ausreichend Puffer ein.",
-    maintenance: "Sichere heute das Wesentliche und verzichte auf zusätzliche Entwicklungsaufgaben.",
-    gentle: "Reduziere Tempo und Umfang. Sichere Grundversorgung, Pflichtgebete und höchstens einen kleinen nächsten Schritt.",
-    stabilization: "Sichere nur das Unaufschiebbare, hole Unterstützung und plane bewusst Erholung ein."
-  }[framework.key] || "";
-  const cause = stateCauseSentence(checkin, data, framework);
-  return cause ? `${cause} ${action}` : action;
+  const priority = dayPriorityText(framework.key, selectedDate, {
+    completedWeeklyTasks: completedWeeklyTasks(selectedDate)
+  });
+  return priority;
 }
 
-// Kurze, konkrete Begründung aus den tatsächlich erfassten Werten – ohne Punktzahl.
+/* Kurze Begründung aus Energie und Laune – ohne Punktzahl und ohne Wertung.
+   Genannt wird der Wert, der den Modus tatsächlich begrenzt hat. */
 function stateCauseSentence(checkin, data = currentData, framework = null) {
   if (!checkin) return "";
-  // Wenn ein einzelner Wert den Modus begrenzt hat, wird genau dieser benannt.
+  const energy = checkin.energy === null || checkin.energy === undefined ? null : Number(checkin.energy);
+  const mood = checkin.mood === null || checkin.mood === undefined ? null : Number(checkin.mood);
+  if (energy === null || mood === null) return "";
+
   const limits = framework?.limitedBy || [];
-  if (limits.length && checkin.slot !== "night") {
-    const phrases = {
-      Energie: checkin.energy === null || checkin.energy === undefined ? null : `die Energie bei ${checkin.energy} % liegt`,
-      Laune: checkin.mood === null || checkin.mood === undefined ? null : `die Laune bei ${checkin.mood} % liegt`,
-      Belastung: `die Belastung ${(LOAD_OPTIONS[checkin.load]?.label || "Normal").toLowerCase()} ist`,
-      Gefühl: checkin.emotion ? `das Gefühl „${checkin.emotion}“ vorherrscht` : null,
-      Schlaf: SLEEP_LABELS[Number(latestNightCheckin(data)?.sleepQualityScore)] ? `der Schlaf ${SLEEP_LABELS[Number(latestNightCheckin(data).sleepQualityScore)].toLowerCase()} war` : null
-    };
-    const named = limits.map(label => phrases[label]).filter(Boolean);
+  if (limits.length) {
+    const phrases = { Energie: `die Energie bei ${energy} % liegt`, Laune: `die Laune bei ${mood} % liegt` };
+    const named = limits.map(l => phrases[l]).filter(Boolean);
     if (named.length) {
-      const joined = named.length === 1 ? named[0] : `${named.slice(0, -1).join(", ")} und ${named.at(-1)}`;
+      const joined = named.length === 1 ? named[0] : `${named[0]} und ${named[1]}`;
+      if (framework?.lifted) return `Die Energie ist niedrig, die gute Laune trägt heute aber ein Stück mit.`;
       return `Begrenzend wirkt, dass ${joined}.`;
     }
   }
-  const low = [];
-  const high = [];
-  const sleep = sleepCapacityScore(latestNightCheckin(data)?.sleepQualityScore);
-  if (sleep !== null && sleep < 50) low.push("Schlaf");
-  if (sleep !== null && sleep >= 80) high.push("Schlaf");
-  const energy = checkin.energy === null || checkin.energy === undefined ? null : Number(checkin.energy);
-  const mood = checkin.mood === null || checkin.mood === undefined ? null : Number(checkin.mood);
-  if (energy !== null && energy < 45) low.push("Energie");
-  if (energy !== null && energy >= 75) high.push("Energie");
-  if (mood !== null && mood < 40) low.push("Laune");
-  if (mood !== null && mood >= 75) high.push("Laune");
-  if (checkin.load === "high") return low.length ? `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig, die Belastung ist hoch.` : "Die Belastung ist heute hoch.";
-  if (low.length) return `${low.join(" und ")} ${low.length > 1 ? "sind" : "ist"} niedrig.`;
-  if (high.length > 1) return `${high.join(" und ")} sind gut.`;
-  return "";
+  if (energy >= 80 && mood >= 80) return "Energie und Laune tragen heute gut.";
+  return `Energie ${energy} %, Laune ${mood} %.`;
 }
+
 
 function checkinReasonFactors(checkin, data = currentData) {
   if (!checkin) return [];
@@ -987,27 +1203,68 @@ function latestStateCheckin(data = currentData) {
   return [...entries].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time)).at(-1) || null;
 }
 
+/* Kreisförmige Tagesdarstellung mit vier Segmenten.
+   Jedes Segment ist eine echte Schaltfläche und öffnet den jeweiligen
+   Check-in – der Kreis ersetzt die früheren Karten also auch funktional. */
 function renderCheckinSlots() {
   const container = $("checkinSlots");
   if (!container || !currentData) return;
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
-  container.innerHTML = CHECKIN_SLOTS.map(slot => {
+
+  const size = 200;
+  const c = size / 2;
+  const rOuter = 92;
+  const rInner = 52;
+  const gap = 0.045;              // kleine Lücke zwischen den Segmenten
+
+  const arc = (from, to) => {
+    const a0 = from + gap, a1 = to - gap;
+    const pt = (r, a) => [c + r * Math.cos(a), c + r * Math.sin(a)];
+    const [x0, y0] = pt(rOuter, a0), [x1, y1] = pt(rOuter, a1);
+    const [x2, y2] = pt(rInner, a1), [x3, y3] = pt(rInner, a0);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter} ${rOuter} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
+         + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner} ${rInner} 0 0 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
+  };
+
+  const quarter = Math.PI / 2;
+  const segments = CHECKIN_SLOTS.map((slot, index) => {
     const entry = bySlot[slot.key];
     const framework = frameworkForCheckin(entry);
-    const detail = !entry ? "Offen" : slot.key === "night" && entry.sleepQualityScore !== "" && entry.sleepQualityScore !== undefined
-      ? (SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Erfasst")
-      : (framework?.label || "Erfasst");
-    // Die Farbwelt gehört zur Tageszeit, nicht zum empfohlenen Modus. Ohne
-    // gespeicherten Eintrag bleibt die Karte bewusst neutral und ohne Glow.
-    const color = slot.color;
-    const tint = entry
-      ? `--slot-color:${color};--slot-soft:${hexToRgba(color, .16)};--slot-glow:${hexToRgba(color, .22)}`
-      : "";
-    return `<button type="button" class="checkin-slot ${entry ? "complete" : ""}" data-open-checkin-slot="${slot.key}" style="${tint}" aria-label="${escapeHTML(slot.label)}-Check-in ${entry ? "bearbeiten" : "erfassen"}">
-      <span>${slot.icon}</span><div><strong>${escapeHTML(slot.label)}</strong><small>${escapeHTML(detail)}</small></div>
-    </button>`;
+    // Ohne Check-in bleibt das Segment neutral; sonst trägt es die Modusfarbe.
+    const color = framework?.color || "";
+    const from = -Math.PI / 2 + index * quarter;
+    const to = from + quarter;
+    const mid = (from + to) / 2;
+    const labelR = (rOuter + rInner) / 2;
+    const lx = c + labelR * Math.cos(mid);
+    const ly = c + labelR * Math.sin(mid);
+    const title = `${slot.label}: ${entry ? (framework?.label || "erfasst") : "noch offen"}`;
+    return `<g class="day-ring-segment ${entry ? "is-filled" : ""}" data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
+        aria-label="${escapeHTML(title)}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}."
+        style="${color ? `--seg-color:${color};--seg-soft:${hexToRgba(color, .30)};--seg-strong:${hexToRgba(color, .85)}` : ""}">
+      <title>${escapeHTML(title)}</title>
+      <path class="day-ring-shape" d="${arc(from, to)}"></path>
+      <text class="day-ring-icon" x="${lx.toFixed(1)}" y="${(ly + 7).toFixed(1)}" text-anchor="middle">${slot.icon}</text>
+    </g>`;
   }).join("");
-  document.querySelectorAll("[data-open-checkin-slot]").forEach(button => button.addEventListener("click", () => openStateCheckinDialog(button.dataset.openCheckinSlot)));
+
+  const done = CHECKIN_SLOTS.filter(slot => bySlot[slot.key]).length;
+  container.innerHTML = `<svg class="day-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Vier Tages-Check-ins">
+      <defs><filter id="ringSoft" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
+      </filter></defs>
+      ${segments}
+      <text class="day-ring-center-value" x="${c}" y="${c - 2}" text-anchor="middle">${done}/4</text>
+      <text class="day-ring-center-label" x="${c}" y="${c + 15}" text-anchor="middle">Check-ins</text>
+    </svg>`;
+
+  const open = element => openStateCheckinDialog(element.dataset.openCheckinSlot);
+  container.querySelectorAll("[data-open-checkin-slot]").forEach(element => {
+    element.addEventListener("click", () => open(element));
+    element.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(element); }
+    });
+  });
 }
 
 function renderStateOverview() {
@@ -1015,18 +1272,18 @@ function renderStateOverview() {
   const timeline = $("stateTimeline");
   if (!summary || !timeline || !currentData) return;
   renderCheckinSlots();
-  const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time));
+  const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || (a.time || "").localeCompare(b.time || ""));
+  // Maßgeblich ist der neueste vorhandene Check-in des Tages.
   const latest = [...checkins].at(-1);
   const framework = frameworkForCheckin(latest);
+  const role = dayRoleConfig(selectedDate);
   $("stateCheckinCount").textContent = `${checkins.length}/4 Check-ins`;
 
   if (!latest || !framework) {
     summary.className = "current-state-summary empty-state-summary compact-empty-state";
-    summary.innerHTML = `<div class="empty-state-icon" aria-hidden="true">◇</div><div><strong>Noch kein Check-in</strong></div>`;
+    summary.innerHTML = `<div class="empty-state-icon" aria-hidden="true">◇</div>`
+      + `<div><strong>Noch kein Check-in</strong><small>${escapeHTML(role.roleName)}</small></div>`;
   } else {
-    const slot = checkinSlot(latest.slot);
-    const factors = checkinReasonFactors(latest);
-    const overrideNote = framework.isOverride ? `<p class="mode-override-note"><strong>Bewusst angepasst:</strong> ${escapeHTML(framework.overrideReason || "Eigene Einschätzung")}</p>` : "";
     summary.className = `current-state-summary compact-state-summary framework-${framework.key}`;
     summary.style.setProperty("--framework-color", framework.color);
     summary.style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
@@ -1035,30 +1292,24 @@ function renderStateOverview() {
       <div class="compact-framework-main lean-framework-main">
         <div class="framework-icon" aria-hidden="true">${framework.icon}</div>
         <div class="framework-copy">
-          <strong>${escapeHTML(framework.label)}</strong>
-          <p>${escapeHTML(recommendationForCheckin(latest, framework))}</p>
+          <strong>${escapeHTML(role.roleName)} · ${escapeHTML(framework.label)}</strong>
+          <p><span class="priority-label">Priorität heute:</span> ${escapeHTML(recommendationForCheckin(latest, framework))}</p>
+          <small>${escapeHTML(stateCauseSentence(latest, currentData, framework))}</small>
         </div>
-      </div>
-      <details class="framework-details">
-        <summary>Begründung</summary>
-        <div class="reason-factor-list">${factors.map(item => `<span>${escapeHTML(item)}</span>`).join("")}</div>
-        ${framework.isOverride ? `<small>Systemempfehlung: ${escapeHTML(framework.recommendedLabel)}</small>` : ""}
-        ${overrideNote}
-      </details>`;
+      </div>`;
   }
 
   timeline.innerHTML = checkins.length ? [...checkins].reverse().map(entry => {
     const entryFramework = frameworkForCheckin(entry);
     const slot = checkinSlot(entry.slot);
-    const details = entry.slot === "night"
-      ? `${entry.sleepQualityScore !== "" ? SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Schlaf erfasst" : "Schlaf nicht bewertet"}${entry.dreamCategory ? ` · ${dreamCategoryLabel(entry.dreamCategory)}` : ""}`
-      : `${entry.energy ?? "–"}% Energie · ${entry.mood ?? "–"}% Laune · ${entry.emotion || "Gefühl offen"} · Belastung ${LOAD_OPTIONS[entry.load]?.label || "Normal"}`;
-    return `<article class="state-timeline-item" style="--framework-color:${entryFramework.color}">
+    const sleep = entry.slot === "night" && entry.sleepQualityScore !== "" && entry.sleepQualityScore !== undefined
+      ? ` · ${SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Schlaf erfasst"}` : "";
+    const details = `${entry.energy ?? "–"} % Energie · ${entry.mood ?? "–"} % Laune${sleep}`;
+    return `<article class="state-timeline-item" style="--framework-color:${entryFramework?.color || "var(--muted)"}">
       <div class="state-timeline-marker"></div>
       <div class="state-timeline-copy">
-        <div class="state-timeline-title"><strong>${slot.icon} ${escapeHTML(slot.label)} · ${escapeHTML(entry.time)}</strong><span>${escapeHTML(entryFramework.label.replace(" Modus", ""))}</span></div>
+        <div class="state-timeline-title"><strong>${slot.icon} ${escapeHTML(slot.label)} · ${escapeHTML(entry.time || "")}</strong><span>${escapeHTML((entryFramework?.label || "").replace(" Modus", ""))}</span></div>
         <small>${escapeHTML(details)}</small>
-        ${entry.note ? `<p>${escapeHTML(entry.note)}</p>` : ""}
       </div>
       <button type="button" class="state-delete-button" data-delete-state-checkin="${escapeHTML(entry.id)}" aria-label="Check-in löschen">×</button>
     </article>`;
@@ -1075,56 +1326,41 @@ function emotionOptionsHTML() {
   return `<option value="">Noch nicht eingetragen</option>${EMOTION_GROUPS.map(group => `<optgroup label="${escapeHTML(group.label)}">${group.options.map(([value, label]) => `<option value="${escapeHTML(value)}">${escapeHTML(label)}</option>`).join("")}</optgroup>`).join("")}`;
 }
 
-function populateStateCheckinEmotion() {
-  const select = $("stateEmotion");
-  if (select) select.innerHTML = emotionOptionsHTML();
-}
 
 function dreamCategoryLabel(value) {
   return DREAM_CATEGORIES.find(([key]) => key === value)?.[1] || "Nicht erfasst";
 }
 
-function renderLoadChoices(selected = "normal") {
-  $("stateLoad").value = LOAD_OPTIONS[selected] ? selected : "normal";
-  document.querySelectorAll("[data-state-load]").forEach(button => {
-    const active = button.dataset.stateLoad === $("stateLoad").value;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-}
 
 function toggleNightCheckinFields(slotKey) {
   const isNight = slotKey === "night";
+  // Die Nacht zeigt zusätzlich Schlaf und Traum – Energie und Laune bleiben sichtbar.
   if ($("nightCheckinSection")) $("nightCheckinSection").hidden = !isNight;
-  if ($("dayCheckinSection")) $("dayCheckinSection").hidden = isNight;
+  if ($("dayCheckinSection")) $("dayCheckinSection").hidden = false;
 }
 
 function fillStateCheckinForm(slotKey) {
   const requestedSlot = slotKey || slotForTime();
   const existing = (currentData.stateCheckins || []).find(entry => entry.slot === requestedSlot);
-  const latestDay = [...(currentData.stateCheckins || [])].filter(entry => entry.slot !== "night").sort((a,b) => slotIndex(a.slot)-slotIndex(b.slot)).at(-1);
+  const latest = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot)).at(-1);
   const slot = checkinSlot(requestedSlot);
   $("stateCheckinDialog").dataset.editingSlot = requestedSlot;
   $("stateSlot").value = requestedSlot;
   $("stateSlotDisplay").style.setProperty("--slot-color", slot.color);
   $("stateSlotDisplay").style.setProperty("--slot-soft", hexToRgba(slot.color, .12));
   $("stateSlotDisplay").style.setProperty("--slot-glow", hexToRgba(slot.color, .24));
-  $("stateSlotDisplay").innerHTML = `<span aria-hidden="true">${slot.icon}</span><strong>${escapeHTML(slot.label)}</strong><small>${requestedSlot === "night" ? "Schlafbereich" : "kurzer Check-in"}</small>`;
-  $("stateEnergy").value = existing?.energy ?? latestDay?.energy ?? 60;
-  $("stateMood").value = existing?.mood ?? latestDay?.mood ?? 60;
-  $("stateEmotion").value = existing?.emotion || latestDay?.emotion || "";
-  renderLoadChoices(existing?.load || latestDay?.load || "normal");
+  $("stateSlotDisplay").innerHTML = `<span aria-hidden="true">${slot.icon}</span><strong>${escapeHTML(slot.label)}</strong><small>${requestedSlot === "night" ? "Schlaf und Zustand" : "kurzer Check-in"}</small>`;
+  // Energie und Laune gelten für alle vier Check-ins, auch für die Nacht.
+  $("stateEnergy").value = existing?.energy ?? latest?.energy ?? 60;
+  $("stateMood").value = existing?.mood ?? latest?.mood ?? 60;
   $("stateTime").value = existing?.time || (selectedDate === todayISO() ? currentClockTime() : slot.time);
-  $("stateNote").value = existing?.note || "";
   const sleepValue = existing?.sleepQualityScore ?? currentData.sleepQualityScore ?? "";
   $("stateSleepQuality").value = sleepValue;
   $("stateDreamCategory").value = existing?.dreamCategory || currentData.dreamCategory || "";
   $("stateDreamNote").value = existing?.dreamNote || currentData.dreams || "";
-  $("stateFrameworkReason").value = existing?.frameworkOverrideReason || "";
-  $("stateCheckinDialog").dataset.frameworkManuallySelected = existing?.selectedFrameworkKey ? "true" : "false";
   toggleNightCheckinFields(requestedSlot);
   if ($("stateDialogTitle")) $("stateDialogTitle").textContent = slot.label;
-  updateStateCheckinPreview(existing?.selectedFrameworkKey || "");
+  updateStateCheckinPreview();
 }
 
 function openStateCheckinDialog(slotKey = null) {
@@ -1137,67 +1373,45 @@ function stateCheckinFromForm() {
   const nightSleep = $("stateSleepQuality").value;
   const energyRaw = $("stateEnergy").value;
   const moodRaw = $("stateMood").value;
+  const existing = (currentData.stateCheckins || []).find(entry => entry.slot === slot);
   return {
     slot,
-    energy: slot === "night" ? null : Number(energyRaw === "" ? 60 : energyRaw),
-    mood: slot === "night" ? null : Number(moodRaw === "" ? 60 : moodRaw),
-    load: slot === "night" ? "normal" : $("stateLoad").value,
-    body: "stable",
-    mind: "normal",
-    motivation: "available",
-    context: "normal",
-    support: "available",
-    emotion: slot === "night" ? "" : $("stateEmotion").value,
+    energy: Number(energyRaw === "" ? 60 : energyRaw),
+    mood: Number(moodRaw === "" ? 60 : moodRaw),
     primaryRole: currentData.role,
-    responsibilitySource: "role",
-    responsibility: "",
-    urgency: "medium",
-    impact: "medium",
-    flexibility: "medium",
-    conflict: "no",
     hydrationMl: Math.max(0, Number(currentData.water || 0)),
-    nutritionScore: mealContextScore(slot),
     sleepQualityScore: slot === "night" ? (nightSleep === "" ? "" : Number(nightSleep)) : "",
     dreamCategory: slot === "night" ? $("stateDreamCategory").value : "",
     dreamNote: slot === "night" ? $("stateDreamNote").value.trim() : "",
-    selectedFrameworkKey: $("stateSelectedFramework").value,
-    frameworkOverrideReason: $("stateFrameworkReason").value.trim(),
     time: $("stateTime").value || currentClockTime(),
-    note: slot === "night" ? "" : $("stateNote").value.trim()
+    // Frühere Felder bleiben erhalten, damit alte Tage unverändert bestehen –
+    // für die Modusberechnung werden sie nicht mehr gelesen.
+    ...(existing ? {
+      load: existing.load,
+      emotion: existing.emotion,
+      note: existing.note,
+      selectedFrameworkKey: existing.selectedFrameworkKey,
+      frameworkOverrideReason: existing.frameworkOverrideReason
+    } : {})
   };
 }
 
-function updateFrameworkOverrideVisibility(recommendedKey) {
-  const selected = $("stateSelectedFramework").value;
-  const changed = Boolean(selected && recommendedKey && selected !== recommendedKey);
-  $("frameworkOverrideReasonWrap").hidden = !changed;
-  $("stateFrameworkReason").required = changed;
-  if (!changed) $("stateFrameworkReason").setCustomValidity("");
-}
 
-function updateStateCheckinPreview(preferredFrameworkKey = null) {
+function updateStateCheckinPreview() {
   if (!$("stateEnergy")) return;
   const draft = stateCheckinFromForm();
-  const recommended = recommendedFrameworkForCheckin(draft);
-  if (!recommended) return;
-  if (preferredFrameworkKey !== null) {
-    const validPreferred = FRAMEWORKS.some(item => item.key === preferredFrameworkKey);
-    $("stateSelectedFramework").value = validPreferred ? preferredFrameworkKey : recommended.key;
-    $("stateCheckinDialog").dataset.frameworkManuallySelected = validPreferred && preferredFrameworkKey !== recommended.key ? "true" : "false";
-  } else if ($("stateCheckinDialog").dataset.frameworkManuallySelected !== "true") {
-    $("stateSelectedFramework").value = recommended.key;
-  }
-  const selected = FRAMEWORKS.find(item => item.key === $("stateSelectedFramework").value) || recommended;
-  draft.selectedFrameworkKey = selected.key;
   const framework = frameworkForCheckin(draft);
   $("stateEnergyValue").textContent = `${draft.energy ?? 0} %`;
   $("stateMoodValue").textContent = `${draft.mood ?? 0} %`;
-  $("stateFrameworkPreviewText").style.setProperty("--framework-color", framework.color);
-  $("stateFrameworkPreviewText").style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
-  $("stateFrameworkPreviewText").style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
-  $("stateFrameworkPreviewText").innerHTML = `<strong>${framework.icon} ${escapeHTML(framework.label)}</strong><span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>${framework.isOverride ? `<small>Systemempfehlung: ${escapeHTML(recommended.label)}</small>` : ""}`;
-  updateFrameworkOverrideVisibility(recommended.key);
-  $("stateCheckinDialog").dataset.recommendedFramework = recommended.key;
+  if (!framework) return;
+  const role = dayRoleConfig(selectedDate);
+  const preview = $("stateFrameworkPreviewText");
+  preview.style.setProperty("--framework-color", framework.color);
+  preview.style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
+  preview.style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
+  preview.innerHTML = `<strong>${framework.icon} ${escapeHTML(role.roleName)} · ${escapeHTML(framework.label)}</strong>`
+    + `<span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>`
+    + `<small>${escapeHTML(stateCauseSentence(draft, currentData, framework))}</small>`;
 }
 
 function saveStateCheckin(event) {
@@ -1205,15 +1419,7 @@ function saveStateCheckin(event) {
   const entry = stateCheckinFromForm();
   const recommended = recommendedFrameworkForCheckin(entry);
   entry.recommendedFrameworkKey = recommended?.key || "";
-  if (entry.selectedFrameworkKey && recommended && entry.selectedFrameworkKey !== recommended.key && !entry.frameworkOverrideReason) {
-    $("stateFrameworkReason").setCustomValidity("Bitte begründe kurz, warum ein anderer Rollenmodus besser passt.");
-    $("frameworkOverrideReasonWrap").hidden = false;
-    $("stateFrameworkReason").reportValidity();
-    $("stateFrameworkReason").focus();
-    return;
-  }
-  $("stateFrameworkReason").setCustomValidity("");
-  const existing = (currentData.stateCheckins || []).find(item => item.slot === entry.slot);
+    const existing = (currentData.stateCheckins || []).find(item => item.slot === entry.slot);
   entry.id = existing?.id || `state-${selectedDate}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
   entry.createdAt = existing?.createdAt || `${selectedDate}T${entry.time}:00`;
   currentData.stateCheckins = [...(currentData.stateCheckins || []).filter(item => item.slot !== entry.slot), entry]
@@ -1358,13 +1564,15 @@ function renderPrayers() {
     sunnahList.innerHTML = SUNNAH_PRAYERS.map(prayer => {
       const state = currentData.sunnahPrayers?.[prayer] || "";
       const meta = SUNNAH_PRAYER_STATES.find(option => option.value === state) || SUNNAH_PRAYER_STATES[0];
-      return `<button type="button" class="sunnah-prayer-chip state-${state === "Verrichtet" ? "done" : state === "Nicht vorgesehen" ? "neutral" : "open"}" data-open-prayer="${escapeHTML(prayer)}" data-prayer-kind="sunnah" aria-label="${escapeHTML(prayer)}: ${escapeHTML(meta.label)}"><span>${state === "Verrichtet" ? "✓" : state === "Nicht vorgesehen" ? "–" : "○"}</span><strong>${escapeHTML(prayer)}</strong><small>${escapeHTML(meta.short)}</small></button>`;
+      // Antippen wechselt unmittelbar zum nächsten Status – wie bei den Routinen.
+      return `<button type="button" class="sunnah-prayer-chip state-${state === "Verrichtet" ? "done" : state === "Nicht vorgesehen" ? "neutral" : "open"}" data-cycle-sunnah="${escapeHTML(prayer)}" aria-label="${escapeHTML(prayer)}: ${escapeHTML(meta.label)}. Antippen für den nächsten Status."><span>${state === "Verrichtet" ? "✓" : state === "Nicht vorgesehen" ? "–" : "○"}</span><strong>${escapeHTML(prayer)}</strong><small>${escapeHTML(meta.short)}</small></button>`;
     }).join("");
     const done = SUNNAH_PRAYERS.filter(prayer => currentData.sunnahPrayers?.[prayer] === "Verrichtet").length;
     if ($("sunnahPrayerSummary")) $("sunnahPrayerSummary").textContent = done ? `${done} verrichtet` : "Noch nichts erfasst";
   }
 
   document.querySelectorAll("[data-open-prayer]").forEach(button => button.addEventListener("click", () => openPrayerDialog(button.dataset.openPrayer, button.dataset.prayerKind || "obligatory")));
+  document.querySelectorAll("[data-cycle-sunnah]").forEach(button => button.addEventListener("click", () => cycleSunnahPrayer(button.dataset.cycleSunnah)));
 }
 
 function openPrayerDialog(prayer, kind = "obligatory") {
@@ -1525,8 +1733,39 @@ function renderStreaks() {
    Sieben Tage bis einschließlich des gewählten Datums. Die Auswertung bleibt
    beschreibend: keine Erfolgsquote, kein Gesamtscore, keine Bewertung.
    -------------------------------------------------------------------------- */
-function weekDates(endDate = selectedDate) {
-  return Array.from({ length: 7 }, (_, index) => addDays(endDate, index - 6));
+/* Immer eine vollständige Kalenderwoche, Montag bis Sonntag.
+   weekOffset zählt Wochen zurück; 0 ist die Woche des gewählten Tages.
+   Zukünftige Wochen sind nicht erreichbar (siehe shiftWeek). */
+let weekOffset = 0;
+
+function weekDates(reference = selectedDate, offset = weekOffset) {
+  const monday = addDays(mondayOf(reference), offset * 7);
+  return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
+}
+
+// Laune eines Tages: Mittel der erfassten Tages-Check-ins.
+function dailyAverageMood(data) {
+  const values = (data?.stateCheckins || [])
+    .filter(entry => entry.mood !== null && entry.mood !== undefined)
+    .map(entry => clamp(Number(entry.mood), 0, 100));
+  if (!values.length) return null;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+// Morgen- und Abendroutine eines Tages, in genau dieser Reihenfolge.
+function dailyRoutineStates(data) {
+  return [data?.morningRoutineState || "", data?.eveningRoutineState || ""];
+}
+
+function shiftWeek(delta) {
+  const next = weekOffset + delta;
+  // Nicht über die aktuelle Kalenderwoche hinaus.
+  if (next > 0) return false;
+  const limit = -520;
+  if (next < limit) return false;
+  weekOffset = next;
+  renderStats();
+  return true;
 }
 
 // Energie eines Tages: Mittel der erfassten Tages-Check-ins (die Nacht trägt
@@ -1639,7 +1878,7 @@ function buildPrayerWeekPanel(labels, counts) {
     return `<div class="prayer-week-day">
       <small>${escapeHTML(label)}</small>
       <div class="prayer-week-dots">${dots}</div>
-      <b>${count === null || count === undefined ? "–" : `${count}/${PRAYERS.length}`}</b>
+      <b>${count === null || count === undefined ? "–" : `${count}/${PRAYERS.length}${count === PRAYERS.length ? '<span class="prayer-star" aria-label="alle fünf">★</span>' : ""}`}</b>
     </div>`;
   }).join("");
   return `<div class="prayer-week-panel">
@@ -1654,18 +1893,52 @@ function renderStats() {
   const reviews = dates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
   const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
   const energy = reviews.map(item => item.stored ? dailyAverageEnergy(item.data) : null);
-  const load = reviews.map(item => item.stored ? dailyAverageLoad(item.data) : null);
+  const mood = reviews.map(item => item.stored ? dailyAverageMood(item.data) : null);
   const prayerCounts = reviews.map(item => item.stored ? dailyPrayerProgress(item.data).count : null);
-  // 0/5 = 0 %, 1/5 = 20 % … 5/5 = 100 % – gleiche Skala wie Energie und Belastung.
+  // 0/5 = 0 %, 1/5 = 20 % … 5/5 = 100 % – gleiche Skala wie Energie und Laune.
   const prayerPercent = prayerCounts.map(count => count === null ? null : Math.round(count / PRAYERS.length * 100));
-  $("weekLabel").textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
+  const routineStates = reviews.map(item => item.stored ? dailyRoutineStates(item.data) : ["", ""]);
+  const today = todayISO();
+
+  const label = $("weekLabel");
+  // Kurz halten: neben der Überschrift steht auf schmalen Geräten wenig Platz.
+  if (label) label.textContent = weekOffset === 0 && dates.includes(today)
+    ? "Diese Woche"
+    : `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
+
+  const range = $("weekRange");
+  if (range) range.textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
+  const back = $("weekBack");
+  const forward = $("weekForward");
+  if (back) back.disabled = false;
+  if (forward) forward.disabled = weekOffset >= 0;
+
   $("statsGrid").innerHTML = `
     ${buildWeeklyTrendChart(labels, [
       { label: "Energie", className: "energy", values: energy },
-      { label: "Belastung", className: "load", values: load },
+      { label: "Laune", className: "mood", values: mood },
       { label: "Pflichtgebete", className: "prayers", values: prayerPercent }
-    ], { todayIndex: dates.indexOf(todayISO()) })}
-    ${buildPrayerWeekPanel(labels, prayerCounts)}`;
+    ], { todayIndex: dates.indexOf(today) })}
+    ${buildPrayerWeekPanel(labels, prayerCounts)}
+    ${buildRoutineWeekPanel(labels, routineStates)}`;
+}
+
+/* Zweite Wochenübersicht direkt unter den Gebeten: zwei Punkte pro Tag.
+   Erster Punkt Morgenroutine, zweiter Punkt Abendroutine – ohne Beschriftung. */
+function buildRoutineWeekPanel(labels, states) {
+  const days = labels.map((label, index) => {
+    const pair = states[index] || ["", ""];
+    const dots = pair.map(state =>
+      `<i class="${state === "done" || state === "responsiblySkipped" ? "filled" : ""}"></i>`).join("");
+    return `<div class="routine-week-day">
+      <small>${escapeHTML(label)}</small>
+      <div class="routine-week-dots">${dots}</div>
+    </div>`;
+  }).join("");
+  return `<div class="routine-week-panel">
+    <span class="panel-caption">Routinen pro Tag</span>
+    <div class="routine-week-grid">${days}</div>
+  </div>`;
 }
 
 function getAllReviews() {
@@ -1966,7 +2239,7 @@ function renderSessionRoutineEditor() {
   const editor = $('sessionRoutineEditor');
   if (editor) editor.dataset.currentItemId = currentId || '';
 
-  $('sessionRoutineItemList').innerHTML = routine.items.map((item, index) => {
+  $('sessionRoutineItemList').innerHTML = sessionItems().map((item, index) => {
     const state = currentData.routineProgress?.[routineSession.key]?.[item.id] || '';
     const stateLabel = item.id === currentId ? 'läuft gerade' : state === 'done' ? 'erledigt' : state === 'skipped' ? 'übersprungen' : '';
     return `<div class="session-editor-item ${item.id === currentId ? 'is-current' : ''}" data-session-item-id="${escapeHTML(item.id)}">
@@ -2027,10 +2300,10 @@ function bindSessionEditorReordering() {
         try { handle.releasePointerCapture?.(pointerId); } catch (_) {}
 
         const order = [...list.querySelectorAll('.session-editor-item')].map(entry => entry.dataset.sessionItemId);
-        const byId = new Map(routines[routineSession.key].items.map(item => [item.id, item]));
-        routines[routineSession.key].items = order.map(id => byId.get(id)).filter(Boolean);
-        routineSession.index = Math.max(0, routines[routineSession.key].items.findIndex(item => item.id === currentItemId));
-        saveRoutines();
+        const byId = new Map(sessionItems().map(item => [item.id, item]));
+        // Nur die Session-Kopie wird neu geordnet – das Template bleibt unberührt.
+        routineSession.items = order.map(id => byId.get(id)).filter(Boolean);
+        routineSession.index = Math.max(0, routineSession.items.findIndex(item => item.id === currentItemId));
         persistRoutineSession();
         renderRoutineSession();
         renderSessionRoutineEditor();
@@ -2047,11 +2320,11 @@ function bindSessionEditorReordering() {
 
 function startSessionItemById(itemId) {
   if (!routineSession) return;
-  const routine = routines[routineSession.key];
-  const index = routine?.items.findIndex(item => item.id === itemId) ?? -1;
+  const items = sessionItems();
+  const index = items.findIndex(item => item.id === itemId);
   if (index < 0) return;
 
-  const item = routine.items[index];
+  const item = items[index];
   routineSession.index = index;
   routineSession.remaining = Math.round(Number(item.minutes || 0) * 60);
   routineSession.running = true;
@@ -2157,15 +2430,46 @@ function startRoutine(key) {
     index = 0;
   }
   const remaining = Math.round(routine.items[index].minutes * 60);
-  routineSession = { key, index, remaining, running: true, endAt: Date.now() + remaining * 1000, interval: null, contextOpen: true, expiredNotified: false };
+  // Die Session arbeitet auf einer Kopie. Umsortieren während des Durchlaufs
+  // verändert damit ausschließlich diesen Durchlauf, nie das gespeicherte
+  // Routine-Template. Dauerhafte Änderungen laufen über "Routine bearbeiten".
+  routineSession = { key, index, remaining, running: true, endAt: Date.now() + remaining * 1000, interval: null, contextOpen: true, expiredNotified: false,
+    items: (routines[key]?.items || []).map(item => ({ ...item })) };
   persistRoutineSession();
   $("routineSessionDialog").showModal();
   renderRoutineSession();
   startSessionInterval();
 }
 
+/* Schritte des laufenden Durchlaufs. Fällt auf das Template zurück, damit
+   Sessions aus früheren Versionen ohne eigene Kopie weiterhin laufen. */
+function sessionItems() {
+  if (!routineSession) return [];
+  if (Array.isArray(routineSession.items) && routineSession.items.length) return routineSession.items;
+  return routines[routineSession.key]?.items || [];
+}
+
+/* Verbleibende Dauer und voraussichtliche Endzeit.
+   Wird bei jedem Rendern neu berechnet – also auch nach Erledigen,
+   Überspringen, Umsortieren und Zeitänderung. */
+function sessionRemainingSummary() {
+  if (!routineSession) return null;
+  const items = sessionItems();
+  const progress = currentData?.routineProgress?.[routineSession.key] || {};
+  // Laufender Schritt: tatsächliche Restzeit. Danach: geplante Dauer.
+  const upcoming = items.slice(routineSession.index + 1)
+    .filter(item => !progress[item.id])
+    .reduce((sum, item) => sum + Number(item.minutes || 0) * 60, 0);
+  const totalSeconds = Math.max(0, Math.round(routineSession.remaining)) + upcoming;
+  const end = new Date(Date.now() + totalSeconds * 1000);
+  return {
+    minutes: Math.max(0, Math.round(totalSeconds / 60)),
+    endLabel: `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`
+  };
+}
+
 function currentSessionItem() {
-  return routines[routineSession.key].items[routineSession.index];
+  return sessionItems()[routineSession.index];
 }
 
 function renderRoutineSession() {
@@ -2176,15 +2480,19 @@ function renderRoutineSession() {
   if (!routine || !item) return;
   $("routineSessionDialog").dataset.theme = routine.theme || "focus";
   $("sessionRoutineName").textContent = routine.title;
-  $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${routine.items.length}`;
+  const items = sessionItems();
+  $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${items.length}`;
   $("sessionItemTitle").textContent = item.title;
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
   $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
   $("sessionContext").hidden = !item.context;
   $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
-  const next = routine.items[routineSession.index + 1];
+  const next = items[routineSession.index + 1];
   $("sessionNext").textContent = next ? `Als Nächstes: ${next.title}` : "Letzter Schritt dieser Routine";
+  const rest = sessionRemainingSummary();
+  const restEl = $("sessionRemaining");
+  if (restEl && rest) restEl.textContent = `Noch ${rest.minutes} Min. · ca. ${rest.endLabel} Uhr fertig`;
   const editor = $("sessionRoutineEditor");
   if (editor && !editor.hidden && editor.dataset.currentItemId !== item.id) renderSessionRoutineEditor();
 }
@@ -2300,11 +2608,14 @@ function completeSessionItem(status) {
   syncRoutineSessionClock();
   const key = routineSession.key;
   const routine = routines[key];
+  // Die Abfolge richtet sich nach der Session-Kopie, damit ein Umsortieren
+  // während des Durchlaufs auch tatsächlich die Reihenfolge bestimmt.
+  const items = sessionItems();
   const item = currentSessionItem();
   currentData.routineProgress[key][item.id] = status;
   const nextIndex = routineSession.index + 1;
-  if (nextIndex >= routine.items.length) {
-    const allDone = routine.items.every(entry => currentData.routineProgress[key][entry.id] === "done");
+  if (nextIndex >= items.length) {
+    const allDone = items.every(entry => currentData.routineProgress[key][entry.id] === "done");
     if (key === "morning") currentData.morningRoutineState = allDone ? "done" : "responsiblySkipped";
     else if (key === "evening") currentData.eveningRoutineState = allDone ? "done" : "responsiblySkipped";
     saveReview(true);
@@ -2313,7 +2624,7 @@ function completeSessionItem(status) {
     return;
   }
   routineSession.index = nextIndex;
-  routineSession.remaining = Math.round(routine.items[nextIndex].minutes * 60);
+  routineSession.remaining = Math.round(Number(items[nextIndex].minutes || 0) * 60);
   routineSession.running = true;
   routineSession.endAt = Date.now() + routineSession.remaining * 1000;
   routineSession.expiredNotified = false;
@@ -2392,8 +2703,6 @@ function initOptions() {
   $("dayRole").innerHTML = roleOptions;
   $("activityRole").innerHTML = roleOptions;
   $("stateSlot").innerHTML = CHECKIN_SLOTS.map(slot => `<option value="${slot.key}">${slot.icon} ${escapeHTML(slot.label)}</option>`).join("");
-  populateStateCheckinEmotion();
-  $("stateSelectedFramework").innerHTML = FRAMEWORKS.map(item => `<option value="${item.key}">${escapeHTML(item.label)}</option>`).join("");
   ["breakfast", "lunch", "dinner", "snack"].forEach(key => { if ($(`${key}Category`)) $(`${key}Category`).innerHTML = mealCategoryOptionsHTML(); });
   if ($("stateSleepQuality")) $("stateSleepQuality").innerHTML = `<option value="">Nicht erfasst</option>${SLEEP_CHOICES.map(value => `<option value="${value}">${escapeHTML(SLEEP_LABELS[value] || "-")}</option>`).join("")}`;
   if ($("stateDreamCategory")) $("stateDreamCategory").innerHTML = DREAM_CATEGORIES.map(([value, label]) => `<option value="${escapeHTML(value)}">${escapeHTML(label)}</option>`).join("");
@@ -2484,9 +2793,9 @@ function bindEvents() {
   $("cancelStateCheckin").addEventListener("click", () => $("stateCheckinDialog").close());
   $("stateCheckinDialog").addEventListener("cancel", event => { event.preventDefault(); $("stateCheckinDialog").close(); });
   $("stateCheckinForm").addEventListener("submit", saveStateCheckin);
-  ["stateEnergy", "stateMood", "stateEmotion", "stateSleepQuality", "stateDreamCategory", "stateDreamNote", "stateNote", "stateFrameworkReason"].forEach(id => {
+  ["stateEnergy", "stateMood", "stateSleepQuality", "stateDreamCategory", "stateDreamNote"].forEach(id => {
     if (!$(id)) return;
-    $(id).addEventListener(["stateEnergy", "stateMood", "stateDreamNote", "stateNote", "stateFrameworkReason"].includes(id) ? "input" : "change", () => updateStateCheckinPreview());
+    $(id).addEventListener(["stateEnergy", "stateMood", "stateDreamNote"].includes(id) ? "input" : "change", () => updateStateCheckinPreview());
   });
   const changeWater = delta => {
     currentData.water = String(Math.max(0, Math.min(10000, Number(currentData.water || 0) + delta)));
@@ -2494,16 +2803,11 @@ function bindEvents() {
     saveReview(true);
     renderStateOverview();
   };
+  if ($("weekBack")) $("weekBack").addEventListener("click", () => shiftWeek(-1));
+  if ($("weekForward")) $("weekForward").addEventListener("click", () => shiftWeek(1));
+  bindWeekSwipe();
   if ($("waterMinus")) $("waterMinus").addEventListener("click", () => changeWater(-500));
   if ($("waterPlus")) $("waterPlus").addEventListener("click", () => changeWater(500));
-  $("stateSelectedFramework").addEventListener("change", () => {
-    $("stateCheckinDialog").dataset.frameworkManuallySelected = "true";
-    updateStateCheckinPreview();
-  });
-  document.querySelectorAll("[data-state-load]").forEach(button => button.addEventListener("click", () => {
-    renderLoadChoices(button.dataset.stateLoad);
-    updateStateCheckinPreview();
-  }));
   document.querySelectorAll("[data-routine-cycle]").forEach(button => button.addEventListener("click", () => cycleRoutineState(button.dataset.routineCycle)));
   document.querySelectorAll("[data-review-open-routine]").forEach(button => button.addEventListener("click", () => {
     switchPage("routines");
@@ -2584,3 +2888,47 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+/* Sunnah-Gebete: zyklischer Wechsel durch die vorhandenen Statuswerte.
+   Die bestehende Datenstruktur bleibt unverändert – gespeichert werden
+   weiterhin genau die Werte aus SUNNAH_PRAYER_STATES. */
+function cycleSunnahPrayer(prayer) {
+  if (!currentData) return;
+  currentData.sunnahPrayers = currentData.sunnahPrayers || {};
+  const order = SUNNAH_PRAYER_STATES.map(item => item.value);
+  const current = currentData.sunnahPrayers[prayer] || "";
+  const next = order[(order.indexOf(current) + 1 + order.length) % order.length];
+  currentData.sunnahPrayers[prayer] = next;
+  saveReview(true);
+  renderPrayers();
+}
+
+/* Horizontales Blättern durch Kalenderwochen.
+   Eine Wischbewegung entspricht genau einer Woche; über die aktuelle
+   Kalenderwoche hinaus wird nicht navigiert (siehe shiftWeek). */
+function bindWeekSwipe() {
+  const area = $("statsSwipe");
+  if (!area || area.dataset.swipeBound === "true") return;
+  area.dataset.swipeBound = "true";
+  let startX = 0, startY = 0, active = false;
+
+  area.addEventListener("pointerdown", event => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    startX = event.clientX; startY = event.clientY; active = true;
+  });
+
+  area.addEventListener("pointerup", event => {
+    if (!active) return;
+    active = false;
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+    // Nur eindeutig horizontale Bewegungen zählen, damit Scrollen nicht stört.
+    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+    const moved = shiftWeek(dx > 0 ? -1 : 1);
+    if (moved) area.animate(
+      [{ opacity: .45, transform: `translateX(${dx > 0 ? 14 : -14}px)` }, { opacity: 1, transform: "none" }],
+      { duration: 190, easing: "ease-out" });
+  });
+
+  area.addEventListener("pointercancel", () => { active = false; });
+}

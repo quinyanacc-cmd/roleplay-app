@@ -63,6 +63,8 @@
   --energy-chart: #183E96;
   --load-chart: #E04F59;
   --prayer-chart: #59D7F7;
+  --mood-chart: #7A5BF0;
+  --routine-red: #E0555F;
   --glow-blue: rgba(68,125,255,.28);
   --glow-turquoise: rgba(31,215,208,.32);
   --glow-red: rgba(224,79,89,.25);
@@ -602,9 +604,10 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
    -------------------------------------------------------------------------- */
 .checkin-slots {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--sp-2);
+  place-items: center;
+  margin-bottom: var(--sp-4);
 }
+
 .checkin-slot {
   display: flex;
   align-items: center;
@@ -1116,7 +1119,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 /* --------------------------------------------------------------------------
    12. 7-Tage-Verlauf
    -------------------------------------------------------------------------- */
-.week-label { flex: 0 0 auto; color: var(--muted); font-size: var(--fs-small); font-weight: 650; }
+.week-label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: var(--fs-small); font-weight: 650; text-align: right; }
 .stats-grid { display: grid; gap: var(--sp-3); }
 
 .trend-panel {
@@ -1141,6 +1144,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 .trend-legend i { width: 14px; height: 3px; border-radius: 3px; background: currentColor; }
 .trend-legend .energy { color: var(--energy-chart); }
 .trend-legend .load { color: var(--load-chart); }
+.trend-legend .mood { color: var(--mood-chart); }
 .trend-legend .prayers { color: var(--prayer-chart); }
 
 .trend-chart { display: block; width: 100%; height: auto; aspect-ratio: 44 / 25; overflow: visible; }
@@ -1155,9 +1159,11 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 .wellbeing-dot.today { stroke: var(--card-solid); stroke-width: 1.6; }
 .wellbeing-line.energy { stroke: var(--energy-chart); filter: drop-shadow(0 0 3px var(--glow-blue)); }
 .wellbeing-line.load { stroke: var(--load-chart); filter: drop-shadow(0 0 3px var(--glow-red)); }
+.wellbeing-line.mood { stroke: var(--mood-chart); filter: drop-shadow(0 0 3px rgba(122,91,240,.32)); }
 .wellbeing-line.prayers { stroke: var(--prayer-chart); filter: drop-shadow(0 0 3px rgba(89,215,247,.35)); }
 .wellbeing-dot.energy { fill: var(--energy-chart); }
 .wellbeing-dot.load { fill: var(--load-chart); }
+.wellbeing-dot.mood { fill: var(--mood-chart); }
 .wellbeing-dot.prayers { fill: var(--prayer-chart); }
 
 .trend-note { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--muted); line-height: 1.4; }
@@ -1266,8 +1272,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   justify-content: space-between;
   gap: var(--sp-3);
   width: 100%;
-  min-height: 152px;
-  padding: var(--sp-4);
+  min-height: 118px;
+  padding: var(--sp-3) var(--sp-4);
   border: 0;
   border-radius: var(--r-card);
   overflow: hidden;
@@ -1279,18 +1285,34 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 }
 .routine-hero.morning { background: url('./morning-header.png') center/cover no-repeat; }
 .routine-hero.evening { background: url('./evening-header.png') center/cover no-repeat; }
+/* Der Verlauf muss ÜBER dem Bild liegen, sonst ist weiße Schrift auf dem
+   hellen Morgenbild unlesbar. Zuvor lag er wegen z-index:-1 dahinter. */
 .routine-hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: -1;
-  background: linear-gradient(180deg, rgba(10,14,26,.05), rgba(10,14,26,.5));
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(10,14,26,.10) 0%, rgba(10,14,26,.42) 55%, rgba(10,14,26,.66) 100%);
 }
+/* Inhalte über den Verlauf heben. */
+.routine-hero-top,
+.routine-hero-play { position: relative; z-index: 1; }
 .routine-thread { display: none; }
 .routine-hero-top { min-width: 0; }
-.routine-hero-top h2 { margin: 0; font-size: var(--fs-h2); text-shadow: 0 1px 6px rgba(0,0,0,.4); }
+.routine-hero-top h2 { margin: 0; font-size: var(--fs-h3); text-shadow: 0 1px 5px rgba(0,0,0,.45); }
 .routine-hero-top p { margin-top: 2px; font-size: var(--fs-small); opacity: .9; text-shadow: 0 1px 6px rgba(0,0,0,.4); }
 
+.routine-hero-play {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+  background: rgba(255,255,255,.94);
+  color: #1C2233;
+  border: 0;
+  box-shadow: 0 4px 14px rgba(10,14,26,.28);
+}
 .routine-hero-play,
 .round-play-button {
   flex: 0 0 auto;
@@ -1766,3 +1788,91 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 @media (max-width: 390px) {
   .streak-daily-actions { grid-template-columns: 1fr; }
 }
+
+/* --------------------------------------------------------------------------
+   Tageskreis
+   Vier Segmente, jedes ein eigenes Bedienelement. Ohne Check-in bleibt das
+   Segment neutral; erst der gespeicherte Eintrag bringt die Modusfarbe.
+   -------------------------------------------------------------------------- */
+.day-ring { width: min(220px, 62vw); height: auto; overflow: visible; }
+.day-ring-segment { cursor: pointer; outline: none; }
+.day-ring-shape {
+  fill: var(--field-2);
+  stroke: var(--line);
+  stroke-width: 1;
+  transition: fill .22s ease, stroke .22s ease, filter .22s ease;
+}
+.day-ring-segment.is-filled .day-ring-shape {
+  fill: var(--seg-soft, var(--tint-accent));
+  stroke: var(--seg-strong, var(--accent));
+  filter: drop-shadow(0 0 6px var(--seg-soft, transparent));
+}
+.day-ring-segment:active .day-ring-shape { fill: var(--tint-neutral); }
+.day-ring-segment:focus-visible .day-ring-shape { stroke: var(--accent); stroke-width: 2.2; }
+.day-ring-icon { font-size: 19px; pointer-events: none; }
+.day-ring-center-value {
+  fill: var(--text);
+  font-size: 21px;
+  font-weight: 750;
+}
+.day-ring-center-label { fill: var(--muted); font-size: 11px; }
+
+/* Wochennavigation über dem Verlauf */
+.week-nav {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.week-nav .icon-button { width: 38px; height: 38px; }
+.week-nav-hint { text-align: center; font-size: var(--fs-small); font-weight: 650; color: var(--text); }
+.week-nav button[disabled] { opacity: .35; }
+.stats-swipe { touch-action: pan-y; }
+
+/* Zweite Wochenübersicht: zwei Punkte je Tag, ohne Beschriftung. */
+.routine-week-panel {
+  margin-top: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--r-field);
+  border: 1px solid var(--line);
+  background: var(--field-2);
+}
+.routine-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-1); }
+.routine-week-day { display: grid; justify-items: center; gap: 5px; }
+.routine-week-day small { font-size: var(--fs-tiny); color: var(--muted); }
+.routine-week-dots { display: grid; gap: 4px; justify-items: center; }
+.routine-week-dots i {
+  width: 8px; height: 8px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+.routine-week-dots i.filled { background: var(--routine-red, #E0555F); border-color: var(--routine-red, #E0555F); }
+
+/* Stern bei fünf von fünf Pflichtgebeten – dezent und ausschließlich positiv. */
+.prayer-week-day b .prayer-star { margin-left: 2px; color: var(--prayer-chart); }
+
+/* Dankbarkeit ohne Leitfragen: die Felder tragen keine sichtbare Beschriftung. */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.priority-label { color: var(--muted); }
+
+/* Restdauer und voraussichtliche Endzeit der laufenden Routine */
+.session-remaining {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-small);
+  font-weight: 650;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* Hauptüberschriften: etwas kleiner, damit sie auf schmalen Geräten sauber sitzen. */
+.app-header h1 { font-size: clamp(18px, 5.2vw, 21px); }
