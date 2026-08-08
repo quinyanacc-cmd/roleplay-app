@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.3.0";
+const APP_VERSION = "5.4.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1206,57 +1206,161 @@ function latestStateCheckin(data = currentData) {
 /* Kreisförmige Tagesdarstellung mit vier Segmenten.
    Jedes Segment ist eine echte Schaltfläche und öffnet den jeweiligen
    Check-in – der Kreis ersetzt die früheren Karten also auch funktional. */
+/* ==========================================================================
+   ROLEPLAY STATE CYCLE
+   Kein Fortschrittsring, sondern ein vollständiger Tageszyklus.
+
+   Die vier Tagesphasen laufen im Uhrzeigersinn:
+     oben links   Nacht    (180°–270°)
+     oben rechts  Morgen   (270°–360°)
+     unten rechts Mittag   (0°–90°)
+     unten links  Abend    (90°–180°)
+
+   Die Farbwelten sind so gewählt, dass sie ineinander übergehen: das Ende
+   jeder Phase liegt nahe am Anfang der nächsten, und Abend läuft zurück in
+   die Nacht. Dadurch liest sich der Ring als EIN Zyklus, nicht als vier
+   eingefärbte Buttons.
+
+   Eine Phase ohne Zustandsaufnahme bleibt gedämpft. "Beleuchtet" bedeutet
+   ausdrücklich nicht "erledigt", sondern: für diese Phase liegt eine
+   Zustandsaufnahme vor.
+   ========================================================================== */
+
+const CYCLE_PHASES = {
+  night:   { short: "Nacht",  from: 180, a: "#22306B", mid: "#2E3579", b: "#3B3486" },
+  morning: { short: "Morgen", from: 270, a: "#DE7369", mid: "#EB9668", b: "#F4BA6B" },
+  // Der Mittelton führt den Mittag über ein warmes Cremeweiß statt über Grün.
+  midday:  { short: "Mittag", from: 0,   a: "#F6CE72", mid: "#F1E4B8", b: "#8CD8E8" },
+  evening: { short: "Abend",  from: 90,  a: "#B96BAE", mid: "#8C5BA6", b: "#5E4A9B" }
+};
+
+// Zeigerwinkel der aktuellen Uhrzeit: 03:00 liegt in der Mitte der Nacht (225°).
+function cycleAngleForTime(date = new Date()) {
+  const hours = date.getHours() + date.getMinutes() / 60;
+  return (225 + (hours - 3) * 15 + 360) % 360;
+}
+
+function polar(cx, cy, r, deg) {
+  const rad = deg * Math.PI / 180;
+  return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
+}
+
+// Ringsegment zwischen zwei Radien.
+function ringSegment(cx, cy, rOuter, rInner, from, to) {
+  const [x0, y0] = polar(cx, cy, rOuter, from);
+  const [x1, y1] = polar(cx, cy, rOuter, to);
+  const [x2, y2] = polar(cx, cy, rInner, to);
+  const [x3, y3] = polar(cx, cy, rInner, from);
+  const large = Math.abs(to - from) > 180 ? 1 : 0;
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter} ${rOuter} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
+       + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner} ${rInner} 0 ${large} 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
+}
+
+/* Abstrakte Phasenmarke statt Emoji: eine Horizontlinie mit einem Lichtkörper.
+   Dessen Höhe über dem Horizont erzählt die Tageszeit – unter dem Horizont
+   Nacht, aufsteigend Morgen, hoch stehend Mittag, absinkend Abend. */
+function phaseGlyph(key, x, y) {
+  const line = `<line class="cycle-glyph-horizon" x1="${x - 11}" y1="${y + 5}" x2="${x + 11}" y2="${y + 5}"></line>`;
+  if (key === "night") {
+    return `<g class="cycle-glyph">${line}
+      <circle class="cycle-glyph-body hollow" cx="${x}" cy="${y + 9}" r="4.2"></circle>
+      <circle class="cycle-glyph-spark" cx="${x - 8}" cy="${y - 4}" r="1"></circle>
+      <circle class="cycle-glyph-spark" cx="${x + 6}" cy="${y - 7}" r="1.3"></circle>
+      <circle class="cycle-glyph-spark" cx="${x + 1}" cy="${y - 1}" r=".9"></circle></g>`;
+  }
+  if (key === "morning") {
+    return `<g class="cycle-glyph">${line}
+      <path class="cycle-glyph-body" d="M${x - 5.4} ${y + 5} a5.4 5.4 0 0 1 10.8 0 Z"></path>
+      <line class="cycle-glyph-ray" x1="${x}" y1="${y - 8}" x2="${x}" y2="${y - 5}"></line></g>`;
+  }
+  if (key === "midday") {
+    return `<g class="cycle-glyph">${line}
+      <circle class="cycle-glyph-body" cx="${x}" cy="${y - 3}" r="4.4"></circle>
+      <line class="cycle-glyph-ray" x1="${x - 9}" y1="${y - 3}" x2="${x - 7}" y2="${y - 3}"></line>
+      <line class="cycle-glyph-ray" x1="${x + 7}" y1="${y - 3}" x2="${x + 9}" y2="${y - 3}"></line>
+      <line class="cycle-glyph-ray" x1="${x}" y1="${y - 12}" x2="${x}" y2="${y - 10}"></line></g>`;
+  }
+  return `<g class="cycle-glyph">${line}
+    <path class="cycle-glyph-body" d="M${x - 5.4} ${y + 5} a5.4 5.4 0 0 1 10.8 0 Z"></path>
+    <line class="cycle-glyph-ray" x1="${x + 8}" y1="${y - 1}" x2="${x + 10}" y2="${y + 1}"></line></g>`;
+}
+
 function renderCheckinSlots() {
   const container = $("checkinSlots");
   if (!container || !currentData) return;
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
 
-  const size = 200;
-  const c = size / 2;
-  const rOuter = 92;
-  const rInner = 52;
-  const gap = 0.045;              // kleine Lücke zwischen den Segmenten
+  const size = 240, c = size / 2;
+  const rOuter = 116, rInner = 66;
+  const gap = 1.6;                       // Grad – feine Trennung, kein harter Schnitt
 
-  const arc = (from, to) => {
-    const a0 = from + gap, a1 = to - gap;
-    const pt = (r, a) => [c + r * Math.cos(a), c + r * Math.sin(a)];
-    const [x0, y0] = pt(rOuter, a0), [x1, y1] = pt(rOuter, a1);
-    const [x2, y2] = pt(rInner, a1), [x3, y3] = pt(rInner, a0);
-    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter} ${rOuter} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
-         + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner} ${rInner} 0 0 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
-  };
+  const defs = [];
+  const paths = [];
+  const marks = [];
 
-  const quarter = Math.PI / 2;
-  const segments = CHECKIN_SLOTS.map((slot, index) => {
+  CHECKIN_SLOTS.forEach(slot => {
+    const phase = CYCLE_PHASES[slot.key];
     const entry = bySlot[slot.key];
     const framework = frameworkForCheckin(entry);
-    // Ohne Check-in bleibt das Segment neutral; sonst trägt es die Modusfarbe.
-    const color = framework?.color || "";
-    const from = -Math.PI / 2 + index * quarter;
-    const to = from + quarter;
-    const mid = (from + to) / 2;
-    const labelR = (rOuter + rInner) / 2;
-    const lx = c + labelR * Math.cos(mid);
-    const ly = c + labelR * Math.sin(mid);
-    const title = `${slot.label}: ${entry ? (framework?.label || "erfasst") : "noch offen"}`;
-    return `<g class="day-ring-segment ${entry ? "is-filled" : ""}" data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
-        aria-label="${escapeHTML(title)}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}."
-        style="${color ? `--seg-color:${color};--seg-soft:${hexToRgba(color, .30)};--seg-strong:${hexToRgba(color, .85)}` : ""}">
-      <title>${escapeHTML(title)}</title>
-      <path class="day-ring-shape" d="${arc(from, to)}"></path>
-      <text class="day-ring-icon" x="${lx.toFixed(1)}" y="${(ly + 7).toFixed(1)}" text-anchor="middle">${slot.icon}</text>
-    </g>`;
-  }).join("");
+    const from = phase.from + gap;
+    const to = phase.from + 90 - gap;
+    const mid = phase.from + 45;
 
-  const done = CHECKIN_SLOTS.filter(slot => bySlot[slot.key]).length;
-  container.innerHTML = `<svg class="day-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Vier Tages-Check-ins">
-      <defs><filter id="ringSoft" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="3.2"></feGaussianBlur>
-      </filter></defs>
-      ${segments}
-      <text class="day-ring-center-value" x="${c}" y="${c - 2}" text-anchor="middle">${done}/4</text>
-      <text class="day-ring-center-label" x="${c}" y="${c + 15}" text-anchor="middle">Check-ins</text>
+    // Verlauf entlang der Bogenrichtung, damit die Phasen ineinanderlaufen.
+    const [gx0, gy0] = polar(c, c, (rOuter + rInner) / 2, from);
+    const [gx1, gy1] = polar(c, c, (rOuter + rInner) / 2, to);
+    defs.push(`<linearGradient id="cyc-${slot.key}" gradientUnits="userSpaceOnUse"
+        x1="${gx0.toFixed(1)}" y1="${gy0.toFixed(1)}" x2="${gx1.toFixed(1)}" y2="${gy1.toFixed(1)}">
+      <stop offset="0" stop-color="${phase.a}"></stop>
+      <stop offset=".5" stop-color="${phase.mid || phase.a}"></stop>
+      <stop offset="1" stop-color="${phase.b}"></stop>
+    </linearGradient>`);
+
+    const [lx, ly] = polar(c, c, (rOuter + rInner) / 2, mid);
+    const label = phase.short;
+    paths.push(`<g class="cycle-phase ${entry ? "is-lit" : ""}" data-open-checkin-slot="${slot.key}"
+        role="button" tabindex="0"
+        aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}."
+        style="--phase-a:${phase.a};--phase-b:${phase.b}">
+      <path class="cycle-phase-shape" d="${ringSegment(c, c, rOuter, rInner, from, to)}" fill="url(#cyc-${slot.key})"></path>
+      <path class="cycle-phase-edge" d="${ringSegment(c, c, rOuter, rInner, from, to)}"></path>
+      ${phaseGlyph(slot.key, lx, ly - 9)}
+      <text class="cycle-phase-label" x="${lx.toFixed(1)}" y="${(ly + 19).toFixed(1)}" text-anchor="middle">${escapeHTML(label)}</text>
+    </g>`);
+  });
+
+  // Zeiger der aktuellen Tageszeit – nur am heutigen Tag.
+  if (selectedDate === todayISO()) {
+    const angle = cycleAngleForTime();
+    const [mx, my] = polar(c, c, rOuter + 7, angle);
+    marks.push(`<circle class="cycle-now" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="3.1"></circle>`);
+  }
+
+  const svg = `<svg class="cycle-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Tageszyklus mit vier Zustandsaufnahmen">
+      <defs>${defs.join("")}</defs>
+      <circle class="cycle-base" cx="${c}" cy="${c}" r="${(rOuter + rInner) / 2}" stroke-width="${rOuter - rInner}"></circle>
+      ${paths.join("")}
+      ${marks.join("")}
     </svg>`;
+
+  // Der Kern liegt als HTML über dem Ring – volle typografische Kontrolle.
+  const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot));
+  const latest = checkins.at(-1);
+  const framework = frameworkForCheckin(latest);
+  const role = dayRoleConfig(selectedDate);
+
+  const core = !latest || !framework
+    ? `<div class="cycle-core is-empty"><span class="cycle-core-hint">Noch kein Check-in</span></div>`
+    : `<div class="cycle-core" style="--mode-color:${framework.color}">
+        <span class="cycle-core-role">${escapeHTML(role.roleName)}</span>
+        <strong class="cycle-core-mode">${escapeHTML(framework.label)}</strong>
+        <div class="cycle-core-metrics">
+          <span class="cycle-metric energy"><i style="--fill:${latest.energy ?? 0}%"></i><b>${latest.energy ?? "–"} %</b>Energie</span>
+          <span class="cycle-metric mood"><i style="--fill:${latest.mood ?? 0}%"></i><b>${latest.mood ?? "–"} %</b>Laune</span>
+        </div>
+      </div>`;
+
+  container.innerHTML = `<div class="state-cycle ${latest ? "" : "is-dormant"}">${svg}${core}</div>`;
 
   const open = element => openStateCheckinDialog(element.dataset.openCheckinSlot);
   container.querySelectorAll("[data-open-checkin-slot]").forEach(element => {
@@ -1277,12 +1381,11 @@ function renderStateOverview() {
   const latest = [...checkins].at(-1);
   const framework = frameworkForCheckin(latest);
   const role = dayRoleConfig(selectedDate);
-  $("stateCheckinCount").textContent = `${checkins.length}/4 Check-ins`;
 
   if (!latest || !framework) {
     summary.className = "current-state-summary empty-state-summary compact-empty-state";
     summary.innerHTML = `<div class="empty-state-icon" aria-hidden="true">◇</div>`
-      + `<div><strong>Noch kein Check-in</strong><small>${escapeHTML(role.roleName)}</small></div>`;
+      + `<div><strong>Noch kein Check-in</strong></div>`;
   } else {
     summary.className = `current-state-summary compact-state-summary framework-${framework.key}`;
     summary.style.setProperty("--framework-color", framework.color);
@@ -1346,10 +1449,20 @@ function fillStateCheckinForm(slotKey) {
   const slot = checkinSlot(requestedSlot);
   $("stateCheckinDialog").dataset.editingSlot = requestedSlot;
   $("stateSlot").value = requestedSlot;
-  $("stateSlotDisplay").style.setProperty("--slot-color", slot.color);
-  $("stateSlotDisplay").style.setProperty("--slot-soft", hexToRgba(slot.color, .12));
-  $("stateSlotDisplay").style.setProperty("--slot-glow", hexToRgba(slot.color, .24));
-  $("stateSlotDisplay").innerHTML = `<span aria-hidden="true">${slot.icon}</span><strong>${escapeHTML(slot.label)}</strong><small>${requestedSlot === "night" ? "Schlaf und Zustand" : "kurzer Check-in"}</small>`;
+  // Der Dialog nimmt die Farbwelt der angetippten Tagesphase auf, damit er
+  // sich wie eine Fortsetzung der Zyklusdarstellung anfühlt.
+  const phase = CYCLE_PHASES[requestedSlot] || CYCLE_PHASES.morning;
+  const dialog = $("stateCheckinDialog");
+  dialog.dataset.phase = requestedSlot;
+  dialog.style.setProperty("--phase-a", phase.a);
+  dialog.style.setProperty("--phase-b", phase.b);
+  dialog.style.setProperty("--phase-veil", hexToRgba(phase.a, .13));
+  dialog.style.setProperty("--phase-veil-b", hexToRgba(phase.b, .10));
+  $("stateSlotDisplay").style.setProperty("--slot-color", phase.a);
+  $("stateSlotDisplay").style.setProperty("--slot-soft", hexToRgba(phase.a, .14));
+  $("stateSlotDisplay").style.setProperty("--slot-glow", hexToRgba(phase.b, .26));
+  $("stateSlotDisplay").innerHTML = `<span class="phase-mark" aria-hidden="true"><svg viewBox="0 0 40 30">${phaseGlyph(requestedSlot, 20, 15)}</svg></span>`
+    + `<strong>${escapeHTML(phase.short)}</strong><small>${requestedSlot === "night" ? "Schlaf und Zustand" : "Zustandsaufnahme"}</small>`;
   // Energie und Laune gelten für alle vier Check-ins, auch für die Nacht.
   $("stateEnergy").value = existing?.energy ?? latest?.energy ?? 60;
   $("stateMood").value = existing?.mood ?? latest?.mood ?? 60;
@@ -1870,6 +1983,15 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
   </div>`;
 }
 
+/* Kleines eigenes Stern-Symbol. Signalisiert ausschließlich, dass ein
+   Bereich an diesem Tag vollständig verantwortungsvoll abgeschlossen wurde –
+   keine Punktzahl, keine Bewertung, keine Gamification. */
+function achievementStar(label) {
+  return `<svg class="achievement-star" viewBox="0 0 24 24" role="img" aria-label="${escapeHTML(label)}">
+    <path d="M12 3.2l2.28 5.02 5.47.6-4.07 3.7 1.12 5.38L12 15.2l-4.8 2.7 1.12-5.38L4.25 8.82l5.47-.6z"></path>
+  </svg>`;
+}
+
 function buildPrayerWeekPanel(labels, counts) {
   const days = labels.map((label, index) => {
     const count = counts[index];
@@ -1878,7 +2000,7 @@ function buildPrayerWeekPanel(labels, counts) {
     return `<div class="prayer-week-day">
       <small>${escapeHTML(label)}</small>
       <div class="prayer-week-dots">${dots}</div>
-      <b>${count === null || count === undefined ? "–" : `${count}/${PRAYERS.length}${count === PRAYERS.length ? '<span class="prayer-star" aria-label="alle fünf">★</span>' : ""}`}</b>
+      <b class="week-mark">${count === PRAYERS.length ? achievementStar("Alle Pflichtgebete erfüllt") : ""}</b>
     </div>`;
   }).join("");
   return `<div class="prayer-week-panel">
@@ -1926,13 +2048,17 @@ function renderStats() {
 /* Zweite Wochenübersicht direkt unter den Gebeten: zwei Punkte pro Tag.
    Erster Punkt Morgenroutine, zweiter Punkt Abendroutine – ohne Beschriftung. */
 function buildRoutineWeekPanel(labels, states) {
+  // Verantwortungsvoll abgeschlossen heißt: tatsächlich durchgeführt ODER
+  // bewusst und gewissenhaft nicht durchgeführt. Beides zählt gleich.
+  const isSettled = state => state === "done" || state === "responsiblySkipped";
   const days = labels.map((label, index) => {
     const pair = states[index] || ["", ""];
-    const dots = pair.map(state =>
-      `<i class="${state === "done" || state === "responsiblySkipped" ? "filled" : ""}"></i>`).join("");
+    const dots = pair.map(state => `<i class="${isSettled(state) ? "filled" : ""}"></i>`).join("");
+    const both = pair.length === 2 && pair.every(isSettled);
     return `<div class="routine-week-day">
       <small>${escapeHTML(label)}</small>
       <div class="routine-week-dots">${dots}</div>
+      <b class="week-mark">${both ? achievementStar("Beide Routinen verantwortungsvoll abgeschlossen") : ""}</b>
     </div>`;
   }).join("");
   return `<div class="routine-week-panel">

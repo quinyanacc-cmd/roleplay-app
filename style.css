@@ -63,7 +63,7 @@
   --energy-chart: #183E96;
   --load-chart: #E04F59;
   --prayer-chart: #59D7F7;
-  --mood-chart: #7A5BF0;
+  --mood-chart: #E8913A;
   --routine-red: #E0555F;
   --glow-blue: rgba(68,125,255,.28);
   --glow-turquoise: rgba(31,215,208,.32);
@@ -665,11 +665,25 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 .empty-state-summary strong { color: var(--text); font-size: var(--fs-body); font-weight: 700; }
 
 .compact-state-summary {
+  /* Interpretation der Zustandsdarstellung – bewusst sachlich. Der Modus wird
+     über eine schmale Farbkante und das Symbol markiert, nicht über eine
+     flächig eingefärbte Karte: ein Schonmodus ist keine Warnung. */
+  position: relative;
   padding: var(--sp-4);
+  padding-left: calc(var(--sp-4) + 3px);
   border-radius: var(--r-field);
-  border: 1px solid var(--framework-color, var(--line));
-  background: linear-gradient(145deg, rgba(255,255,255,.45), var(--framework-soft, var(--field-2)) 28%, var(--field-2) 86%);
-  box-shadow: 0 10px 26px var(--framework-glow, transparent);
+  border: 1px solid var(--line);
+  background: var(--field-2);
+  box-shadow: none;
+  overflow: hidden;
+}
+.compact-state-summary::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--framework-color, var(--line));
+  opacity: .85;
 }
 .compact-framework-main {
   display: flex;
@@ -1041,7 +1055,7 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   align-items: center;
   gap: var(--sp-2);
   min-height: 62px;
-  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-5);
   border-radius: var(--r-field);
   border: 1px solid var(--line);
   background: var(--card-solid);
@@ -1789,34 +1803,6 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   .streak-daily-actions { grid-template-columns: 1fr; }
 }
 
-/* --------------------------------------------------------------------------
-   Tageskreis
-   Vier Segmente, jedes ein eigenes Bedienelement. Ohne Check-in bleibt das
-   Segment neutral; erst der gespeicherte Eintrag bringt die Modusfarbe.
-   -------------------------------------------------------------------------- */
-.day-ring { width: min(220px, 62vw); height: auto; overflow: visible; }
-.day-ring-segment { cursor: pointer; outline: none; }
-.day-ring-shape {
-  fill: var(--field-2);
-  stroke: var(--line);
-  stroke-width: 1;
-  transition: fill .22s ease, stroke .22s ease, filter .22s ease;
-}
-.day-ring-segment.is-filled .day-ring-shape {
-  fill: var(--seg-soft, var(--tint-accent));
-  stroke: var(--seg-strong, var(--accent));
-  filter: drop-shadow(0 0 6px var(--seg-soft, transparent));
-}
-.day-ring-segment:active .day-ring-shape { fill: var(--tint-neutral); }
-.day-ring-segment:focus-visible .day-ring-shape { stroke: var(--accent); stroke-width: 2.2; }
-.day-ring-icon { font-size: 19px; pointer-events: none; }
-.day-ring-center-value {
-  fill: var(--text);
-  font-size: 21px;
-  font-weight: 750;
-}
-.day-ring-center-label { fill: var(--muted); font-size: 11px; }
-
 /* Wochennavigation über dem Verlauf */
 .week-nav {
   display: grid;
@@ -1875,4 +1861,259 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 }
 
 /* Hauptüberschriften: etwas kleiner, damit sie auf schmalen Geräten sauber sitzen. */
-.app-header h1 { font-size: clamp(18px, 5.2vw, 21px); }
+.app-header h1 {
+  /* Etwas kleiner gesetzt und mit Luft nach unten, damit Unterlängen wie das
+     "g" in "Tagesreflexion" nicht angeschnitten werden. */
+  font-size: clamp(17px, 4.9vw, 20px);
+  line-height: 1.30;
+  padding-bottom: 2px;
+  overflow: visible;
+}
+
+/* ==========================================================================
+   ROLEPLAY STATE CYCLE
+   Ein Tageszyklus, kein Fortschrittsring. Die vier Phasen laufen im
+   Uhrzeigersinn ineinander; eine Phase ohne Zustandsaufnahme bleibt gedämpft.
+   Bewusst leichtgewichtig gehalten: SVG plus CSS-Übergänge, keine
+   Dauer-Animation und kein Canvas.
+   ========================================================================== */
+.state-cycle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(280px, 76vw);
+  margin: var(--sp-2) auto var(--sp-4);
+  isolation: isolate;
+}
+/* Atmosphärischer Hof hinter dem Ring – gibt Tiefe ohne harte Kante. */
+.state-cycle::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  z-index: -1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(224,119,107,.16), transparent 58%),
+    radial-gradient(circle at 74% 76%, rgba(94,74,155,.18), transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(140,216,232,.08), transparent 70%);
+  filter: blur(14px);
+  opacity: .95;
+  transition: opacity .4s ease;
+}
+.state-cycle.is-dormant::before { opacity: .35; }
+
+.cycle-ring { width: 100%; height: auto; overflow: visible; display: block; }
+
+/* Grundring: die Bahn des Tages, auch ohne jede Aufnahme sichtbar. */
+.cycle-base { fill: none; stroke: var(--field-2); opacity: .9; }
+
+.cycle-phase { cursor: pointer; outline: none; }
+.cycle-phase-shape {
+  opacity: .16;
+  transition: opacity .45s ease;
+}
+.cycle-phase.is-lit .cycle-phase-shape { opacity: 1; }
+
+/* Feine Lichtkante entlang der Phase – erst nach der Zustandsaufnahme. */
+.cycle-phase-edge {
+  fill: none;
+  stroke: var(--phase-b, var(--line));
+  stroke-width: 1;
+  opacity: .22;
+  transition: opacity .45s ease, stroke-width .3s ease;
+}
+.cycle-phase.is-lit .cycle-phase-edge {
+  opacity: .85;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 5px var(--phase-b));
+}
+
+/* Abstrakte Phasenmarke: Horizont plus Lichtkörper, kein Emoji. */
+.cycle-glyph { pointer-events: none; }
+.cycle-glyph-horizon {
+  stroke: var(--text);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: .30;
+  transition: opacity .4s ease, stroke .4s ease;
+}
+.cycle-glyph-body {
+  fill: var(--text);
+  stroke: none;
+  opacity: .34;
+  transition: opacity .4s ease, fill .4s ease;
+}
+.cycle-glyph-body.hollow { fill: none; stroke: var(--text); stroke-width: 1.2; }
+.cycle-glyph-ray, .cycle-glyph-spark {
+  stroke: var(--text);
+  fill: var(--text);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: .28;
+  transition: opacity .4s ease, fill .4s ease, stroke .4s ease;
+}
+.cycle-phase.is-lit .cycle-glyph-horizon { stroke: #fff; opacity: .78; filter: drop-shadow(0 1px 2px rgba(12,16,30,.4)); }
+.cycle-phase.is-lit .cycle-glyph-body { fill: #fff; opacity: .95; }
+.cycle-phase.is-lit .cycle-glyph-body.hollow { fill: none; stroke: #fff; }
+.cycle-phase.is-lit .cycle-glyph-ray,
+.cycle-phase.is-lit .cycle-glyph-spark { stroke: #fff; fill: #fff; opacity: .85; }
+
+.cycle-phase-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  pointer-events: none;
+  transition: fill .4s ease;
+}
+.cycle-phase.is-lit .cycle-phase-label {
+  /* Der Schatten hält die Beschriftung auch auf den hellen Phasen lesbar. */
+  fill: #fff;
+  opacity: .96;
+  paint-order: stroke;
+  stroke: rgba(12,16,30,.42);
+  stroke-width: 2.4px;
+  stroke-linejoin: round;
+}
+
+/* Microinteraction: die angetippte Phase hellt kurz auf. */
+.cycle-phase:active .cycle-phase-shape { opacity: .55; }
+.cycle-phase.is-lit:active .cycle-phase-shape { opacity: .82; }
+.cycle-phase:focus-visible .cycle-phase-edge {
+  opacity: 1;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+/* Zeiger der aktuellen Tageszeit. */
+.cycle-now {
+  fill: var(--text);
+  opacity: .55;
+  filter: drop-shadow(0 0 4px var(--text));
+}
+
+/* Kern: die Aussage des Systems, kein Zähler. */
+.cycle-core {
+  position: absolute;
+  inset: 30%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+  pointer-events: none;
+  animation: cycleCoreIn .38s ease-out;
+}
+@keyframes cycleCoreIn {
+  from { opacity: 0; transform: scale(.94); }
+  to { opacity: 1; transform: none; }
+}
+.cycle-core-role {
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cycle-core-mode {
+  font-size: clamp(13px, 3.9vw, 16px);
+  font-weight: 800;
+  line-height: 1.12;
+  color: var(--mode-color, var(--text));
+  text-wrap: balance;
+}
+.cycle-core-hint { font-size: var(--fs-small); font-weight: 650; color: var(--muted); }
+.cycle-core-metrics {
+  display: grid;
+  gap: 3px;
+  margin-top: 5px;
+  width: 100%;
+  max-width: 104px;
+}
+.cycle-metric {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0 5px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cycle-metric b { font-size: 10.5px; font-weight: 800; color: var(--text); }
+/* Feine Messlatte statt Fortschrittsbalken. */
+.cycle-metric i {
+  grid-column: 1 / -1;
+  order: 2;
+  position: relative;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--tint-neutral);
+  overflow: hidden;
+}
+.cycle-metric i::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--fill, 0%);
+  border-radius: inherit;
+  transition: width .45s ease;
+}
+.cycle-metric.energy i::after { background: linear-gradient(90deg, #3F6FE0, #63A8F5); }
+.cycle-metric.mood i::after { background: linear-gradient(90deg, #E08A3C, #F5B95E); }
+
+@media (prefers-color-scheme: dark) {
+  .cycle-base { stroke: rgba(255,255,255,.05); }
+  .cycle-phase-shape { opacity: .20; }
+  .cycle-glyph-horizon, .cycle-glyph-body, .cycle-glyph-ray, .cycle-glyph-spark { opacity: .40; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cycle-core { animation: none; }
+}
+
+/* Stern: dezente Kennzeichnung eines vollständig verantwortungsvoll
+   abgeschlossenen Bereichs. Keine Punktzahl, kein Emoji. */
+.week-mark { display: grid; place-items: center; min-height: 14px; }
+.achievement-star {
+  width: 13px;
+  height: 13px;
+  fill: var(--star-color, #F0C24B);
+  filter: drop-shadow(0 0 3px rgba(240,194,75,.45));
+}
+.prayer-week-day .achievement-star { --star-color: #5FD8F2; filter: drop-shadow(0 0 3px rgba(95,216,242,.5)); }
+.routine-week-day .achievement-star { --star-color: #EE7C86; filter: drop-shadow(0 0 3px rgba(238,124,134,.45)); }
+
+/* Ergebniskarte als Interpretation der Zustandsdarstellung – sachlich,
+   keine Warnkarte. */
+.compact-state-summary .framework-copy strong { line-height: 1.2; }
+.compact-state-summary .framework-copy small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+/* Der Check-in-Dialog atmet in der Farbe der geöffneten Tagesphase. */
+.state-checkin-dialog {
+  background:
+    radial-gradient(circle at 12% -8%, var(--phase-veil, transparent), transparent 58%),
+    radial-gradient(circle at 92% 6%, var(--phase-veil-b, transparent), transparent 52%),
+    var(--card-solid);
+  transition: background .3s ease;
+}
+.state-checkin-dialog .phase-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 30px;
+  color: var(--phase-b, var(--text));
+}
+.state-checkin-dialog .phase-mark svg { width: 40px; height: 30px; overflow: visible; }
+/* Im Dialog trägt die Marke die Phasenfarbe statt der gedämpften Ringvariante. */
+.state-checkin-dialog .phase-mark .cycle-glyph-horizon { stroke: var(--phase-b); opacity: .85; }
+.state-checkin-dialog .phase-mark .cycle-glyph-body { fill: var(--phase-b); opacity: 1; }
+.state-checkin-dialog .phase-mark .cycle-glyph-body.hollow { fill: none; stroke: var(--phase-b); }
+.state-checkin-dialog .phase-mark .cycle-glyph-ray,
+.state-checkin-dialog .phase-mark .cycle-glyph-spark { stroke: var(--phase-b); fill: var(--phase-b); opacity: .9; }
