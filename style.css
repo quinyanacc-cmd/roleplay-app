@@ -255,11 +255,13 @@ main { padding: var(--sp-3); }
 .role-picker {
   -webkit-appearance: none;
   appearance: none;
-  max-width: 198px;
+  /* Lange Rollennamen wie "Familienmensch" brauchen den Platz: schmalere
+     Innenabstände und eine leicht kleinere Schrift, damit nichts abschneidet. */
+  max-width: 100%;
   min-height: 36px;
-  padding: 0 30px 0 var(--sp-3);
+  padding: 0 26px 0 var(--sp-2);
   border-radius: var(--r-pill);
-  font-size: var(--fs-label);
+  font-size: 13px;
   font-weight: 750;
   /* Fügt sich in Light und Dark gleichermaßen in die farbige Kopfzeile ein. */
   color: var(--header-role-text);
@@ -1467,6 +1469,23 @@ dialog::backdrop { background: rgba(10,14,24,.46); backdrop-filter: blur(3px); }
 .dialog-actions.split-actions { justify-content: space-between; }
 .dialog-spacer { flex: 1 1 auto; }
 
+/* Zurücksetzen steht links und tritt bewusst zurück – es ist die seltene,
+   nicht die naheliegende Handlung. */
+.ghost-button {
+  margin-right: auto;
+  min-height: var(--control-h);
+  padding: 0 var(--sp-3);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: transparent;
+  font-size: var(--fs-small);
+  font-weight: 650;
+  color: var(--muted);
+}
+.ghost-button.danger { color: var(--danger); border-color: var(--tint-danger-line); }
+.ghost-button:active { background: var(--tint-danger); }
+.ghost-button[hidden] { display: none; }
+
 /* Check-in-Dialog --------------------------------------------------------- */
 #stateSlotDisplay {
   display: flex;
@@ -1785,7 +1804,7 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   .prayer-card { min-height: 98px; }
   .ramadan-controls { grid-template-columns: 84px 1fr; }
   .routine-review-card { min-height: 158px; }
-  .role-picker { max-width: 168px; }
+  .role-picker { max-width: 196px; }
 }
 
 @media (min-width: 620px) {
@@ -1873,105 +1892,157 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 
 /* ==========================================================================
    ROLEPLAY STATE CYCLE
-   Ein durchgehender Tagesring ohne Segmentgrenzen: die Farbe wird zwischen
-   Ankerpunkten interpoliert, sodass Nacht, Morgen, Mittag und Abend
-   ineinanderfließen. Die als nächste anstehende Phase schwillt weich nach
-   außen und trägt eine Lichtkante – sie steht damit sichtbar hervor, ohne
-   herausgeschnitten zu wirken.
+   Vier Bogensegmente mit runden Enden, pastellige Verläufe, farbige Symbole
+   und Beschriftung. In der Mitte steht die Aussage des Systems.
+   Erfasste Phasen leuchten satt, noch offene bleiben hell und zurückhaltend.
    ========================================================================== */
 .state-cycle {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(300px, 82vw);
+  width: min(320px, 88vw);
   margin: var(--sp-2) auto var(--sp-4);
   isolation: isolate;
 }
-/* Atmosphärischer Hof – gibt Tiefe, ohne eine harte Kante zu setzen. */
+/* Weicher Lichthof – gibt Tiefe ohne harte Kante. */
 .state-cycle::before {
   content: "";
   position: absolute;
-  inset: -6%;
+  inset: 2%;
   z-index: -1;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 30% 20%, rgba(240,144,106,.16), transparent 56%),
-    radial-gradient(circle at 76% 74%, rgba(138,87,148,.18), transparent 58%),
-    radial-gradient(circle at 50% 52%, rgba(134,210,232,.10), transparent 68%);
-  filter: blur(16px);
+    radial-gradient(circle at 30% 22%, rgba(169,155,240,.20), transparent 58%),
+    radial-gradient(circle at 74% 26%, rgba(248,177,115,.18), transparent 56%),
+    radial-gradient(circle at 72% 76%, rgba(132,207,236,.18), transparent 56%),
+    radial-gradient(circle at 28% 74%, rgba(205,166,232,.18), transparent 56%);
+  filter: blur(18px);
   transition: opacity .45s ease;
 }
-.state-cycle.is-dormant::before { opacity: .38; }
+.state-cycle.is-dormant::before { opacity: .55; }
 
 .cycle-ring { width: 100%; height: auto; overflow: visible; display: block; }
-.cycle-band path { shape-rendering: geometricPrecision; }
 
-/* Weiches Licht im Kern in der Farbe des aktuellen Modus. */
-.cycle-core-glow {
-  fill: var(--mode-color, transparent);
-  opacity: .055;
-  transition: fill .45s ease, opacity .45s ease;
-}
-/* Feine Innenkante – gibt dem Kern Halt, ohne ihn zu füllen. */
-.cycle-core-rim {
+/* Runde Enden lassen die Segmente weich wirken statt abgeschnitten. */
+.cycle-arc {
   fill: none;
-  stroke: var(--line);
-  stroke-width: 1;
-  opacity: .55;
-}
-.state-cycle.is-dormant .cycle-core-glow { opacity: 0; }
-@media (prefers-color-scheme: dark) { .cycle-core-rim { stroke: rgba(255,255,255,.08); } }
-
-/* Lichtkante der anstehenden Phase. */
-.cycle-pending-edge {
-  fill: none;
-  stroke: var(--edge-color, var(--accent));
-  stroke-width: 2;
   stroke-linecap: round;
-  opacity: .62;
-  filter: drop-shadow(0 0 8px var(--edge-color));
+  opacity: .34;
+  transition: opacity .45s ease, filter .45s ease;
 }
+.cycle-phase.is-lit .cycle-arc {
+  opacity: 1;
+  filter: drop-shadow(0 4px 14px rgba(40,32,80,.13));
+}
+/* Die anstehende Phase bleibt auch unerfasst gut sichtbar. */
+.cycle-phase.is-pending .cycle-arc { opacity: .62; }
 
-.cycle-phase { cursor: pointer; outline: none; }
-.cycle-hit { fill: transparent; }
+.cycle-hit { fill: none; stroke: transparent; stroke-linecap: butt; }
+.cycle-phase { cursor: pointer; outline: none; transition: transform .18s ease; transform-origin: 50% 50%; }
+.cycle-phase:active { transform: scale(1.03); }
 
-/* Phasenmarken – reduziert, ohne Beschriftung und ohne Emoji. */
+/* Symbole und Beschriftung in der Tinte der jeweiligen Phase. */
 .cycle-glyph { pointer-events: none; }
+.cycle-glyph-body { fill: var(--phase-ink); stroke: none; }
+.cycle-glyph-spark { fill: var(--phase-ink); }
 .cycle-glyph-horizon,
 .cycle-glyph-ray {
-  stroke: #fff;
-  stroke-width: 1.5;
+  stroke: var(--phase-ink);
+  stroke-width: 1.7;
   stroke-linecap: round;
   fill: none;
-  opacity: .30;
-  transition: opacity .45s ease;
 }
-.cycle-glyph-body { fill: #fff; stroke: none; opacity: .32; transition: opacity .45s ease; }
-.cycle-glyph-body.hollow { fill: none; stroke: #fff; stroke-width: 1.6; }
-.cycle-glyph-spark { fill: #fff; stroke: none; opacity: .30; transition: opacity .45s ease; }
+.cycle-glyph, .cycle-label { opacity: .48; transition: opacity .45s ease; }
+.cycle-phase.is-pending .cycle-glyph,
+.cycle-phase.is-pending .cycle-label { opacity: .8; }
+.cycle-phase.is-lit .cycle-glyph,
+.cycle-phase.is-lit .cycle-label { opacity: 1; }
 
-.cycle-phase.is-lit .cycle-glyph-horizon,
-.cycle-phase.is-lit .cycle-glyph-ray { opacity: .82; }
-.cycle-phase.is-lit .cycle-glyph-body,
-.cycle-phase.is-lit .cycle-glyph-spark { opacity: .96; }
-.cycle-phase.is-lit .cycle-glyph { filter: drop-shadow(0 1px 3px rgba(10,14,28,.4)); }
+.cycle-label {
+  fill: var(--phase-ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  pointer-events: none;
+}
 
-/* Die anstehende Phase bleibt auch unbeleuchtet gut erkennbar. */
-.cycle-phase.is-pending .cycle-glyph-horizon,
-.cycle-phase.is-pending .cycle-glyph-ray,
-.cycle-phase.is-pending .cycle-glyph-body,
-.cycle-phase.is-pending .cycle-glyph-spark { opacity: .68; }
+/* Zeiger: helle Kugel auf der Bahn. */
+/* Der Zeiger bleibt in beiden Modi hell – er ist ein Lichtpunkt auf der Bahn. */
+.cycle-marker {
+  fill: #FFFFFF;
+  stroke: rgba(120,110,170,.20);
+  stroke-width: 1;
+  filter: drop-shadow(0 3px 9px rgba(40,32,80,.24));
+}
 
-/* Microinteraction: die angetippte Phase hebt sich kurz an. */
-.cycle-phase { transition: transform .18s ease; transform-origin: 50% 50%; }
-.cycle-phase:active { transform: scale(1.035); }
-.cycle-phase:focus-visible .cycle-glyph { filter: drop-shadow(0 0 6px var(--accent)); }
+/* Kern als ruhige Glasfläche. */
+.cycle-core {
+  position: absolute;
+  inset: 26.5%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: var(--sp-2);
+  border-radius: 50%;
+  text-align: center;
+  pointer-events: none;
+  background: var(--card-solid);
+  box-shadow: 0 6px 20px rgba(40,32,80,.10), inset 0 0 0 1px var(--line);
+  animation: cycleCoreIn .34s ease-out;
+}
+@keyframes cycleCoreIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
 
-.cycle-now {
-  fill: var(--now-color, var(--text));
-  stroke: rgba(255,255,255,.85);
-  stroke-width: 1.4;
-  filter: drop-shadow(0 0 6px var(--now-color));
+.cycle-core-icon svg { width: 26px; height: 26px; display: block; }
+.cycle-core-icon circle { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; }
+.cycle-core-icon .dot { fill: var(--mode-color, #4FBF8B); stroke: none; }
+.cycle-core-icon .smile { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; stroke-linecap: round; }
+
+.cycle-core-role {
+  font-size: var(--fs-tiny);
+  font-weight: 750;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cycle-core-mode {
+  font-size: clamp(14px, 4.2vw, 17px);
+  font-weight: 800;
+  line-height: 1.14;
+  color: var(--mode-color, var(--text));
+  text-wrap: balance;
+}
+.cycle-core-mode.empty { color: var(--text); }
+.cycle-core-sub b { font-weight: 800; color: var(--text); }
+.cycle-core-sub {
+  margin-top: 2px;
+  font-size: var(--fs-tiny);
+  line-height: 1.25;
+  color: var(--muted);
+  text-wrap: balance;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* Im Dark Mode dürfen die Pastelltöne nicht ausbleichen: unerfasste Phasen
+     werden dunkler statt heller. */
+  .cycle-arc { opacity: .22; }
+  .cycle-phase.is-pending .cycle-arc { opacity: .5; }
+  .cycle-glyph, .cycle-label { opacity: .72; }
+  /* Nur auf den gedimmten, also dunklen Bögen wird die Tinte aufgehellt.
+     Auf einem erfassten, hell leuchtenden Bogen bliebe helle Schrift
+     unlesbar – dort behält die dunkle Tinte den Kontrast. */
+  .cycle-phase:not(.is-lit) .cycle-label { fill: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
+  .cycle-phase:not(.is-lit) .cycle-glyph-body,
+  .cycle-phase:not(.is-lit) .cycle-glyph-spark { fill: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
+  .cycle-phase:not(.is-lit) .cycle-glyph-horizon,
+  .cycle-phase:not(.is-lit) .cycle-glyph-ray { stroke: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
+  .cycle-marker { stroke: rgba(255,255,255,.22); }
+  .cycle-core { box-shadow: 0 6px 20px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.07); }
+  .state-cycle::before { filter: blur(22px); opacity: .7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cycle-core { animation: none; }
+  .cycle-phase { transition: none; }
 }
 
 /* --------------------------------------------------------------------------

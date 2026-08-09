@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.5.0";
+const APP_VERSION = "5.6.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1227,10 +1227,10 @@ function latestStateCheckin(data = currentData) {
    ========================================================================== */
 
 const CYCLE_PHASES = {
-  night:   { short: "Nacht",  from: 180 },
-  morning: { short: "Morgen", from: 270 },
-  midday:  { short: "Mittag", from: 0   },
-  evening: { short: "Abend",  from: 90  }
+  night:   { short: "Nacht",  from: 180, from0: "#B9AEF5", mid: "#A99BF0", to0: "#C3B4F2", ink: "#6D57C9" },
+  morning: { short: "Morgen", from: 270, from0: "#F7C48E", mid: "#F8B173", to0: "#FBD9A6", ink: "#D97E22" },
+  midday:  { short: "Mittag", from: 0,   from0: "#A8DFF2", mid: "#84CFEC", to0: "#B7E7F3", ink: "#2589B8" },
+  evening: { short: "Abend",  from: 90,  from0: "#DCC0EE", mid: "#CDA6E8", to0: "#C6B2F0", ink: "#8B4FBC" }
 };
 
 /* Farbanker rund um den Tag. Zwischen ihnen wird interpoliert, deshalb gibt
@@ -1314,61 +1314,53 @@ function polar(cx, cy, r, deg) {
   return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
 }
 
-function ringSegment(cx, cy, rOuter, rInner, from, to) {
-  const [x0, y0] = polar(cx, cy, rOuter, from);
-  const [x1, y1] = polar(cx, cy, rOuter, to);
-  const [x2, y2] = polar(cx, cy, rInner, to);
-  const [x3, y3] = polar(cx, cy, rInner, from);
+function arcPath(cx, cy, r, from, to) {
+  const [x0, y0] = polar(cx, cy, r, from);
+  const [x1, y1] = polar(cx, cy, r, to);
   const large = Math.abs(to - from) > 180 ? 1 : 0;
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter.toFixed(2)} ${rOuter.toFixed(2)} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
-       + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner.toFixed(2)} ${rInner.toFixed(2)} 0 ${large} 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
 }
 
-/* Abstrakte Phasenmarke: eine Horizontlinie mit einem Lichtkörper. Dessen
-   Höhe über dem Horizont erzählt die Tageszeit – darunter Nacht, aufsteigend
-   Morgen, hochstehend Mittag, absinkend Abend. Kein Emoji nötig. */
+/* Reduzierte Tageszeit-Symbole. Jedes zeigt einen Lichtkörper über oder unter
+   einer Horizontlinie – die Höhe erzählt die Tageszeit. Eigene Zeichnung
+   statt Emoji, damit sie zur Formsprache der App passen. */
 function phaseGlyph(key, x, y, scale = 1) {
-  const s = v => (v * scale).toFixed(2);
-  const px = (dx, dy) => `${(x + dx * scale).toFixed(2)} ${(y + dy * scale).toFixed(2)}`;
-  const horizon = `<line class="cycle-glyph-horizon" x1="${(x - 13 * scale).toFixed(2)}" y1="${(y + 6 * scale).toFixed(2)}" x2="${(x + 13 * scale).toFixed(2)}" y2="${(y + 6 * scale).toFixed(2)}"></line>`;
+  const S = v => (v * scale).toFixed(2);
+  const P = (dx, dy) => `${(x + dx * scale).toFixed(2)} ${(y + dy * scale).toFixed(2)}`;
+  const horizon = `<line class="cycle-glyph-horizon" x1="${(x - 11 * scale).toFixed(2)}" y1="${(y + 7 * scale).toFixed(2)}" x2="${(x + 11 * scale).toFixed(2)}" y2="${(y + 7 * scale).toFixed(2)}"></line>`;
   if (key === "night") {
-    return `<g class="cycle-glyph">${horizon}
-      <circle class="cycle-glyph-body hollow" cx="${x}" cy="${(y + 10.5 * scale).toFixed(2)}" r="${s(4.8)}"></circle>
-      <circle class="cycle-glyph-spark" cx="${(x - 9 * scale).toFixed(2)}" cy="${(y - 5 * scale).toFixed(2)}" r="${s(1.15)}"></circle>
-      <circle class="cycle-glyph-spark" cx="${(x + 7 * scale).toFixed(2)}" cy="${(y - 8 * scale).toFixed(2)}" r="${s(1.5)}"></circle>
-      <circle class="cycle-glyph-spark" cx="${(x + 1 * scale).toFixed(2)}" cy="${(y - 2 * scale).toFixed(2)}" r="${s(1)}"></circle></g>`;
-  }
-  if (key === "morning") {
-    return `<g class="cycle-glyph">${horizon}
-      <path class="cycle-glyph-body" d="M${px(-6.2, 6)} a${s(6.2)} ${s(6.2)} 0 0 1 ${s(12.4)} 0 Z"></path>
-      <line class="cycle-glyph-ray" x1="${x}" y1="${(y - 10 * scale).toFixed(2)}" x2="${x}" y2="${(y - 6.5 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${(x - 9 * scale).toFixed(2)}" y1="${(y - 5 * scale).toFixed(2)}" x2="${(x - 7 * scale).toFixed(2)}" y2="${(y - 3 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${(x + 9 * scale).toFixed(2)}" y1="${(y - 5 * scale).toFixed(2)}" x2="${(x + 7 * scale).toFixed(2)}" y2="${(y - 3 * scale).toFixed(2)}"></line></g>`;
+    // Mondsichel plus Sterne – der einzige Zustand ohne Horizontbezug.
+    return `<g class="cycle-glyph">
+      <path class="cycle-glyph-body" d="M${P(3.4, -7.6)} a8.4 8.4 0 1 0 ${S(6.4)} ${S(11.4)} 6.6 6.6 0 0 1 ${S(-6.4)} ${S(-11.4)} Z"></path>
+      <circle class="cycle-glyph-spark" cx="${(x - 8 * scale).toFixed(2)}" cy="${(y - 5 * scale).toFixed(2)}" r="${S(1.5)}"></circle>
+      <circle class="cycle-glyph-spark" cx="${(x - 9.5 * scale).toFixed(2)}" cy="${(y + 3.5 * scale).toFixed(2)}" r="${S(1)}"></circle></g>`;
   }
   if (key === "midday") {
-    return `<g class="cycle-glyph">${horizon}
-      <circle class="cycle-glyph-body" cx="${x}" cy="${(y - 3.5 * scale).toFixed(2)}" r="${s(5)}"></circle>
-      <line class="cycle-glyph-ray" x1="${(x - 11 * scale).toFixed(2)}" y1="${(y - 3.5 * scale).toFixed(2)}" x2="${(x - 8.5 * scale).toFixed(2)}" y2="${(y - 3.5 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${(x + 8.5 * scale).toFixed(2)}" y1="${(y - 3.5 * scale).toFixed(2)}" x2="${(x + 11 * scale).toFixed(2)}" y2="${(y - 3.5 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${x}" y1="${(y - 14.5 * scale).toFixed(2)}" x2="${x}" y2="${(y - 12 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${(x - 8 * scale).toFixed(2)}" y1="${(y - 11 * scale).toFixed(2)}" x2="${(x - 6.2 * scale).toFixed(2)}" y2="${(y - 9.2 * scale).toFixed(2)}"></line>
-      <line class="cycle-glyph-ray" x1="${(x + 8 * scale).toFixed(2)}" y1="${(y - 11 * scale).toFixed(2)}" x2="${(x + 6.2 * scale).toFixed(2)}" y2="${(y - 9.2 * scale).toFixed(2)}"></line></g>`;
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(deg => {
+      const [x0, y0] = polar(x, y - 1 * scale, 8.4 * scale, deg);
+      const [x1, y1] = polar(x, y - 1 * scale, 11.4 * scale, deg);
+      return `<line class="cycle-glyph-ray" x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}"></line>`;
+    }).join("");
+    return `<g class="cycle-glyph">
+      <circle class="cycle-glyph-body" cx="${x}" cy="${(y - 1 * scale).toFixed(2)}" r="${S(5.4)}"></circle>${rays}</g>`;
   }
+  // Morgen und Abend: halbe Scheibe am Horizont, Strahlen unterscheiden sie.
+  const rays = (key === "morning" ? [225, 270, 315] : [250, 290]).map(deg => {
+    const [x0, y0] = polar(x, y + 7 * scale, 9.6 * scale, deg);
+    const [x1, y1] = polar(x, y + 7 * scale, 12.8 * scale, deg);
+    return `<line class="cycle-glyph-ray" x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}"></line>`;
+  }).join("");
   return `<g class="cycle-glyph">${horizon}
-    <path class="cycle-glyph-body" d="M${px(-6.2, 6)} a${s(6.2)} ${s(6.2)} 0 0 1 ${s(12.4)} 0 Z"></path>
-    <line class="cycle-glyph-ray" x1="${(x + 9.5 * scale).toFixed(2)}" y1="${(y - 1 * scale).toFixed(2)}" x2="${(x + 12 * scale).toFixed(2)}" y2="${(y + 1.5 * scale).toFixed(2)}"></line>
-    <line class="cycle-glyph-ray" x1="${(x - 12 * scale).toFixed(2)}" y1="${(y + 1.5 * scale).toFixed(2)}" x2="${(x - 9.5 * scale).toFixed(2)}" y2="${(y - 1 * scale).toFixed(2)}"></line></g>`;
+    <path class="cycle-glyph-body" d="M${P(-6.6, 7)} a${S(6.6)} ${S(6.6)} 0 0 1 ${S(13.2)} 0 Z"></path>${rays}</g>`;
 }
 
-// Welche Tagesphase steht als nächste an? Sie bekommt den kräftigeren Rand.
+// Welche Tagesphase steht als nächste an? Sie bekommt den Zeiger.
 function pendingPhaseKey() {
   const bySlot = Object.fromEntries((currentData?.stateCheckins || []).map(e => [e.slot, e]));
   const open = CHECKIN_CHRONOLOGY.filter(key => !bySlot[key]);
   if (!open.length) return null;
   if (selectedDate !== todayISO()) return open[0];
-  const current = slotForTime();
-  const from = CHECKIN_CHRONOLOGY.indexOf(current);
-  // Ab der aktuellen Tageszeit vorwärts suchen, dann von vorn.
+  const from = CHECKIN_CHRONOLOGY.indexOf(slotForTime());
   for (let i = 0; i < CHECKIN_CHRONOLOGY.length; i += 1) {
     const key = CHECKIN_CHRONOLOGY[(from + i) % CHECKIN_CHRONOLOGY.length];
     if (!bySlot[key]) return key;
@@ -1380,130 +1372,84 @@ function renderCheckinSlots() {
   const container = $("checkinSlots");
   if (!container || !currentData) return;
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
-
-  const size = 264, c = size / 2;
-  const rInner = 78;
-  const rOuter = 118;
-  const swell = 13;                // wie weit die anstehende Phase nach außen wächst
-  const step = 1.5;                // Grad je Teilstück – fein genug für eine glatte Außenkante
-  const overlap = 0.42;            // minimale Überlappung gegen Haarlinien
-
   const pending = pendingPhaseKey();
-  const litFor = key => (bySlot[key] ? 1 : 0);
 
-  // Weiche Rampe: Werte an den Phasengrenzen ineinander überführen, damit
-  // auch der Hell-/Dunkelwechsel fließt statt zu springen.
-  const smoothAt = (angle, valueOf) => {
-    const window = 16;
-    let sum = 0, weight = 0;
-    for (let d = -window; d <= window; d += 4) {
-      const a = ((angle + d) % 360 + 360) % 360;
-      const key = CHECKIN_SLOTS.find(s => {
-        const from = CYCLE_PHASES[s.key].from;
-        const rel = ((a - from) % 360 + 360) % 360;
-        return rel < 90;
-      })?.key;
-      const w = Math.cos(d / window * Math.PI / 2);
-      sum += valueOf(key) * w;
-      weight += w;
-    }
-    return weight ? sum / weight : 0;
-  };
+  const size = 300, c = size / 2;
+  const band = 50;                 // Dicke des Bogens
+  const r = 108;                   // Mittellinie des Bogens
+  const gap = 7;                   // Grad Abstand zwischen den Phasen
 
-  /* Die Farbstücke werden deckend gezeichnet und überlappen leicht, damit
-     keine Haarlinien entstehen. Die Helligkeit steuert eine separate Maske:
-     würde sie über Einzeltransparenzen laufen, addierte sich der Alphawert an
-     jeder Überlappung und der Ring bekäme radiale Streifen. */
-  const slices = [];
-  const maskSlices = [];
-  const outline = [];
-  for (let a = 0; a < 360; a += step) {
-    const mid = a + step / 2;
-    const lit = smoothAt(mid, key => key ? litFor(key) : 0);
-    const bump = pending ? smoothAt(mid, key => (key === pending ? 1 : 0)) : 0;
-    const outer = rOuter + bump * swell;
-    // Alle Stücke reichen bis zum äußersten möglichen Radius; die tatsächliche
-    // Kontur schneidet der Beschnittpfad. Sonst entstünde an der anschwellenden
-    // Phase eine sägezahnartige Kante, weil jedes Stück einen eigenen Radius hätte.
-    const d = ringSegment(c, c, rOuter + swell + 2, rInner - 1, a - overlap, a + step + overlap);
-    slices.push(`<path d="${d}" fill="${cycleColorAt(mid)}"></path>`);
-    const level = Math.round((0.19 + 0.81 * lit) * 255);
-    maskSlices.push(`<path d="${d}" fill="rgb(${level},${level},${level})"></path>`);
-    outline.push([outer, a - step / 2]);
-  }
+  const defs = [];
+  const arcs = [];
+  const marks = [];
 
-  // Außenkontur als geschlossener Ring: außen die weich verlaufende Kante,
-  // innen ein gegenläufiger Kreis, der die Mitte ausstanzt.
-  const outerPts = outline.map(([r, a]) => {
-    const [x, y] = polar(c, c, r, a);
-    return `${x.toFixed(2)} ${y.toFixed(2)}`;
-  });
-  const outlinePath = `M${outerPts.join(" L")} Z`
-    + ` M${(c + rInner).toFixed(2)} ${c} A${rInner} ${rInner} 0 1 0 ${(c - rInner).toFixed(2)} ${c}`
-    + ` A${rInner} ${rInner} 0 1 0 ${(c + rInner).toFixed(2)} ${c} Z`;
-
-  // Lichtkante entlang der anstehenden Phase – der Rand wird spürbar dicker.
-  let pendingEdge = "";
-  if (pending) {
-    const from = CYCLE_PHASES[pending].from;
-    const pts = [];
-    for (let d = 0; d <= 90; d += 2) {
-      const a = from + d;
-      const bump = smoothAt(a, key => (key === pending ? 1 : 0));
-      const [x, y] = polar(c, c, rOuter + bump * swell, a);
-      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
-    }
-    pendingEdge = `<polyline class="cycle-pending-edge" points="${pts.join(" ")}" style="--edge-color:${cycleColorAt(from + 45)}"></polyline>`;
-  }
-
-  // Unsichtbare Trefferflächen: die gesamte Phase bleibt antippbar.
-  const hits = CHECKIN_SLOTS.map(slot => {
+  CHECKIN_SLOTS.forEach(slot => {
     const phase = CYCLE_PHASES[slot.key];
     const entry = bySlot[slot.key];
     const framework = frameworkForCheckin(entry);
-    const [gx, gy] = polar(c, c, (rInner + rOuter) / 2 + (slot.key === pending ? swell / 2 : 0), phase.from + 45);
-    return `<g class="cycle-phase ${entry ? "is-lit" : ""} ${slot.key === pending ? "is-pending" : ""}"
-        data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
-        aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}.">
-      <path class="cycle-hit" d="${ringSegment(c, c, rOuter + swell + 6, rInner - 4, phase.from, phase.from + 90)}"></path>
-      ${phaseGlyph(slot.key, gx, gy, 1.15)}
-    </g>`;
-  }).join("");
+    const from = phase.from + gap;
+    const to = phase.from + 90 - gap;
+    const mid = phase.from + 45;
 
-  // Zeiger der aktuellen Tageszeit.
-  let now = "";
-  if (selectedDate === todayISO()) {
-    const angle = cycleAngleForTime();
-    const bump = pending ? smoothAt(angle, key => (key === pending ? 1 : 0)) : 0;
-    const [nx, ny] = polar(c, c, rOuter + bump * swell + 9, angle);
-    now = `<circle class="cycle-now" cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="3.4" style="--now-color:${cycleColorAt(angle)}"></circle>`;
+    // Verlauf entlang des Bogens – innerhalb der Phase fließt die Farbe weiter.
+    const [gx0, gy0] = polar(c, c, r, from);
+    const [gx1, gy1] = polar(c, c, r, to);
+    defs.push(`<linearGradient id="arc-${slot.key}" gradientUnits="userSpaceOnUse"
+        x1="${gx0.toFixed(1)}" y1="${gy0.toFixed(1)}" x2="${gx1.toFixed(1)}" y2="${gy1.toFixed(1)}">
+      <stop offset="0" stop-color="${phase.from0}"></stop>
+      <stop offset=".55" stop-color="${phase.mid}"></stop>
+      <stop offset="1" stop-color="${phase.to0}"></stop>
+    </linearGradient>`);
+
+    const [ix, iy] = polar(c, c, r + 11, mid);
+    const [lx, ly] = polar(c, c, r - 15, mid);
+
+    arcs.push(`<g class="cycle-phase ${entry ? "is-lit" : ""} ${slot.key === pending ? "is-pending" : ""}"
+        data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
+        style="--phase-ink:${phase.ink}"
+        aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}.">
+      <path class="cycle-arc" d="${arcPath(c, c, r, from, to)}" stroke="url(#arc-${slot.key})" stroke-width="${band}"></path>
+      <path class="cycle-hit" d="${arcPath(c, c, r, phase.from + 1, phase.from + 89)}" stroke-width="${band + 14}"></path>
+      ${phaseGlyph(slot.key, ix, iy, 1)}
+      <text class="cycle-label" x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle">${escapeHTML(phase.short.toUpperCase())}</text>
+    </g>`);
+  });
+
+  // Weiße Kugel als Zeiger: am heutigen Tag die Uhrzeit, sonst die offene Phase.
+  const markerAngle = selectedDate === todayISO()
+    ? cycleAngleForTime()
+    : (pending ? CYCLE_PHASES[pending].from + 45 : null);
+  if (markerAngle !== null) {
+    const [mx, my] = polar(c, c, r, markerAngle);
+    marks.push(`<circle class="cycle-marker" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="13"></circle>`);
   }
 
   const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot));
   const latest = checkins.at(-1);
   const framework = frameworkForCheckin(latest);
+  const role = dayRoleConfig(selectedDate);
+
+  // Kern: bei leerem Tag eine Einladung, sonst der ermittelte Modus.
+  const core = latest && framework
+    ? `<span class="cycle-core-role">${escapeHTML(role.roleName)}</span>
+       <strong class="cycle-core-mode">${escapeHTML(framework.label)}</strong>
+       <span class="cycle-core-sub"><b>${latest.energy ?? "–"} %</b> Energie<br><b>${latest.mood ?? "–"} %</b> Laune</span>`
+    : `<span class="cycle-core-icon" aria-hidden="true">
+         <svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10.4"></circle>
+           <circle class="dot" cx="9.4" cy="10.6" r="1.35"></circle>
+           <circle class="dot" cx="16.6" cy="10.6" r="1.35"></circle>
+           <path class="smile" d="M8.6 15.4a5.2 5.2 0 0 0 8.8 0"></path></svg>
+       </span>
+       <strong class="cycle-core-mode empty">Noch kein Check-in</strong>
+       <span class="cycle-core-sub">Wie fühlst du dich heute?</span>`;
 
   container.innerHTML = `<div class="state-cycle ${latest ? "" : "is-dormant"}" ${framework ? `style="--mode-color:${framework.color}"` : ""}>
     <svg class="cycle-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Tageszyklus mit vier Zustandsaufnahmen">
-      <defs>
-        <filter id="cycleSoften" x="-10%" y="-10%" width="120%" height="120%">
-          <feGaussianBlur stdDeviation="1.6"></feGaussianBlur>
-        </filter>
-        <mask id="cycleLit" maskUnits="userSpaceOnUse" x="0" y="0" width="${size}" height="${size}">
-          <rect x="0" y="0" width="${size}" height="${size}" fill="black"></rect>
-          <g filter="url(#cycleSoften)">${maskSlices.join("")}</g>
-        </mask>
-        <clipPath id="cycleShape" clipPathUnits="userSpaceOnUse">
-          <path d="${outlinePath}"></path>
-        </clipPath>
-      </defs>
-      <circle class="cycle-core-glow" cx="${c}" cy="${c}" r="${rInner - 4}"></circle>
-      <circle class="cycle-core-rim" cx="${c}" cy="${c}" r="${rInner - 4}"></circle>
-      <g class="cycle-band" mask="url(#cycleLit)" clip-path="url(#cycleShape)">${slices.join("")}</g>
-      ${pendingEdge}
-      ${hits}
-      ${now}
+      <defs>${defs.join("")}</defs>
+      ${arcs.join("")}
+      ${marks.join("")}
     </svg>
+    <div class="cycle-core">${core}</div>
   </div>`;
 
   const open = element => openStateCheckinDialog(element.dataset.openCheckinSlot);
@@ -1632,6 +1578,9 @@ function fillStateCheckinForm(slotKey) {
   $("stateDreamCategory").value = existing?.dreamCategory || currentData.dreamCategory || "";
   $("stateDreamNote").value = existing?.dreamNote || currentData.dreams || "";
   toggleNightCheckinFields(requestedSlot);
+  // Zurücksetzen nur anbieten, wenn für diese Tagesphase etwas gespeichert ist.
+  const resetButton = $("resetStateCheckin");
+  if (resetButton) resetButton.hidden = !existing;
   if ($("stateDialogTitle")) $("stateDialogTitle").textContent = slot.label;
   updateStateCheckinPreview();
 }
@@ -1639,6 +1588,18 @@ function fillStateCheckinForm(slotKey) {
 function openStateCheckinDialog(slotKey = null) {
   fillStateCheckinForm(slotKey || slotForTime());
   $("stateCheckinDialog").showModal();
+}
+
+/* Entfernt die Zustandsaufnahme einer einzelnen Tagesphase. Die übrigen
+   Angaben des Tages bleiben unberührt – nur dieser eine Eintrag verschwindet. */
+function resetStateCheckin(slotKey) {
+  if (!currentData || !slotKey) return;
+  const before = (currentData.stateCheckins || []).length;
+  currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.slot !== slotKey);
+  if (currentData.stateCheckins.length === before) return;
+  saveReview(true);
+  renderStateOverview();
+  renderStats();
 }
 
 function stateCheckinFromForm() {
@@ -3089,6 +3050,11 @@ function bindEvents() {
     saveReview(true);
     renderStateOverview();
   };
+  if ($("resetStateCheckin")) $("resetStateCheckin").addEventListener("click", () => {
+    const slot = $("stateCheckinDialog").dataset.editingSlot;
+    resetStateCheckin(slot);
+    $("stateCheckinDialog").close();
+  });
   if ($("weekBack")) $("weekBack").addEventListener("click", () => shiftWeek(-1));
   if ($("weekForward")) $("weekForward").addEventListener("click", () => shiftWeek(1));
   bindWeekSwipe();

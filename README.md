@@ -1,74 +1,71 @@
-# ROLEPLAY App 5.5.0
+# ROLEPLAY App 5.6.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Der State Cycle
+## Der State Cycle – nach Vorlage neu gestaltet
 
-Diese Version baut die Zustandsdarstellung zum visuellen Herzstück aus.
+Der Ring besteht jetzt aus **vier Bogensegmenten mit runden Enden**, getrennt
+durch weiche Abstände. Jedes Segment trägt einen eigenen pastelligen Verlauf,
+der innerhalb der Phase weiterfließt:
 
-### Ein durchgehender Verlauf, keine Segmente
+- Nacht (oben links): Lavendel bis Flieder
+- Morgen (oben rechts): Pfirsich bis Gold
+- Mittag (unten rechts): helles Cyan bis Himmelblau
+- Abend (unten links): Lila bis Rosé
 
-Der Ring besteht nicht mehr aus vier abgegrenzten Vierteln. Rund um den Kreis
-liegen siebzehn Farbanker, zwischen denen fortlaufend interpoliert wird –
-gezeichnet als 240 feine Teilstücke. Nacht, Morgen, Mittag und Abend gehen
-dadurch fließend ineinander über, ohne jede sichtbare Grenze.
+**Symbole und Beschriftung.** Jede Phase trägt ein eigenes reduziertes Symbol –
+Mondsichel, aufgehende Sonne, Sonne mit Strahlen, untergehende Sonne – in der
+Tinte der jeweiligen Phase, darunter die Beschriftung. Keine Emojis, sondern
+eigene Zeichnungen in der Formsprache der App.
 
-Der Farbweg folgt einem echten Tag: tiefes Indigo, violette Dämmerung,
-Sonnenaufgang, Gold, klarer Mittagshimmel, weicher Nachmittag,
-Sonnenuntergang, Abendrot, Abenddämmerung – und zurück ins Indigo.
+**Zustände.** Erfasste Phasen leuchten voll und werfen einen weichen Schatten.
+Noch offene bleiben zurückhaltend, die als nächste anstehende Phase deutlich
+sichtbarer als der Rest. Ein heller Punkt läuft als Zeiger auf der Bahn und
+markiert am heutigen Tag die aktuelle Uhrzeit.
 
-### Die anstehende Phase tritt hervor
+**Der Kern** ist eine ruhige Glasfläche. Ohne Eintrag steht dort ein Gesicht
+mit „Noch kein Check-in“ und „Wie fühlst du dich heute?“. Sobald ein Zustand
+erfasst ist, zeigt er Tagesrolle, Rollenmodus sowie Energie und Laune.
 
-Die als nächste fällige Tagesphase schwillt weich nach außen (13 px, über eine
-Kosinus-Rampe eingeblendet) und trägt eine farbige Lichtkante. Sie steht damit
-sichtbar heraus, ohne herausgeschnitten zu wirken.
+Die ausführliche Auswertung mit Priorität und begrenzender Bedingung steht
+weiterhin in der Karte darunter.
 
-Damit die Außenkante dabei glatt bleibt, werden alle Teilstücke bis zum
-äußersten Radius gezeichnet und über einen Beschnittpfad auf die tatsächliche
-Kontur zurückgeschnitten. Ohne diesen Schritt entstünde eine sägezahnartige
-Kante.
+## Neu: Zustand zurücksetzen
 
-### Hell und Dunkel über eine Maske
+Im Check-in-Dialog gibt es jetzt **Zurücksetzen**. Die Schaltfläche erscheint
+nur, wenn für diese Tagesphase bereits etwas gespeichert ist, steht links und
+tritt bewusst zurück – sie ist die seltene, nicht die naheliegende Handlung.
 
-Erfasste Phasen leuchten, noch offene bleiben gedämpft. Gesteuert wird das
-über eine weichgezeichnete SVG-Maske. Über Einzeltransparenzen ginge es nicht:
-An jeder Überlappung addierte sich der Alphawert und der Ring bekäme radiale
-Streifen.
+Zurückgesetzt wird ausschließlich die eine Tagesphase. Alle übrigen Angaben des
+Tages – die anderen Check-ins, Gebete, Mahlzeiten, Aktivitäten – bleiben
+unberührt.
 
-### Ohne Beschriftung, ohne Emoji
+## Korrekturen
 
-Die Textlabels sind entfallen. Jede Phase trägt nur noch ihre abstrakte Marke:
-eine Horizontlinie mit einem Lichtkörper, dessen Höhe die Tageszeit erzählt –
-darunter Nacht, aufsteigend Morgen, hochstehend Mittag, absinkend Abend.
-Dieselbe Marke erscheint im Check-in-Dialog.
-
-### Auswertung unter dem Kreis
-
-Der Kern ist frei; die Mitte trägt nur ein weiches Licht in der Modusfarbe.
-Die Aussage des Systems steht darunter in einer eigenen Karte: Tagesrolle und
-Rollenmodus, die beiden Messwerte mit Balken, die heutige Priorität und die
-begrenzende Bedingung. Die frühere Doppelung – Modus im Kreis *und* in der
-Karte – ist damit aufgelöst.
-
-Der Zeitzeiger am Außenrand markiert am heutigen Tag die aktuelle Uhrzeit auf
-der Tagesbahn.
-
-Umgesetzt in SVG und CSS. Keine Dauer-Animation, kein Canvas.
+- **Rollennamen wurden abgeschnitten** („Familienmens…“). Zwei Ursachen: eine
+  spätere Regel überschrieb die Schriftgröße, und eine Medienabfrage deckelte
+  die Breite auf 168 px. „Familienmensch“ passt jetzt an allen geprüften
+  Breiten vollständig.
+- **Dark Mode:** Symbole und Beschriftung wurden auf den gedimmten Bögen
+  aufgehellt – aber nur dort. Auf einem hell leuchtenden Bogen bliebe helle
+  Schrift unlesbar, dort behält die dunkle Tinte den Kontrast.
+- Der Zeiger ist in beiden Modi hell; zuvor wurde er im Dark Mode zu einem
+  dunklen Fleck.
+- Die ausgefransten Kanten und radialen Streifen der Vorversion entfallen mit
+  der neuen Bogenzeichnung vollständig.
 
 ## Datenmodell
 
 **Unverändert.** Keine Migration, kein neuer Schlüssel. Namespace bleibt
-`roleplay-v25`. Alle bestehenden Check-ins, Gebete, Routinen, Aktivitäten und
-Streaks werden unverändert weiterverwendet.
-
-## Geänderte Dateien
-
-`app.js`, `style.css`, `manifest.webmanifest`, `service-worker.js`.
+`roleplay-v25`. Das Zurücksetzen entfernt einen Eintrag aus `stateCheckins`
+und schreibt den Tag normal zurück.
 
 ## Tests
 
-- **285** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
+- **306** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark,
+  darunter sieben für das Zurücksetzen (Sichtbarkeit der Schaltfläche, Wirkung
+  auf genau eine Phase, Erhalt der übrigen, Bestand nach Neuladen)
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
-- **0** Layoutmängel
-- Keine doppelten Funktionsdefinitionen, keine Konsolenfehler
+- **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler
+- Breite des längsten Rollennamens an drei Gerätebreiten vermessen
