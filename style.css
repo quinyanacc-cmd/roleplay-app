@@ -1462,6 +1462,7 @@ dialog::backdrop { background: rgba(10,14,24,.46); backdrop-filter: blur(3px); }
 
 .dialog-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--sp-2);
   margin-top: var(--sp-2);
@@ -1472,7 +1473,11 @@ dialog::backdrop { background: rgba(10,14,24,.46); backdrop-filter: blur(3px); }
 /* Zurücksetzen steht links und tritt bewusst zurück – es ist die seltene,
    nicht die naheliegende Handlung. */
 .ghost-button {
-  margin-right: auto;
+  /* Steht in einer eigenen Zeile unter den Hauptaktionen: drei Schaltflächen
+     nebeneinander passen auf schmalen Geräten nicht. */
+  order: 2;
+  flex: 1 0 100%;
+  margin-top: var(--sp-1);
   min-height: var(--control-h);
   padding: 0 var(--sp-3);
   border-radius: var(--r-pill);
@@ -1960,7 +1965,7 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 
 .cycle-label {
   fill: var(--phase-ink);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
   letter-spacing: .12em;
   pointer-events: none;
@@ -1978,7 +1983,8 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 /* Kern als ruhige Glasfläche. */
 .cycle-core {
   position: absolute;
-  inset: 26.5%;
+  /* Muss innerhalb des Ringlochs bleiben – der Innenrand liegt bei rund 28,3 %. */
+  inset: 27.5%;
   display: grid;
   align-content: center;
   justify-items: center;
@@ -1999,17 +2005,23 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 .cycle-core-icon .smile { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; stroke-linecap: round; }
 
 .cycle-core-role {
-  font-size: var(--fs-tiny);
-  font-weight: 750;
-  letter-spacing: .08em;
+  /* "Familienmensch" ist der längste Rollenname und muss in den Kern passen. */
+  max-width: 100%;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: var(--muted);
 }
 .cycle-core-mode {
-  font-size: clamp(14px, 4.2vw, 17px);
+  /* Lange Modusnamen wie "Stabilisierungsmodus" müssen im Kern bleiben. */
+  max-width: 100%;
+  font-size: clamp(11px, 3.3vw, 14px);
   font-weight: 800;
-  line-height: 1.14;
+  line-height: 1.16;
   color: var(--mode-color, var(--text));
+  hyphens: auto;
+  overflow-wrap: anywhere;
   text-wrap: balance;
 }
 .cycle-core-mode.empty { color: var(--text); }

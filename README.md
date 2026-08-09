@@ -1,71 +1,71 @@
-# ROLEPLAY App 5.6.0
+# ROLEPLAY App 5.6.1
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Der State Cycle – nach Vorlage neu gestaltet
+## Der State Cycle
 
-Der Ring besteht jetzt aus **vier Bogensegmenten mit runden Enden**, getrennt
-durch weiche Abstände. Jedes Segment trägt einen eigenen pastelligen Verlauf,
-der innerhalb der Phase weiterfließt:
+Vier Bogensegmente mit runden Enden, getrennt durch weiche Abstände. Jedes
+Segment trägt einen pastelligen Verlauf, ein eigenes reduziertes Symbol und
+seine Beschriftung in der Tinte der Phase:
 
-- Nacht (oben links): Lavendel bis Flieder
-- Morgen (oben rechts): Pfirsich bis Gold
-- Mittag (unten rechts): helles Cyan bis Himmelblau
-- Abend (unten links): Lila bis Rosé
+- Nacht (oben links): Lavendel, Mondsichel
+- Morgen (oben rechts): Pfirsich bis Gold, aufgehende Sonne
+- Mittag (unten rechts): Cyan bis Himmelblau, Sonne mit Strahlen
+- Abend (unten links): Lila bis Rosé, untergehende Sonne
 
-**Symbole und Beschriftung.** Jede Phase trägt ein eigenes reduziertes Symbol –
-Mondsichel, aufgehende Sonne, Sonne mit Strahlen, untergehende Sonne – in der
-Tinte der jeweiligen Phase, darunter die Beschriftung. Keine Emojis, sondern
-eigene Zeichnungen in der Formsprache der App.
+Erfasste Phasen leuchten voll, offene bleiben zurückhaltend, die als nächste
+anstehende deutlich sichtbarer. Ein heller Punkt läuft als Zeiger auf der
+Außenkante und markiert am heutigen Tag die Uhrzeit.
 
-**Zustände.** Erfasste Phasen leuchten voll und werfen einen weichen Schatten.
-Noch offene bleiben zurückhaltend, die als nächste anstehende Phase deutlich
-sichtbarer als der Rest. Ein heller Punkt läuft als Zeiger auf der Bahn und
-markiert am heutigen Tag die aktuelle Uhrzeit.
+Im Kern steht ohne Eintrag „Noch kein Check-in / Wie fühlst du dich heute?“,
+mit Eintrag Tagesrolle, Rollenmodus sowie Energie und Laune. Die ausführliche
+Auswertung mit Priorität und begrenzender Bedingung steht darunter.
 
-**Der Kern** ist eine ruhige Glasfläche. Ohne Eintrag steht dort ein Gesicht
-mit „Noch kein Check-in“ und „Wie fühlst du dich heute?“. Sobald ein Zustand
-erfasst ist, zeigt er Tagesrolle, Rollenmodus sowie Energie und Laune.
+## Korrekturen in 5.6.1
 
-Die ausführliche Auswertung mit Priorität und begrenzender Bedingung steht
-weiterhin in der Karte darunter.
+**Die runden Bogenenden überlappten sich.** Ein runder Abschluss verlängert den
+Bogen an jeder Seite um die halbe Bandbreite – hier rund 11,4°. Der Abstand
+zwischen den Phasen betrug aber nur 7°, sodass sich benachbarte Kappen
+berührten. Band auf 42 verschmälert, Abstand auf 15° erhöht: es bleibt eine
+sichtbare Lücke von gut 7°.
 
-## Neu: Zustand zurücksetzen
+**Der Kern überdeckte die Beschriftung.** Waagerechter Text auf einem Kreis
+kommt an seinen Ecken näher an den Mittelpunkt als der Radius vermuten lässt –
+bei „MORGEN“ genau bis an den Kernrand. Kern verkleinert, Beschriftung nach
+außen gerückt, Schrift leicht reduziert. Nachgemessen bleiben an allen
+geprüften Breiten 8 bis 13 px Abstand.
 
-Im Check-in-Dialog gibt es jetzt **Zurücksetzen**. Die Schaltfläche erscheint
-nur, wenn für diese Tagesphase bereits etwas gespeichert ist, steht links und
-tritt bewusst zurück – sie ist die seltene, nicht die naheliegende Handlung.
+**Die Symbole ragten über den Bogen hinaus.** Auf 82 % verkleinert und nach
+innen gerückt; sie liegen jetzt vollständig im Band.
 
-Zurückgesetzt wird ausschließlich die eine Tagesphase. Alle übrigen Angaben des
-Tages – die anderen Check-ins, Gebete, Mahlzeiten, Aktivitäten – bleiben
-unberührt.
+**Der Modus- und Rollenname lief aus dem Kern.** „Stabilisierungsmodus“ ist
+breiter als der Kerndurchmesser. Schriftgrößen angepasst, Silbentrennung
+erlaubt.
 
-## Korrekturen
+**Die Dialogschaltflächen liefen über.** Mit sichtbarem „Zurücksetzen“
+brauchten die drei Schaltflächen rund 400 px bei 321 px Platz – „Speichern“
+wurde abgeschnitten. „Zurücksetzen“ steht jetzt in einer eigenen Zeile
+darunter.
 
-- **Rollennamen wurden abgeschnitten** („Familienmens…“). Zwei Ursachen: eine
-  spätere Regel überschrieb die Schriftgröße, und eine Medienabfrage deckelte
-  die Breite auf 168 px. „Familienmensch“ passt jetzt an allen geprüften
-  Breiten vollständig.
-- **Dark Mode:** Symbole und Beschriftung wurden auf den gedimmten Bögen
-  aufgehellt – aber nur dort. Auf einem hell leuchtenden Bogen bliebe helle
-  Schrift unlesbar, dort behält die dunkle Tinte den Kontrast.
-- Der Zeiger ist in beiden Modi hell; zuvor wurde er im Dark Mode zu einem
-  dunklen Fleck.
-- Die ausgefransten Kanten und radialen Streifen der Vorversion entfallen mit
-  der neuen Bogenzeichnung vollständig.
+**Der Dialogtitel** nennt die Tagesphase wie im Ring („Morgen“ statt
+„Morgens“).
+
+## Zustand zurücksetzen
+
+Im Check-in-Dialog entfernt „Zurücksetzen“ die Zustandsaufnahme einer einzelnen
+Tagesphase. Die Schaltfläche erscheint nur, wenn dort etwas gespeichert ist.
+Alle übrigen Angaben des Tages bleiben unberührt.
 
 ## Datenmodell
 
 **Unverändert.** Keine Migration, kein neuer Schlüssel. Namespace bleibt
-`roleplay-v25`. Das Zurücksetzen entfernt einen Eintrag aus `stateCheckins`
-und schreibt den Tag normal zurück.
+`roleplay-v25`.
 
 ## Tests
 
-- **306** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark,
-  darunter sieben für das Zurücksetzen (Sichtbarkeit der Schaltfläche, Wirkung
-  auf genau eine Phase, Erhalt der übrigen, Bestand nach Neuladen)
+- **324** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
+- Darunter dauerhafte Geometrieprüfungen: Abstand der Beschriftung zum Kern,
+  Symbole innerhalb des Bogens, kein Überlauf der Dialogschaltflächen
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
 - **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler
-- Breite des längsten Rollennamens an drei Gerätebreiten vermessen

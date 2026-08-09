@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.6.0";
+const APP_VERSION = "5.6.1";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1375,9 +1375,13 @@ function renderCheckinSlots() {
   const pending = pendingPhaseKey();
 
   const size = 300, c = size / 2;
-  const band = 50;                 // Dicke des Bogens
-  const r = 108;                   // Mittellinie des Bogens
-  const gap = 7;                   // Grad Abstand zwischen den Phasen
+  const band = 42;                 // Dicke des Bogens
+  const r = 106;                   // Mittellinie des Bogens
+  /* Runde Enden verlängern den Bogen an jeder Seite um band/2. Der Abstand
+     muss größer sein als diese Verlängerung, sonst berühren sich die Kappen
+     benachbarter Phasen. band/2 entspricht hier rund 11,4°; bei 15° Abstand
+     bleibt eine sichtbare Lücke von gut 7°. */
+  const gap = 15;
 
   const defs = [];
   const arcs = [];
@@ -1401,16 +1405,16 @@ function renderCheckinSlots() {
       <stop offset="1" stop-color="${phase.to0}"></stop>
     </linearGradient>`);
 
-    const [ix, iy] = polar(c, c, r + 11, mid);
-    const [lx, ly] = polar(c, c, r - 15, mid);
+    const [ix, iy] = polar(c, c, r + 8, mid);
+    const [lx, ly] = polar(c, c, r - 7, mid);
 
     arcs.push(`<g class="cycle-phase ${entry ? "is-lit" : ""} ${slot.key === pending ? "is-pending" : ""}"
         data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
         style="--phase-ink:${phase.ink}"
         aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}.">
       <path class="cycle-arc" d="${arcPath(c, c, r, from, to)}" stroke="url(#arc-${slot.key})" stroke-width="${band}"></path>
-      <path class="cycle-hit" d="${arcPath(c, c, r, phase.from + 1, phase.from + 89)}" stroke-width="${band + 14}"></path>
-      ${phaseGlyph(slot.key, ix, iy, 1)}
+      <path class="cycle-hit" d="${arcPath(c, c, r, phase.from + 2, phase.from + 88)}" stroke-width="${band + 18}"></path>
+      ${phaseGlyph(slot.key, ix, iy, .82)}
       <text class="cycle-label" x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle">${escapeHTML(phase.short.toUpperCase())}</text>
     </g>`);
   });
@@ -1420,8 +1424,8 @@ function renderCheckinSlots() {
     ? cycleAngleForTime()
     : (pending ? CYCLE_PHASES[pending].from + 45 : null);
   if (markerAngle !== null) {
-    const [mx, my] = polar(c, c, r, markerAngle);
-    marks.push(`<circle class="cycle-marker" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="13"></circle>`);
+    const [mx, my] = polar(c, c, r + band / 2, markerAngle);
+    marks.push(`<circle class="cycle-marker" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="8.5"></circle>`);
   }
 
   const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot));
@@ -1581,7 +1585,7 @@ function fillStateCheckinForm(slotKey) {
   // Zurücksetzen nur anbieten, wenn für diese Tagesphase etwas gespeichert ist.
   const resetButton = $("resetStateCheckin");
   if (resetButton) resetButton.hidden = !existing;
-  if ($("stateDialogTitle")) $("stateDialogTitle").textContent = slot.label;
+  if ($("stateDialogTitle")) $("stateDialogTitle").textContent = phase.short;
   updateStateCheckinPreview();
 }
 
