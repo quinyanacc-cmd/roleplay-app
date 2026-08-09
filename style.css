@@ -63,6 +63,8 @@
   --energy-chart: #183E96;
   --load-chart: #E04F59;
   --prayer-chart: #59D7F7;
+  /* Grundton, mit dem nicht erfasste Tagesphasen abgedunkelt werden. */
+  --dim-rgb: 244, 245, 249;
   --mood-chart: #E8913A;
   --routine-red: #E0555F;
   --glow-blue: rgba(68,125,255,.28);
@@ -109,6 +111,7 @@
     --line-strong: rgba(255,255,255,.17);
 
     --accent: #76a7ff;
+    --dim-rgb: 13, 16, 23;
     --accent-strong: #9a7dff;
     --success: #3fc584;
     --danger: #ff7484;
@@ -1185,15 +1188,15 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 .trend-note { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--muted); line-height: 1.4; }
 
 .trend-panel,
-.prayer-week-panel {
-  background: linear-gradient(145deg, rgba(255,255,255,.42), var(--field-2) 26%, var(--field-2) 100%);
-}
-
-.prayer-week-panel {
+/* Beide Wochenpanels teilen sich Gestaltung und Raster – sie sollen als Paar
+   gelesen werden, nicht als zwei verschiedene Bausteine. */
+.prayer-week-panel,
+.routine-week-panel {
+  margin-top: var(--sp-2);
   padding: var(--sp-3);
   border-radius: var(--r-field);
   border: 1px solid var(--line);
-  background: linear-gradient(145deg, rgba(255,255,255,.42), var(--field-2) 26%, var(--field-2) 100%);
+  background: var(--field-2);
 }
 .panel-caption { display: block; margin-bottom: var(--sp-2); font-size: var(--fs-small); font-weight: 650; color: var(--muted); }
 .prayer-week-grid {
@@ -1201,13 +1204,16 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--sp-1);
 }
-.prayer-week-day { display: grid; justify-items: center; gap: var(--sp-1); }
-.prayer-week-day small { font-size: var(--fs-tiny); color: var(--muted); }
+.prayer-week-day,
+.routine-week-day { display: grid; justify-items: center; gap: var(--sp-1); }
+.prayer-week-day small,
 .prayer-week-day b { font-size: var(--fs-tiny); font-weight: 750; }
-.prayer-week-dots { display: grid; gap: 3px; justify-items: center; }
-.prayer-week-dots i {
+.prayer-week-dots,
+.routine-week-dots { display: grid; gap: 3px; justify-items: center; }
+.prayer-week-dots i,
+.routine-week-dots i {
   display: block;
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border-radius: var(--r-pill);
   background: var(--tint-neutral);
   border: 1px solid var(--line);
@@ -1461,23 +1467,23 @@ dialog::backdrop { background: rgba(10,14,24,.46); backdrop-filter: blur(3px); }
 .form-dialog form > details { margin-top: var(--sp-1); }
 
 .dialog-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  /* Zwei gleich breite Hauptaktionen; Zurücksetzen liegt darunter. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
+.dialog-actions > button { width: 100%; }
 .dialog-actions.split-actions { justify-content: space-between; }
 .dialog-spacer { flex: 1 1 auto; }
 
 /* Zurücksetzen steht links und tritt bewusst zurück – es ist die seltene,
    nicht die naheliegende Handlung. */
 .ghost-button {
-  /* Steht in einer eigenen Zeile unter den Hauptaktionen: drei Schaltflächen
-     nebeneinander passen auf schmalen Geräten nicht. */
+  /* Eigene Zeile unter den Hauptaktionen: drei Schaltflächen nebeneinander
+     passen auf schmalen Geräten nicht. */
   order: 2;
-  flex: 1 0 100%;
-  margin-top: var(--sp-1);
+  grid-column: 1 / -1;
   min-height: var(--control-h);
   padding: 0 var(--sp-3);
   border-radius: var(--r-pill);
@@ -1841,23 +1847,7 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 .stats-swipe { touch-action: pan-y; }
 
 /* Zweite Wochenübersicht: zwei Punkte je Tag, ohne Beschriftung. */
-.routine-week-panel {
-  margin-top: var(--sp-3);
-  padding: var(--sp-3);
-  border-radius: var(--r-field);
-  border: 1px solid var(--line);
-  background: var(--field-2);
-}
 .routine-week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--sp-1); }
-.routine-week-day { display: grid; justify-items: center; gap: 5px; }
-.routine-week-day small { font-size: var(--fs-tiny); color: var(--muted); }
-.routine-week-dots { display: grid; gap: 4px; justify-items: center; }
-.routine-week-dots i {
-  width: 8px; height: 8px;
-  border-radius: var(--r-pill);
-  background: transparent;
-  border: 1px solid var(--line-strong);
-}
 .routine-week-dots i.filled { background: var(--routine-red, #E0555F); border-color: var(--routine-red, #E0555F); }
 
 /* Stern bei fünf von fünf Pflichtgebeten – dezent und ausschließlich positiv. */
@@ -1897,104 +1887,122 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 
 /* ==========================================================================
    ROLEPLAY STATE CYCLE
-   Vier Bogensegmente mit runden Enden, pastellige Verläufe, farbige Symbole
-   und Beschriftung. In der Mitte steht die Aussage des Systems.
-   Erfasste Phasen leuchten satt, noch offene bleiben hell und zurückhaltend.
+   Ein geschlossener Farbkreis: ein durchgehender Kegelverlauf führt von der
+   tiefblauen Nacht über Violett und Rosé in das Orange des Morgens, weiter
+   über Gold ins Türkis des Mittags und über Blau und Magenta des Abends
+   zurück in die Nacht. Keine Segmentkanten, kein Bruch.
+
+   Ob eine Tagesphase erfasst ist, steuert eine zweite Ebene mit ebenfalls
+   weich verlaufender Abdunklung. Dadurch bleibt auch dieser Wechsel fließend.
    ========================================================================== */
 .state-cycle {
   position: relative;
-  display: grid;
-  place-items: center;
-  width: min(320px, 88vw);
+  width: min(300px, 84vw);
+  aspect-ratio: 1;
   margin: var(--sp-2) auto var(--sp-4);
   isolation: isolate;
 }
-/* Weicher Lichthof – gibt Tiefe ohne harte Kante. */
-.state-cycle::before {
+
+.cycle-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    #9A55B7 0deg,
+    #C75AA0 15deg,
+    #F5893F 45deg,
+    #F5B93C 75deg,
+    #7ACBB4 105deg,
+    #24B4CB 135deg,
+    #3E9BD8 165deg,
+    #6A76DA 195deg,
+    #A855C7 225deg,
+    #7A4ECF 255deg,
+    #4A45C6 285deg,
+    #3B49C4 315deg,
+    #6B45C8 345deg,
+    #9A55B7 360deg);
+  /* Das Band reicht weit nach innen; in der Mitte bleibt Platz für den Kern. */
+  -webkit-mask: radial-gradient(closest-side, transparent 0 46%, #000 46.6% 100%);
+  mask: radial-gradient(closest-side, transparent 0 46%, #000 46.6% 100%);
+  box-shadow: 0 12px 34px rgba(40,30,90,.20);
+}
+/* Abdunklung der noch nicht erfassten Tagesphasen. Die Stops sitzen in den
+   Quadrantenmitten, dazwischen blendet der Verlauf weich über. */
+.cycle-ring::after {
   content: "";
   position: absolute;
-  inset: 2%;
-  z-index: -1;
+  inset: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 30% 22%, rgba(169,155,240,.20), transparent 58%),
-    radial-gradient(circle at 74% 26%, rgba(248,177,115,.18), transparent 56%),
-    radial-gradient(circle at 72% 76%, rgba(132,207,236,.18), transparent 56%),
-    radial-gradient(circle at 28% 74%, rgba(205,166,232,.18), transparent 56%);
-  filter: blur(18px);
-  transition: opacity .45s ease;
+  background: conic-gradient(from 45deg,
+    rgba(var(--dim-rgb), var(--dim-morning, 0)) 0deg,
+    rgba(var(--dim-rgb), var(--dim-midday, 0)) 90deg,
+    rgba(var(--dim-rgb), var(--dim-evening, 0)) 180deg,
+    rgba(var(--dim-rgb), var(--dim-night, 0)) 270deg,
+    rgba(var(--dim-rgb), var(--dim-morning, 0)) 360deg);
+  transition: background .45s ease;
 }
-.state-cycle.is-dormant::before { opacity: .55; }
 
-.cycle-ring { width: 100%; height: auto; overflow: visible; display: block; }
-
-/* Runde Enden lassen die Segmente weich wirken statt abgeschnitten. */
-.cycle-arc {
-  fill: none;
-  stroke-linecap: round;
-  opacity: .34;
-  transition: opacity .45s ease, filter .45s ease;
+/* Trefferfläche: jeweils ein Viertel des Kreises. */
+.cycle-phase {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transition: transform .18s ease;
 }
-.cycle-phase.is-lit .cycle-arc {
-  opacity: 1;
-  filter: drop-shadow(0 4px 14px rgba(40,32,80,.13));
-}
-/* Die anstehende Phase bleibt auch unerfasst gut sichtbar. */
-.cycle-phase.is-pending .cycle-arc { opacity: .62; }
+.cycle-phase:nth-of-type(1) { top: 0; left: 0; }
+.cycle-phase:nth-of-type(2) { top: 0; right: 0; }
+.cycle-phase:nth-of-type(3) { bottom: 0; right: 0; }
+.cycle-phase:nth-of-type(4) { bottom: 0; left: 0; }
+.cycle-phase:active { transform: scale(1.04); }
 
-.cycle-hit { fill: none; stroke: transparent; stroke-linecap: butt; }
-.cycle-phase { cursor: pointer; outline: none; transition: transform .18s ease; transform-origin: 50% 50%; }
-.cycle-phase:active { transform: scale(1.03); }
-
-/* Symbole und Beschriftung in der Tinte der jeweiligen Phase. */
-.cycle-glyph { pointer-events: none; }
-.cycle-glyph-body { fill: var(--phase-ink); stroke: none; }
-.cycle-glyph-spark { fill: var(--phase-ink); }
-.cycle-glyph-horizon,
-.cycle-glyph-ray {
-  stroke: var(--phase-ink);
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  fill: none;
-}
-.cycle-glyph, .cycle-label { opacity: .48; transition: opacity .45s ease; }
-.cycle-phase.is-pending .cycle-glyph,
-.cycle-phase.is-pending .cycle-label { opacity: .8; }
-.cycle-phase.is-lit .cycle-glyph,
-.cycle-phase.is-lit .cycle-label { opacity: 1; }
-
-.cycle-label {
-  fill: var(--phase-ink);
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: .12em;
+/* Das Symbol sitzt in der Bandmitte des jeweiligen Quadranten. */
+.cycle-symbol {
+  position: absolute;
+  left: var(--qx);
+  top: var(--qy);
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  display: block;
   pointer-events: none;
 }
 
-/* Zeiger: helle Kugel auf der Bahn. */
-/* Der Zeiger bleibt in beiden Modi hell – er ist ein Lichtpunkt auf der Bahn. */
-.cycle-marker {
-  fill: #FFFFFF;
-  stroke: rgba(120,110,170,.20);
-  stroke-width: 1;
-  filter: drop-shadow(0 3px 9px rgba(40,32,80,.24));
+.cycle-symbol svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.cycle-symbol svg path,
+.cycle-symbol svg circle { fill: #fff; stroke: none; }
+.cycle-symbol svg line {
+  stroke: #fff;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  fill: none;
 }
+.cycle-symbol {
+  opacity: .55;
+  filter: drop-shadow(0 1px 4px rgba(20,16,50,.45));
+  transition: opacity .45s ease, transform .3s ease;
+}
+.cycle-phase.is-pending .cycle-symbol { opacity: .82; }
+.cycle-phase.is-lit .cycle-symbol { opacity: 1; }
 
-/* Kern als ruhige Glasfläche. */
+/* Kern: ruhige Fläche mit der Aussage des Systems. */
 .cycle-core {
   position: absolute;
-  /* Muss innerhalb des Ringlochs bleiben – der Innenrand liegt bei rund 28,3 %. */
-  inset: 27.5%;
+  inset: 28%;
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 3px;
+  gap: 2px;
   padding: var(--sp-2);
   border-radius: 50%;
   text-align: center;
   pointer-events: none;
   background: var(--card-solid);
-  box-shadow: 0 6px 20px rgba(40,32,80,.10), inset 0 0 0 1px var(--line);
+  box-shadow: 0 8px 24px rgba(40,30,90,.16), inset 0 0 0 1px var(--line);
   animation: cycleCoreIn .34s ease-out;
 }
 @keyframes cycleCoreIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
@@ -2005,7 +2013,6 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 .cycle-core-icon .smile { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; stroke-linecap: round; }
 
 .cycle-core-role {
-  /* "Familienmensch" ist der längste Rollenname und muss in den Kern passen. */
   max-width: 100%;
   font-size: 8.5px;
   font-weight: 800;
@@ -2014,9 +2021,8 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   color: var(--muted);
 }
 .cycle-core-mode {
-  /* Lange Modusnamen wie "Stabilisierungsmodus" müssen im Kern bleiben. */
   max-width: 100%;
-  font-size: clamp(11px, 3.3vw, 14px);
+  font-size: clamp(12px, 3.6vw, 15px);
   font-weight: 800;
   line-height: 1.16;
   color: var(--mode-color, var(--text));
@@ -2025,36 +2031,18 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   text-wrap: balance;
 }
 .cycle-core-mode.empty { color: var(--text); }
-.cycle-core-sub b { font-weight: 800; color: var(--text); }
 .cycle-core-sub {
   margin-top: 2px;
   font-size: var(--fs-tiny);
-  line-height: 1.25;
+  line-height: 1.3;
   color: var(--muted);
   text-wrap: balance;
 }
+.cycle-core-sub b { font-weight: 800; color: var(--text); }
 
-@media (prefers-color-scheme: dark) {
-  /* Im Dark Mode dürfen die Pastelltöne nicht ausbleichen: unerfasste Phasen
-     werden dunkler statt heller. */
-  .cycle-arc { opacity: .22; }
-  .cycle-phase.is-pending .cycle-arc { opacity: .5; }
-  .cycle-glyph, .cycle-label { opacity: .72; }
-  /* Nur auf den gedimmten, also dunklen Bögen wird die Tinte aufgehellt.
-     Auf einem erfassten, hell leuchtenden Bogen bliebe helle Schrift
-     unlesbar – dort behält die dunkle Tinte den Kontrast. */
-  .cycle-phase:not(.is-lit) .cycle-label { fill: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
-  .cycle-phase:not(.is-lit) .cycle-glyph-body,
-  .cycle-phase:not(.is-lit) .cycle-glyph-spark { fill: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
-  .cycle-phase:not(.is-lit) .cycle-glyph-horizon,
-  .cycle-phase:not(.is-lit) .cycle-glyph-ray { stroke: color-mix(in srgb, var(--phase-ink) 34%, #FFFFFF); }
-  .cycle-marker { stroke: rgba(255,255,255,.22); }
-  .cycle-core { box-shadow: 0 6px 20px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.07); }
-  .state-cycle::before { filter: blur(22px); opacity: .7; }
-}
 @media (prefers-reduced-motion: reduce) {
   .cycle-core { animation: none; }
-  .cycle-phase { transition: none; }
+  .cycle-phase, .cycle-symbol, .cycle-ring::after { transition: none; }
 }
 
 /* --------------------------------------------------------------------------
@@ -2068,22 +2056,13 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-4);
-  padding-left: calc(var(--sp-4) + 3px);
   border-radius: var(--r-field);
   border: 1px solid var(--line);
   background: var(--field-2);
   overflow: hidden;
 }
-.state-readout::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: var(--mode-color, var(--line));
-  opacity: .9;
-}
+
 .state-readout.is-empty { display: block; text-align: center; padding: var(--sp-5) var(--sp-4); }
-.state-readout.is-empty::before { display: none; }
 .readout-empty { margin: 0; color: var(--muted); font-size: var(--fs-body); font-weight: 650; }
 
 .readout-head { display: grid; gap: 1px; }
