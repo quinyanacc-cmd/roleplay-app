@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.4.0";
+const APP_VERSION = "5.5.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1227,12 +1227,81 @@ function latestStateCheckin(data = currentData) {
    ========================================================================== */
 
 const CYCLE_PHASES = {
-  night:   { short: "Nacht",  from: 180, a: "#22306B", mid: "#2E3579", b: "#3B3486" },
-  morning: { short: "Morgen", from: 270, a: "#DE7369", mid: "#EB9668", b: "#F4BA6B" },
-  // Der Mittelton führt den Mittag über ein warmes Cremeweiß statt über Grün.
-  midday:  { short: "Mittag", from: 0,   a: "#F6CE72", mid: "#F1E4B8", b: "#8CD8E8" },
-  evening: { short: "Abend",  from: 90,  a: "#B96BAE", mid: "#8C5BA6", b: "#5E4A9B" }
+  night:   { short: "Nacht",  from: 180 },
+  morning: { short: "Morgen", from: 270 },
+  midday:  { short: "Mittag", from: 0   },
+  evening: { short: "Abend",  from: 90  }
 };
+
+/* Farbanker rund um den Tag. Zwischen ihnen wird interpoliert, deshalb gibt
+   es keine Segmentgrenzen: der Ring läuft als ein einziger Verlauf durch.
+
+   Der Weg folgt einem echten Tag – tiefes Indigo, violette Dämmerung,
+   Sonnenaufgang, Gold, klarer Mittagshimmel, weicher Nachmittag,
+   Sonnenuntergang, Abendrot, Abenddämmerung und zurück ins Indigo. */
+const CYCLE_STOPS = [
+  { at: 180, c: "#2A2E6B" },   // Abend geht in die Nacht über
+  { at: 205, c: "#1D2456" },
+  { at: 225, c: "#171F4F" },   // tiefste Nacht
+  { at: 250, c: "#3B2F6E" },
+  { at: 270, c: "#6B4C86" },   // Dämmerung
+  { at: 292, c: "#C2705F" },
+  { at: 315, c: "#F0906A" },   // Sonnenaufgang
+  { at: 337, c: "#F7BE6C" },
+  { at: 360, c: "#EFD98F" },   // später Vormittag
+  { at: 22,  c: "#BCDDD8" },
+  { at: 45,  c: "#86D2E8" },   // klarer Mittagshimmel
+  { at: 68,  c: "#9AC8E6" },
+  { at: 90,  c: "#B3B9DE" },   // Nachmittag wird weicher
+  { at: 112, c: "#E9A87A" },   // Sonnenuntergang
+  { at: 135, c: "#D2708F" },   // Abendrot
+  { at: 157, c: "#8A5794" },   // Abenddämmerung
+  { at: 180, c: "#2A2E6B" }
+];
+
+// Ergänzt einen rgb()-Wert um einen Alphakanal.
+function rgbWithAlpha(rgb, alpha) {
+  const m = String(rgb).match(/(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+  if (!m) return rgb;
+  return `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${alpha})`;
+}
+
+function hexToRgbTriple(hex) {
+  const v = hex.replace("#", "");
+  return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+}
+
+/* Die Ankerwinkel werden einmalig zu einer aufsteigenden Folge ab 180°
+   aufgerollt (180 … 540), damit die Suche auch über den Nullpunkt hinweg
+   funktioniert. */
+const CYCLE_STOPS_UNWRAPPED = (() => {
+  let previous = CYCLE_STOPS[0].at;
+  return CYCLE_STOPS.map((stop, index) => {
+    if (index === 0) return { at: previous, c: stop.c };
+    let at = stop.at;
+    while (at <= previous) at += 360;
+    previous = at;
+    return { at, c: stop.c };
+  });
+})();
+
+// Farbe an einem beliebigen Winkel – lineare Mischung der beiden Nachbaranker.
+function cycleColorAt(angle) {
+  const base = CYCLE_STOPS_UNWRAPPED[0].at;
+  const a = ((angle - base) % 360 + 360) % 360 + base;
+  for (let i = 0; i < CYCLE_STOPS_UNWRAPPED.length - 1; i += 1) {
+    const s0 = CYCLE_STOPS_UNWRAPPED[i];
+    const s1 = CYCLE_STOPS_UNWRAPPED[i + 1];
+    if (a >= s0.at && a <= s1.at) {
+      const t = s1.at === s0.at ? 0 : (a - s0.at) / (s1.at - s0.at);
+      const c0 = hexToRgbTriple(s0.c);
+      const c1 = hexToRgbTriple(s1.c);
+      return `rgb(${c0.map((v, k) => Math.round(v + (c1[k] - v) * t)).join(",")})`;
+    }
+  }
+  return CYCLE_STOPS_UNWRAPPED[0].c;
+}
+
 
 // Zeigerwinkel der aktuellen Uhrzeit: 03:00 liegt in der Mitte der Nacht (225°).
 function cycleAngleForTime(date = new Date()) {
@@ -1245,44 +1314,66 @@ function polar(cx, cy, r, deg) {
   return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)];
 }
 
-// Ringsegment zwischen zwei Radien.
 function ringSegment(cx, cy, rOuter, rInner, from, to) {
   const [x0, y0] = polar(cx, cy, rOuter, from);
   const [x1, y1] = polar(cx, cy, rOuter, to);
   const [x2, y2] = polar(cx, cy, rInner, to);
   const [x3, y3] = polar(cx, cy, rInner, from);
   const large = Math.abs(to - from) > 180 ? 1 : 0;
-  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter} ${rOuter} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
-       + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner} ${rInner} 0 ${large} 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rOuter.toFixed(2)} ${rOuter.toFixed(2)} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`
+       + ` L${x2.toFixed(2)} ${y2.toFixed(2)} A${rInner.toFixed(2)} ${rInner.toFixed(2)} 0 ${large} 0 ${x3.toFixed(2)} ${y3.toFixed(2)} Z`;
 }
 
-/* Abstrakte Phasenmarke statt Emoji: eine Horizontlinie mit einem Lichtkörper.
-   Dessen Höhe über dem Horizont erzählt die Tageszeit – unter dem Horizont
-   Nacht, aufsteigend Morgen, hoch stehend Mittag, absinkend Abend. */
-function phaseGlyph(key, x, y) {
-  const line = `<line class="cycle-glyph-horizon" x1="${x - 11}" y1="${y + 5}" x2="${x + 11}" y2="${y + 5}"></line>`;
+/* Abstrakte Phasenmarke: eine Horizontlinie mit einem Lichtkörper. Dessen
+   Höhe über dem Horizont erzählt die Tageszeit – darunter Nacht, aufsteigend
+   Morgen, hochstehend Mittag, absinkend Abend. Kein Emoji nötig. */
+function phaseGlyph(key, x, y, scale = 1) {
+  const s = v => (v * scale).toFixed(2);
+  const px = (dx, dy) => `${(x + dx * scale).toFixed(2)} ${(y + dy * scale).toFixed(2)}`;
+  const horizon = `<line class="cycle-glyph-horizon" x1="${(x - 13 * scale).toFixed(2)}" y1="${(y + 6 * scale).toFixed(2)}" x2="${(x + 13 * scale).toFixed(2)}" y2="${(y + 6 * scale).toFixed(2)}"></line>`;
   if (key === "night") {
-    return `<g class="cycle-glyph">${line}
-      <circle class="cycle-glyph-body hollow" cx="${x}" cy="${y + 9}" r="4.2"></circle>
-      <circle class="cycle-glyph-spark" cx="${x - 8}" cy="${y - 4}" r="1"></circle>
-      <circle class="cycle-glyph-spark" cx="${x + 6}" cy="${y - 7}" r="1.3"></circle>
-      <circle class="cycle-glyph-spark" cx="${x + 1}" cy="${y - 1}" r=".9"></circle></g>`;
+    return `<g class="cycle-glyph">${horizon}
+      <circle class="cycle-glyph-body hollow" cx="${x}" cy="${(y + 10.5 * scale).toFixed(2)}" r="${s(4.8)}"></circle>
+      <circle class="cycle-glyph-spark" cx="${(x - 9 * scale).toFixed(2)}" cy="${(y - 5 * scale).toFixed(2)}" r="${s(1.15)}"></circle>
+      <circle class="cycle-glyph-spark" cx="${(x + 7 * scale).toFixed(2)}" cy="${(y - 8 * scale).toFixed(2)}" r="${s(1.5)}"></circle>
+      <circle class="cycle-glyph-spark" cx="${(x + 1 * scale).toFixed(2)}" cy="${(y - 2 * scale).toFixed(2)}" r="${s(1)}"></circle></g>`;
   }
   if (key === "morning") {
-    return `<g class="cycle-glyph">${line}
-      <path class="cycle-glyph-body" d="M${x - 5.4} ${y + 5} a5.4 5.4 0 0 1 10.8 0 Z"></path>
-      <line class="cycle-glyph-ray" x1="${x}" y1="${y - 8}" x2="${x}" y2="${y - 5}"></line></g>`;
+    return `<g class="cycle-glyph">${horizon}
+      <path class="cycle-glyph-body" d="M${px(-6.2, 6)} a${s(6.2)} ${s(6.2)} 0 0 1 ${s(12.4)} 0 Z"></path>
+      <line class="cycle-glyph-ray" x1="${x}" y1="${(y - 10 * scale).toFixed(2)}" x2="${x}" y2="${(y - 6.5 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${(x - 9 * scale).toFixed(2)}" y1="${(y - 5 * scale).toFixed(2)}" x2="${(x - 7 * scale).toFixed(2)}" y2="${(y - 3 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${(x + 9 * scale).toFixed(2)}" y1="${(y - 5 * scale).toFixed(2)}" x2="${(x + 7 * scale).toFixed(2)}" y2="${(y - 3 * scale).toFixed(2)}"></line></g>`;
   }
   if (key === "midday") {
-    return `<g class="cycle-glyph">${line}
-      <circle class="cycle-glyph-body" cx="${x}" cy="${y - 3}" r="4.4"></circle>
-      <line class="cycle-glyph-ray" x1="${x - 9}" y1="${y - 3}" x2="${x - 7}" y2="${y - 3}"></line>
-      <line class="cycle-glyph-ray" x1="${x + 7}" y1="${y - 3}" x2="${x + 9}" y2="${y - 3}"></line>
-      <line class="cycle-glyph-ray" x1="${x}" y1="${y - 12}" x2="${x}" y2="${y - 10}"></line></g>`;
+    return `<g class="cycle-glyph">${horizon}
+      <circle class="cycle-glyph-body" cx="${x}" cy="${(y - 3.5 * scale).toFixed(2)}" r="${s(5)}"></circle>
+      <line class="cycle-glyph-ray" x1="${(x - 11 * scale).toFixed(2)}" y1="${(y - 3.5 * scale).toFixed(2)}" x2="${(x - 8.5 * scale).toFixed(2)}" y2="${(y - 3.5 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${(x + 8.5 * scale).toFixed(2)}" y1="${(y - 3.5 * scale).toFixed(2)}" x2="${(x + 11 * scale).toFixed(2)}" y2="${(y - 3.5 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${x}" y1="${(y - 14.5 * scale).toFixed(2)}" x2="${x}" y2="${(y - 12 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${(x - 8 * scale).toFixed(2)}" y1="${(y - 11 * scale).toFixed(2)}" x2="${(x - 6.2 * scale).toFixed(2)}" y2="${(y - 9.2 * scale).toFixed(2)}"></line>
+      <line class="cycle-glyph-ray" x1="${(x + 8 * scale).toFixed(2)}" y1="${(y - 11 * scale).toFixed(2)}" x2="${(x + 6.2 * scale).toFixed(2)}" y2="${(y - 9.2 * scale).toFixed(2)}"></line></g>`;
   }
-  return `<g class="cycle-glyph">${line}
-    <path class="cycle-glyph-body" d="M${x - 5.4} ${y + 5} a5.4 5.4 0 0 1 10.8 0 Z"></path>
-    <line class="cycle-glyph-ray" x1="${x + 8}" y1="${y - 1}" x2="${x + 10}" y2="${y + 1}"></line></g>`;
+  return `<g class="cycle-glyph">${horizon}
+    <path class="cycle-glyph-body" d="M${px(-6.2, 6)} a${s(6.2)} ${s(6.2)} 0 0 1 ${s(12.4)} 0 Z"></path>
+    <line class="cycle-glyph-ray" x1="${(x + 9.5 * scale).toFixed(2)}" y1="${(y - 1 * scale).toFixed(2)}" x2="${(x + 12 * scale).toFixed(2)}" y2="${(y + 1.5 * scale).toFixed(2)}"></line>
+    <line class="cycle-glyph-ray" x1="${(x - 12 * scale).toFixed(2)}" y1="${(y + 1.5 * scale).toFixed(2)}" x2="${(x - 9.5 * scale).toFixed(2)}" y2="${(y - 1 * scale).toFixed(2)}"></line></g>`;
+}
+
+// Welche Tagesphase steht als nächste an? Sie bekommt den kräftigeren Rand.
+function pendingPhaseKey() {
+  const bySlot = Object.fromEntries((currentData?.stateCheckins || []).map(e => [e.slot, e]));
+  const open = CHECKIN_CHRONOLOGY.filter(key => !bySlot[key]);
+  if (!open.length) return null;
+  if (selectedDate !== todayISO()) return open[0];
+  const current = slotForTime();
+  const from = CHECKIN_CHRONOLOGY.indexOf(current);
+  // Ab der aktuellen Tageszeit vorwärts suchen, dann von vorn.
+  for (let i = 0; i < CHECKIN_CHRONOLOGY.length; i += 1) {
+    const key = CHECKIN_CHRONOLOGY[(from + i) % CHECKIN_CHRONOLOGY.length];
+    if (!bySlot[key]) return key;
+  }
+  return open[0];
 }
 
 function renderCheckinSlots() {
@@ -1290,77 +1381,130 @@ function renderCheckinSlots() {
   if (!container || !currentData) return;
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
 
-  const size = 240, c = size / 2;
-  const rOuter = 116, rInner = 66;
-  const gap = 1.6;                       // Grad – feine Trennung, kein harter Schnitt
+  const size = 264, c = size / 2;
+  const rInner = 78;
+  const rOuter = 118;
+  const swell = 13;                // wie weit die anstehende Phase nach außen wächst
+  const step = 1.5;                // Grad je Teilstück – fein genug für eine glatte Außenkante
+  const overlap = 0.42;            // minimale Überlappung gegen Haarlinien
 
-  const defs = [];
-  const paths = [];
-  const marks = [];
+  const pending = pendingPhaseKey();
+  const litFor = key => (bySlot[key] ? 1 : 0);
 
-  CHECKIN_SLOTS.forEach(slot => {
+  // Weiche Rampe: Werte an den Phasengrenzen ineinander überführen, damit
+  // auch der Hell-/Dunkelwechsel fließt statt zu springen.
+  const smoothAt = (angle, valueOf) => {
+    const window = 16;
+    let sum = 0, weight = 0;
+    for (let d = -window; d <= window; d += 4) {
+      const a = ((angle + d) % 360 + 360) % 360;
+      const key = CHECKIN_SLOTS.find(s => {
+        const from = CYCLE_PHASES[s.key].from;
+        const rel = ((a - from) % 360 + 360) % 360;
+        return rel < 90;
+      })?.key;
+      const w = Math.cos(d / window * Math.PI / 2);
+      sum += valueOf(key) * w;
+      weight += w;
+    }
+    return weight ? sum / weight : 0;
+  };
+
+  /* Die Farbstücke werden deckend gezeichnet und überlappen leicht, damit
+     keine Haarlinien entstehen. Die Helligkeit steuert eine separate Maske:
+     würde sie über Einzeltransparenzen laufen, addierte sich der Alphawert an
+     jeder Überlappung und der Ring bekäme radiale Streifen. */
+  const slices = [];
+  const maskSlices = [];
+  const outline = [];
+  for (let a = 0; a < 360; a += step) {
+    const mid = a + step / 2;
+    const lit = smoothAt(mid, key => key ? litFor(key) : 0);
+    const bump = pending ? smoothAt(mid, key => (key === pending ? 1 : 0)) : 0;
+    const outer = rOuter + bump * swell;
+    // Alle Stücke reichen bis zum äußersten möglichen Radius; die tatsächliche
+    // Kontur schneidet der Beschnittpfad. Sonst entstünde an der anschwellenden
+    // Phase eine sägezahnartige Kante, weil jedes Stück einen eigenen Radius hätte.
+    const d = ringSegment(c, c, rOuter + swell + 2, rInner - 1, a - overlap, a + step + overlap);
+    slices.push(`<path d="${d}" fill="${cycleColorAt(mid)}"></path>`);
+    const level = Math.round((0.19 + 0.81 * lit) * 255);
+    maskSlices.push(`<path d="${d}" fill="rgb(${level},${level},${level})"></path>`);
+    outline.push([outer, a - step / 2]);
+  }
+
+  // Außenkontur als geschlossener Ring: außen die weich verlaufende Kante,
+  // innen ein gegenläufiger Kreis, der die Mitte ausstanzt.
+  const outerPts = outline.map(([r, a]) => {
+    const [x, y] = polar(c, c, r, a);
+    return `${x.toFixed(2)} ${y.toFixed(2)}`;
+  });
+  const outlinePath = `M${outerPts.join(" L")} Z`
+    + ` M${(c + rInner).toFixed(2)} ${c} A${rInner} ${rInner} 0 1 0 ${(c - rInner).toFixed(2)} ${c}`
+    + ` A${rInner} ${rInner} 0 1 0 ${(c + rInner).toFixed(2)} ${c} Z`;
+
+  // Lichtkante entlang der anstehenden Phase – der Rand wird spürbar dicker.
+  let pendingEdge = "";
+  if (pending) {
+    const from = CYCLE_PHASES[pending].from;
+    const pts = [];
+    for (let d = 0; d <= 90; d += 2) {
+      const a = from + d;
+      const bump = smoothAt(a, key => (key === pending ? 1 : 0));
+      const [x, y] = polar(c, c, rOuter + bump * swell, a);
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    pendingEdge = `<polyline class="cycle-pending-edge" points="${pts.join(" ")}" style="--edge-color:${cycleColorAt(from + 45)}"></polyline>`;
+  }
+
+  // Unsichtbare Trefferflächen: die gesamte Phase bleibt antippbar.
+  const hits = CHECKIN_SLOTS.map(slot => {
     const phase = CYCLE_PHASES[slot.key];
     const entry = bySlot[slot.key];
     const framework = frameworkForCheckin(entry);
-    const from = phase.from + gap;
-    const to = phase.from + 90 - gap;
-    const mid = phase.from + 45;
+    const [gx, gy] = polar(c, c, (rInner + rOuter) / 2 + (slot.key === pending ? swell / 2 : 0), phase.from + 45);
+    return `<g class="cycle-phase ${entry ? "is-lit" : ""} ${slot.key === pending ? "is-pending" : ""}"
+        data-open-checkin-slot="${slot.key}" role="button" tabindex="0"
+        aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}.">
+      <path class="cycle-hit" d="${ringSegment(c, c, rOuter + swell + 6, rInner - 4, phase.from, phase.from + 90)}"></path>
+      ${phaseGlyph(slot.key, gx, gy, 1.15)}
+    </g>`;
+  }).join("");
 
-    // Verlauf entlang der Bogenrichtung, damit die Phasen ineinanderlaufen.
-    const [gx0, gy0] = polar(c, c, (rOuter + rInner) / 2, from);
-    const [gx1, gy1] = polar(c, c, (rOuter + rInner) / 2, to);
-    defs.push(`<linearGradient id="cyc-${slot.key}" gradientUnits="userSpaceOnUse"
-        x1="${gx0.toFixed(1)}" y1="${gy0.toFixed(1)}" x2="${gx1.toFixed(1)}" y2="${gy1.toFixed(1)}">
-      <stop offset="0" stop-color="${phase.a}"></stop>
-      <stop offset=".5" stop-color="${phase.mid || phase.a}"></stop>
-      <stop offset="1" stop-color="${phase.b}"></stop>
-    </linearGradient>`);
-
-    const [lx, ly] = polar(c, c, (rOuter + rInner) / 2, mid);
-    const label = phase.short;
-    paths.push(`<g class="cycle-phase ${entry ? "is-lit" : ""}" data-open-checkin-slot="${slot.key}"
-        role="button" tabindex="0"
-        aria-label="${escapeHTML(phase.short)}: ${entry ? escapeHTML(framework?.label || "Zustand erfasst") : "noch keine Zustandsaufnahme"}. Antippen zum ${entry ? "Bearbeiten" : "Erfassen"}."
-        style="--phase-a:${phase.a};--phase-b:${phase.b}">
-      <path class="cycle-phase-shape" d="${ringSegment(c, c, rOuter, rInner, from, to)}" fill="url(#cyc-${slot.key})"></path>
-      <path class="cycle-phase-edge" d="${ringSegment(c, c, rOuter, rInner, from, to)}"></path>
-      ${phaseGlyph(slot.key, lx, ly - 9)}
-      <text class="cycle-phase-label" x="${lx.toFixed(1)}" y="${(ly + 19).toFixed(1)}" text-anchor="middle">${escapeHTML(label)}</text>
-    </g>`);
-  });
-
-  // Zeiger der aktuellen Tageszeit – nur am heutigen Tag.
+  // Zeiger der aktuellen Tageszeit.
+  let now = "";
   if (selectedDate === todayISO()) {
     const angle = cycleAngleForTime();
-    const [mx, my] = polar(c, c, rOuter + 7, angle);
-    marks.push(`<circle class="cycle-now" cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="3.1"></circle>`);
+    const bump = pending ? smoothAt(angle, key => (key === pending ? 1 : 0)) : 0;
+    const [nx, ny] = polar(c, c, rOuter + bump * swell + 9, angle);
+    now = `<circle class="cycle-now" cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="3.4" style="--now-color:${cycleColorAt(angle)}"></circle>`;
   }
 
-  const svg = `<svg class="cycle-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Tageszyklus mit vier Zustandsaufnahmen">
-      <defs>${defs.join("")}</defs>
-      <circle class="cycle-base" cx="${c}" cy="${c}" r="${(rOuter + rInner) / 2}" stroke-width="${rOuter - rInner}"></circle>
-      ${paths.join("")}
-      ${marks.join("")}
-    </svg>`;
-
-  // Der Kern liegt als HTML über dem Ring – volle typografische Kontrolle.
   const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot));
   const latest = checkins.at(-1);
   const framework = frameworkForCheckin(latest);
-  const role = dayRoleConfig(selectedDate);
 
-  const core = !latest || !framework
-    ? `<div class="cycle-core is-empty"><span class="cycle-core-hint">Noch kein Check-in</span></div>`
-    : `<div class="cycle-core" style="--mode-color:${framework.color}">
-        <span class="cycle-core-role">${escapeHTML(role.roleName)}</span>
-        <strong class="cycle-core-mode">${escapeHTML(framework.label)}</strong>
-        <div class="cycle-core-metrics">
-          <span class="cycle-metric energy"><i style="--fill:${latest.energy ?? 0}%"></i><b>${latest.energy ?? "–"} %</b>Energie</span>
-          <span class="cycle-metric mood"><i style="--fill:${latest.mood ?? 0}%"></i><b>${latest.mood ?? "–"} %</b>Laune</span>
-        </div>
-      </div>`;
-
-  container.innerHTML = `<div class="state-cycle ${latest ? "" : "is-dormant"}">${svg}${core}</div>`;
+  container.innerHTML = `<div class="state-cycle ${latest ? "" : "is-dormant"}" ${framework ? `style="--mode-color:${framework.color}"` : ""}>
+    <svg class="cycle-ring" viewBox="0 0 ${size} ${size}" role="group" aria-label="Tageszyklus mit vier Zustandsaufnahmen">
+      <defs>
+        <filter id="cycleSoften" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="1.6"></feGaussianBlur>
+        </filter>
+        <mask id="cycleLit" maskUnits="userSpaceOnUse" x="0" y="0" width="${size}" height="${size}">
+          <rect x="0" y="0" width="${size}" height="${size}" fill="black"></rect>
+          <g filter="url(#cycleSoften)">${maskSlices.join("")}</g>
+        </mask>
+        <clipPath id="cycleShape" clipPathUnits="userSpaceOnUse">
+          <path d="${outlinePath}"></path>
+        </clipPath>
+      </defs>
+      <circle class="cycle-core-glow" cx="${c}" cy="${c}" r="${rInner - 4}"></circle>
+      <circle class="cycle-core-rim" cx="${c}" cy="${c}" r="${rInner - 4}"></circle>
+      <g class="cycle-band" mask="url(#cycleLit)" clip-path="url(#cycleShape)">${slices.join("")}</g>
+      ${pendingEdge}
+      ${hits}
+      ${now}
+    </svg>
+  </div>`;
 
   const open = element => openStateCheckinDialog(element.dataset.openCheckinSlot);
   container.querySelectorAll("[data-open-checkin-slot]").forEach(element => {
@@ -1383,23 +1527,34 @@ function renderStateOverview() {
   const role = dayRoleConfig(selectedDate);
 
   if (!latest || !framework) {
-    summary.className = "current-state-summary empty-state-summary compact-empty-state";
-    summary.innerHTML = `<div class="empty-state-icon" aria-hidden="true">◇</div>`
-      + `<div><strong>Noch kein Check-in</strong></div>`;
+    summary.className = "current-state-summary state-readout is-empty";
+    summary.removeAttribute("style");
+    summary.innerHTML = `<p class="readout-empty">Noch kein Check-in</p>`;
   } else {
-    summary.className = `current-state-summary compact-state-summary framework-${framework.key}`;
-    summary.style.setProperty("--framework-color", framework.color);
-    summary.style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
-    summary.style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
+    /* Die Auswertung sitzt unter dem Kreis und liest sich als Ergebnis:
+       zuerst Rolle und Modus, dann die beiden Messwerte, dann die Priorität
+       und schließlich die begrenzende Bedingung. */
+    summary.className = "current-state-summary state-readout";
+    summary.style.setProperty("--mode-color", framework.color);
+    summary.style.setProperty("--mode-soft", hexToRgba(framework.color, .13));
+    const cause = stateCauseSentence(latest, currentData, framework);
     summary.innerHTML = `
-      <div class="compact-framework-main lean-framework-main">
-        <div class="framework-icon" aria-hidden="true">${framework.icon}</div>
-        <div class="framework-copy">
-          <strong>${escapeHTML(role.roleName)} · ${escapeHTML(framework.label)}</strong>
-          <p><span class="priority-label">Priorität heute:</span> ${escapeHTML(recommendationForCheckin(latest, framework))}</p>
-          <small>${escapeHTML(stateCauseSentence(latest, currentData, framework))}</small>
+      <div class="readout-head">
+        <span class="readout-role">${escapeHTML(role.roleName)}</span>
+        <strong class="readout-mode">${escapeHTML(framework.label)}</strong>
+      </div>
+      <div class="readout-metrics">
+        <div class="readout-metric energy">
+          <span>Energie</span><b>${latest.energy ?? "–"} %</b>
+          <i style="--fill:${clamp(Number(latest.energy ?? 0), 0, 100)}%"></i>
         </div>
-      </div>`;
+        <div class="readout-metric mood">
+          <span>Laune</span><b>${latest.mood ?? "–"} %</b>
+          <i style="--fill:${clamp(Number(latest.mood ?? 0), 0, 100)}%"></i>
+        </div>
+      </div>
+      <p class="readout-priority">${escapeHTML(recommendationForCheckin(latest, framework))}</p>
+      ${cause ? `<p class="readout-cause">${escapeHTML(cause)}</p>` : ""}`;
   }
 
   timeline.innerHTML = checkins.length ? [...checkins].reverse().map(entry => {
@@ -1452,15 +1607,20 @@ function fillStateCheckinForm(slotKey) {
   // Der Dialog nimmt die Farbwelt der angetippten Tagesphase auf, damit er
   // sich wie eine Fortsetzung der Zyklusdarstellung anfühlt.
   const phase = CYCLE_PHASES[requestedSlot] || CYCLE_PHASES.morning;
+  // Die Farben stammen direkt aus dem Tageszyklus: Anfang, Mitte und Ende der
+  // Phase. Dadurch trägt der Dialog dieselbe Lichtstimmung wie der Ring.
+  const phaseStart = cycleColorAt(phase.from + 12);
+  const phaseMid = cycleColorAt(phase.from + 45);
+  const phaseEnd = cycleColorAt(phase.from + 78);
   const dialog = $("stateCheckinDialog");
   dialog.dataset.phase = requestedSlot;
-  dialog.style.setProperty("--phase-a", phase.a);
-  dialog.style.setProperty("--phase-b", phase.b);
-  dialog.style.setProperty("--phase-veil", hexToRgba(phase.a, .13));
-  dialog.style.setProperty("--phase-veil-b", hexToRgba(phase.b, .10));
-  $("stateSlotDisplay").style.setProperty("--slot-color", phase.a);
-  $("stateSlotDisplay").style.setProperty("--slot-soft", hexToRgba(phase.a, .14));
-  $("stateSlotDisplay").style.setProperty("--slot-glow", hexToRgba(phase.b, .26));
+  dialog.style.setProperty("--phase-a", phaseStart);
+  dialog.style.setProperty("--phase-b", phaseEnd);
+  dialog.style.setProperty("--phase-veil", rgbWithAlpha(phaseStart, .16));
+  dialog.style.setProperty("--phase-veil-b", rgbWithAlpha(phaseEnd, .13));
+  $("stateSlotDisplay").style.setProperty("--slot-color", phaseMid);
+  $("stateSlotDisplay").style.setProperty("--slot-soft", rgbWithAlpha(phaseMid, .16));
+  $("stateSlotDisplay").style.setProperty("--slot-glow", rgbWithAlpha(phaseEnd, .28));
   $("stateSlotDisplay").innerHTML = `<span class="phase-mark" aria-hidden="true"><svg viewBox="0 0 40 30">${phaseGlyph(requestedSlot, 20, 15)}</svg></span>`
     + `<strong>${escapeHTML(phase.short)}</strong><small>${requestedSlot === "night" ? "Schlaf und Zustand" : "Zustandsaufnahme"}</small>`;
   // Energie und Laune gelten für alle vier Check-ins, auch für die Nacht.

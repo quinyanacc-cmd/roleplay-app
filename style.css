@@ -1870,207 +1870,198 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   overflow: visible;
 }
 
+
 /* ==========================================================================
    ROLEPLAY STATE CYCLE
-   Ein Tageszyklus, kein Fortschrittsring. Die vier Phasen laufen im
-   Uhrzeigersinn ineinander; eine Phase ohne Zustandsaufnahme bleibt gedämpft.
-   Bewusst leichtgewichtig gehalten: SVG plus CSS-Übergänge, keine
-   Dauer-Animation und kein Canvas.
+   Ein durchgehender Tagesring ohne Segmentgrenzen: die Farbe wird zwischen
+   Ankerpunkten interpoliert, sodass Nacht, Morgen, Mittag und Abend
+   ineinanderfließen. Die als nächste anstehende Phase schwillt weich nach
+   außen und trägt eine Lichtkante – sie steht damit sichtbar hervor, ohne
+   herausgeschnitten zu wirken.
    ========================================================================== */
 .state-cycle {
   position: relative;
   display: grid;
   place-items: center;
-  width: min(280px, 76vw);
+  width: min(300px, 82vw);
   margin: var(--sp-2) auto var(--sp-4);
   isolation: isolate;
 }
-/* Atmosphärischer Hof hinter dem Ring – gibt Tiefe ohne harte Kante. */
+/* Atmosphärischer Hof – gibt Tiefe, ohne eine harte Kante zu setzen. */
 .state-cycle::before {
   content: "";
   position: absolute;
-  inset: -8%;
+  inset: -6%;
   z-index: -1;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 32% 22%, rgba(224,119,107,.16), transparent 58%),
-    radial-gradient(circle at 74% 76%, rgba(94,74,155,.18), transparent 60%),
-    radial-gradient(circle at 50% 50%, rgba(140,216,232,.08), transparent 70%);
-  filter: blur(14px);
-  opacity: .95;
-  transition: opacity .4s ease;
-}
-.state-cycle.is-dormant::before { opacity: .35; }
-
-.cycle-ring { width: 100%; height: auto; overflow: visible; display: block; }
-
-/* Grundring: die Bahn des Tages, auch ohne jede Aufnahme sichtbar. */
-.cycle-base { fill: none; stroke: var(--field-2); opacity: .9; }
-
-.cycle-phase { cursor: pointer; outline: none; }
-.cycle-phase-shape {
-  opacity: .16;
+    radial-gradient(circle at 30% 20%, rgba(240,144,106,.16), transparent 56%),
+    radial-gradient(circle at 76% 74%, rgba(138,87,148,.18), transparent 58%),
+    radial-gradient(circle at 50% 52%, rgba(134,210,232,.10), transparent 68%);
+  filter: blur(16px);
   transition: opacity .45s ease;
 }
-.cycle-phase.is-lit .cycle-phase-shape { opacity: 1; }
+.state-cycle.is-dormant::before { opacity: .38; }
 
-/* Feine Lichtkante entlang der Phase – erst nach der Zustandsaufnahme. */
-.cycle-phase-edge {
+.cycle-ring { width: 100%; height: auto; overflow: visible; display: block; }
+.cycle-band path { shape-rendering: geometricPrecision; }
+
+/* Weiches Licht im Kern in der Farbe des aktuellen Modus. */
+.cycle-core-glow {
+  fill: var(--mode-color, transparent);
+  opacity: .055;
+  transition: fill .45s ease, opacity .45s ease;
+}
+/* Feine Innenkante – gibt dem Kern Halt, ohne ihn zu füllen. */
+.cycle-core-rim {
   fill: none;
-  stroke: var(--phase-b, var(--line));
+  stroke: var(--line);
   stroke-width: 1;
-  opacity: .22;
-  transition: opacity .45s ease, stroke-width .3s ease;
-}
-.cycle-phase.is-lit .cycle-phase-edge {
-  opacity: .85;
-  stroke-width: 1.4;
-  filter: drop-shadow(0 0 5px var(--phase-b));
-}
-
-/* Abstrakte Phasenmarke: Horizont plus Lichtkörper, kein Emoji. */
-.cycle-glyph { pointer-events: none; }
-.cycle-glyph-horizon {
-  stroke: var(--text);
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  opacity: .30;
-  transition: opacity .4s ease, stroke .4s ease;
-}
-.cycle-glyph-body {
-  fill: var(--text);
-  stroke: none;
-  opacity: .34;
-  transition: opacity .4s ease, fill .4s ease;
-}
-.cycle-glyph-body.hollow { fill: none; stroke: var(--text); stroke-width: 1.2; }
-.cycle-glyph-ray, .cycle-glyph-spark {
-  stroke: var(--text);
-  fill: var(--text);
-  stroke-width: 1.1;
-  stroke-linecap: round;
-  opacity: .28;
-  transition: opacity .4s ease, fill .4s ease, stroke .4s ease;
-}
-.cycle-phase.is-lit .cycle-glyph-horizon { stroke: #fff; opacity: .78; filter: drop-shadow(0 1px 2px rgba(12,16,30,.4)); }
-.cycle-phase.is-lit .cycle-glyph-body { fill: #fff; opacity: .95; }
-.cycle-phase.is-lit .cycle-glyph-body.hollow { fill: none; stroke: #fff; }
-.cycle-phase.is-lit .cycle-glyph-ray,
-.cycle-phase.is-lit .cycle-glyph-spark { stroke: #fff; fill: #fff; opacity: .85; }
-
-.cycle-phase-label {
-  fill: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  pointer-events: none;
-  transition: fill .4s ease;
-}
-.cycle-phase.is-lit .cycle-phase-label {
-  /* Der Schatten hält die Beschriftung auch auf den hellen Phasen lesbar. */
-  fill: #fff;
-  opacity: .96;
-  paint-order: stroke;
-  stroke: rgba(12,16,30,.42);
-  stroke-width: 2.4px;
-  stroke-linejoin: round;
-}
-
-/* Microinteraction: die angetippte Phase hellt kurz auf. */
-.cycle-phase:active .cycle-phase-shape { opacity: .55; }
-.cycle-phase.is-lit:active .cycle-phase-shape { opacity: .82; }
-.cycle-phase:focus-visible .cycle-phase-edge {
-  opacity: 1;
-  stroke: var(--accent);
-  stroke-width: 2;
-}
-
-/* Zeiger der aktuellen Tageszeit. */
-.cycle-now {
-  fill: var(--text);
   opacity: .55;
-  filter: drop-shadow(0 0 4px var(--text));
+}
+.state-cycle.is-dormant .cycle-core-glow { opacity: 0; }
+@media (prefers-color-scheme: dark) { .cycle-core-rim { stroke: rgba(255,255,255,.08); } }
+
+/* Lichtkante der anstehenden Phase. */
+.cycle-pending-edge {
+  fill: none;
+  stroke: var(--edge-color, var(--accent));
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: .62;
+  filter: drop-shadow(0 0 8px var(--edge-color));
 }
 
-/* Kern: die Aussage des Systems, kein Zähler. */
-.cycle-core {
-  position: absolute;
-  inset: 30%;
+.cycle-phase { cursor: pointer; outline: none; }
+.cycle-hit { fill: transparent; }
+
+/* Phasenmarken – reduziert, ohne Beschriftung und ohne Emoji. */
+.cycle-glyph { pointer-events: none; }
+.cycle-glyph-horizon,
+.cycle-glyph-ray {
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  fill: none;
+  opacity: .30;
+  transition: opacity .45s ease;
+}
+.cycle-glyph-body { fill: #fff; stroke: none; opacity: .32; transition: opacity .45s ease; }
+.cycle-glyph-body.hollow { fill: none; stroke: #fff; stroke-width: 1.6; }
+.cycle-glyph-spark { fill: #fff; stroke: none; opacity: .30; transition: opacity .45s ease; }
+
+.cycle-phase.is-lit .cycle-glyph-horizon,
+.cycle-phase.is-lit .cycle-glyph-ray { opacity: .82; }
+.cycle-phase.is-lit .cycle-glyph-body,
+.cycle-phase.is-lit .cycle-glyph-spark { opacity: .96; }
+.cycle-phase.is-lit .cycle-glyph { filter: drop-shadow(0 1px 3px rgba(10,14,28,.4)); }
+
+/* Die anstehende Phase bleibt auch unbeleuchtet gut erkennbar. */
+.cycle-phase.is-pending .cycle-glyph-horizon,
+.cycle-phase.is-pending .cycle-glyph-ray,
+.cycle-phase.is-pending .cycle-glyph-body,
+.cycle-phase.is-pending .cycle-glyph-spark { opacity: .68; }
+
+/* Microinteraction: die angetippte Phase hebt sich kurz an. */
+.cycle-phase { transition: transform .18s ease; transform-origin: 50% 50%; }
+.cycle-phase:active { transform: scale(1.035); }
+.cycle-phase:focus-visible .cycle-glyph { filter: drop-shadow(0 0 6px var(--accent)); }
+
+.cycle-now {
+  fill: var(--now-color, var(--text));
+  stroke: rgba(255,255,255,.85);
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 6px var(--now-color));
+}
+
+/* --------------------------------------------------------------------------
+   Auswertung unter dem Kreis
+   Liest sich als Ergebnis der Darstellung darüber: Rolle und Modus,
+   die beiden Messwerte, die Priorität, die begrenzende Bedingung.
+   Bewusst sachlich – ein Schonmodus ist keine Warnung.
+   -------------------------------------------------------------------------- */
+.state-readout {
+  position: relative;
   display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 2px;
-  text-align: center;
-  pointer-events: none;
-  animation: cycleCoreIn .38s ease-out;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  padding-left: calc(var(--sp-4) + 3px);
+  border-radius: var(--r-field);
+  border: 1px solid var(--line);
+  background: var(--field-2);
+  overflow: hidden;
 }
-@keyframes cycleCoreIn {
-  from { opacity: 0; transform: scale(.94); }
-  to { opacity: 1; transform: none; }
+.state-readout::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--mode-color, var(--line));
+  opacity: .9;
 }
-.cycle-core-role {
+.state-readout.is-empty { display: block; text-align: center; padding: var(--sp-5) var(--sp-4); }
+.state-readout.is-empty::before { display: none; }
+.readout-empty { margin: 0; color: var(--muted); font-size: var(--fs-body); font-weight: 650; }
+
+.readout-head { display: grid; gap: 1px; }
+.readout-role {
   font-size: var(--fs-tiny);
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-weight: 750;
+  letter-spacing: .08em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.cycle-core-mode {
-  font-size: clamp(13px, 3.9vw, 16px);
+.readout-mode {
+  font-size: var(--fs-h3);
   font-weight: 800;
-  line-height: 1.12;
+  line-height: 1.16;
   color: var(--mode-color, var(--text));
-  text-wrap: balance;
 }
-.cycle-core-hint { font-size: var(--fs-small); font-weight: 650; color: var(--muted); }
-.cycle-core-metrics {
-  display: grid;
-  gap: 3px;
-  margin-top: 5px;
-  width: 100%;
-  max-width: 104px;
-}
-.cycle-metric {
+
+.readout-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.readout-metric {
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 0 5px;
-  font-size: 9.5px;
-  font-weight: 650;
-  letter-spacing: .03em;
+  align-items: baseline;
+  gap: 0 var(--sp-1);
+}
+.readout-metric span {
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  letter-spacing: .05em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.cycle-metric b { font-size: 10.5px; font-weight: 800; color: var(--text); }
-/* Feine Messlatte statt Fortschrittsbalken. */
-.cycle-metric i {
+.readout-metric b { font-size: var(--fs-label); font-weight: 800; color: var(--text); }
+.readout-metric i {
   grid-column: 1 / -1;
-  order: 2;
   position: relative;
-  height: 3px;
+  height: 4px;
+  margin-top: 5px;
   border-radius: var(--r-pill);
   background: var(--tint-neutral);
   overflow: hidden;
 }
-.cycle-metric i::after {
+.readout-metric i::after {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
   width: var(--fill, 0%);
   border-radius: inherit;
-  transition: width .45s ease;
+  transition: width .5s ease;
 }
-.cycle-metric.energy i::after { background: linear-gradient(90deg, #3F6FE0, #63A8F5); }
-.cycle-metric.mood i::after { background: linear-gradient(90deg, #E08A3C, #F5B95E); }
+.readout-metric.energy i::after { background: linear-gradient(90deg, #3F6FE0, #6FB2F7); }
+.readout-metric.mood i::after { background: linear-gradient(90deg, #E0873A, #F5B95E); }
+
+.readout-priority { margin: 0; font-size: var(--fs-body); line-height: 1.42; color: var(--text); }
+.readout-cause { margin: 0; font-size: var(--fs-small); line-height: 1.4; color: var(--muted); }
 
 @media (prefers-color-scheme: dark) {
-  .cycle-base { stroke: rgba(255,255,255,.05); }
-  .cycle-phase-shape { opacity: .20; }
-  .cycle-glyph-horizon, .cycle-glyph-body, .cycle-glyph-ray, .cycle-glyph-spark { opacity: .40; }
+  .cycle-core-glow { opacity: .16; }
+  .cycle-glyph-horizon, .cycle-glyph-ray, .cycle-glyph-body, .cycle-glyph-spark { opacity: .42; }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .cycle-core { animation: none; }
+  .cycle-phase, .readout-metric i::after { transition: none; }
 }
 
 /* Stern: dezente Kennzeichnung eines vollständig verantwortungsvoll

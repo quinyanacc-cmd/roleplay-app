@@ -1,108 +1,74 @@
-# ROLEPLAY App 5.4.0
+# ROLEPLAY App 5.5.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Schwerpunkt dieser Version: der State Cycle
+## Der State Cycle
 
-Die Darstellung von Zustand und Rollenmodus ist zum visuellen Herzstück
-ausgebaut worden.
+Diese Version baut die Zustandsdarstellung zum visuellen Herzstück aus.
 
-**Konzept:** kein Fortschrittsring, sondern ein vollständiger Tageszyklus. Die
-vier Tagesphasen laufen im Uhrzeigersinn – Nacht oben links, Morgen oben
-rechts, Mittag unten rechts, Abend unten links – und ihre Farbwelten gehen
-ineinander über. Das Ende jeder Phase liegt nahe am Anfang der nächsten, der
-Abend läuft zurück in die Nacht. Dadurch liest sich der Ring als ein
-zusammenhängender Zyklus statt als vier eingefärbte Buttons.
+### Ein durchgehender Verlauf, keine Segmente
 
-**Ohne Emojis.** Jede Phase trägt eine eigene abstrakte Marke: eine
-Horizontlinie mit einem Lichtkörper, dessen Höhe über dem Horizont die
-Tageszeit erzählt – darunter Nacht, aufsteigend Morgen, hochstehend Mittag,
-absinkend Abend. Ein System statt vier Bildzeichen.
+Der Ring besteht nicht mehr aus vier abgegrenzten Vierteln. Rund um den Kreis
+liegen siebzehn Farbanker, zwischen denen fortlaufend interpoliert wird –
+gezeichnet als 240 feine Teilstücke. Nacht, Morgen, Mittag und Abend gehen
+dadurch fließend ineinander über, ohne jede sichtbare Grenze.
 
-**Zustandsaufnahme statt Erledigt.** Eine Phase ohne Aufnahme bleibt gedämpft
-(16 % Deckkraft). Nach dem Check-in wird sie voll beleuchtet, erhält eine feine
-Lichtkante und ihre Marke tritt hervor. Beleuchtet bedeutet ausdrücklich nicht
-"erledigt", sondern: für diese Phase liegt eine Zustandsaufnahme vor.
+Der Farbweg folgt einem echten Tag: tiefes Indigo, violette Dämmerung,
+Sonnenaufgang, Gold, klarer Mittagshimmel, weicher Nachmittag,
+Sonnenuntergang, Abendrot, Abenddämmerung – und zurück ins Indigo.
 
-**Zeitzeiger.** Am heutigen Tag markiert ein feiner Punkt am Außenrand die
-aktuelle Uhrzeit auf der Tagesbahn (03:00 liegt in der Mitte der Nacht).
+### Die anstehende Phase tritt hervor
 
-**Kern statt Zähler.** In der Mitte steht die Aussage des Systems: Tagesrolle,
-Rollenmodus und die beiden Messwerte als feine Messlatten. Sämtliche
-Check-in-Zähler ("0/4", "4/4") sind entfernt.
+Die als nächste fällige Tagesphase schwillt weich nach außen (13 px, über eine
+Kosinus-Rampe eingeblendet) und trägt eine farbige Lichtkante. Sie steht damit
+sichtbar heraus, ohne herausgeschnitten zu wirken.
 
-Umgesetzt in SVG plus CSS-Übergängen. Keine Dauer-Animation, kein Canvas –
-bewusst leichtgewichtig für das iPhone.
+Damit die Außenkante dabei glatt bleibt, werden alle Teilstücke bis zum
+äußersten Radius gezeichnet und über einen Beschnittpfad auf die tatsächliche
+Kontur zurückgeschnitten. Ohne diesen Schritt entstünde eine sägezahnartige
+Kante.
 
-## Weitere Änderungen
+### Hell und Dunkel über eine Maske
 
-### Fachliche Korrektur
+Erfasste Phasen leuchten, noch offene bleiben gedämpft. Gesteuert wird das
+über eine weichgezeichnete SVG-Maske. Über Einzeltransparenzen ginge es nicht:
+An jeder Überlappung addierte sich der Alphawert und der Ring bekäme radiale
+Streifen.
 
-Der Bereich heißt jetzt **Zustand & Rollenmodus** statt "Zustand und
-Verantwortung". Verantwortung ist kein zweiter Messwert: der Rollenmodus *ist*
-die verantwortungsvolle Anpassung einer Rolle an die realen Bedingungen.
+### Ohne Beschriftung, ohne Emoji
 
-Die Ergebniskarte darunter wurde neutralisiert. Sie trug zuvor eine flächige
-Einfärbung in der Modusfarbe – ein Schonmodus sah dadurch aus wie eine
-Warnung. Jetzt markiert nur eine schmale Farbkante links und das Symbol den
-Modus.
+Die Textlabels sind entfallen. Jede Phase trägt nur noch ihre abstrakte Marke:
+eine Horizontlinie mit einem Lichtkörper, dessen Höhe die Tageszeit erzählt –
+darunter Nacht, aufsteigend Morgen, hochstehend Mittag, absinkend Abend.
+Dieselbe Marke erscheint im Check-in-Dialog.
 
-### Check-in
+### Auswertung unter dem Kreis
 
-"Kontext ergänzen" war inhaltsleer und ist vollständig entfernt. Der Dialog
-nimmt jetzt die Lichtstimmung der geöffneten Tagesphase auf und trägt deren
-abstrakte Marke statt eines Emojis.
+Der Kern ist frei; die Mitte trägt nur ein weiches Licht in der Modusfarbe.
+Die Aussage des Systems steht darunter in einer eigenen Karte: Tagesrolle und
+Rollenmodus, die beiden Messwerte mit Balken, die heutige Priorität und die
+begrenzende Bedingung. Die frühere Doppelung – Modus im Kreis *und* in der
+Karte – ist damit aufgelöst.
 
-Der Leerzustand zeigt nur noch "Noch kein Check-in" – ohne den Rollennamen
-dahinter.
+Der Zeitzeiger am Außenrand markiert am heutigen Tag die aktuelle Uhrzeit auf
+der Tagesbahn.
 
-### Wochenübersicht
-
-- Laune im Verlauf ist **orange** (`#E8913A`) statt violett – in Legende,
-  Linie und Datenpunkten.
-- Zahlen unter den Gebetspunkten ("5/5", "3/5") sind entfernt. Bei allen fünf
-  Pflichtgebeten erscheint ein Stern, sonst nichts.
-- Bei den Routinen dieselbe Logik: Stern, wenn **beide** Routinen
-  verantwortungsvoll abgeschlossen sind.
-
-**Verantwortungsvoll abgeschlossen** heißt: tatsächlich durchgeführt *oder*
-aufgrund des Zustands bewusst und gewissenhaft nicht durchgeführt. Beides zählt
-gleich. Nur offen gelassene oder unreflektiert versäumte Routinen zählen nicht.
-Die Wochenübersicht unterscheidet die beiden positiven Fälle nicht – die
-genauere Information bleibt im Routine-Check-in gespeichert.
-
-Der Stern ist ein eigenes SVG mit feinem Glow, kein Emoji: türkis bei den
-Gebeten, rot bei den Routinen.
-
-### Feinjustierung
-
-- Kopfzeile: Schriftgröße leicht reduziert, `line-height` auf 1.30 und
-  Innenabstand ergänzt. Die Unterlänge des "g" in "Tagesreflexion" endet jetzt
-  gemessen 3–4 px über der Boxunterkante statt angeschnitten zu werden. Die
-  Kopfzeile ist dadurch nicht höher geworden.
-- Aktivitätskarten: mehr horizontaler Abstand zwischen Rollenbalken und Text,
-  ohne die Karten zu vergrößern.
-
-## Geänderte Dateien
-
-`app.js`, `style.css`, `index.html`, `manifest.webmanifest`,
-`service-worker.js`.
+Umgesetzt in SVG und CSS. Keine Dauer-Animation, kein Canvas.
 
 ## Datenmodell
 
-**Unverändert.** Keine Migration, kein neuer Schlüssel, keine geänderte
-Struktur. Der Namespace bleibt `roleplay-v25`. Alte Felder (`load`, `emotion`,
-`note`, `selectedFrameworkKey`) bleiben in bestehenden Datensätzen erhalten und
-werden weiterhin nicht gelesen.
+**Unverändert.** Keine Migration, kein neuer Schlüssel. Namespace bleibt
+`roleplay-v25`. Alle bestehenden Check-ins, Gebete, Routinen, Aktivitäten und
+Streaks werden unverändert weiterverwendet.
+
+## Geänderte Dateien
+
+`app.js`, `style.css`, `manifest.webmanifest`, `service-worker.js`.
 
 ## Tests
 
-- **279** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
+- **285** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
-- **0** Layoutmängel (abgeschnittener Text, Touchflächen, Überlappungen,
-  horizontaler Überlauf)
-- Kopfzeilen-Unterlängen an drei Breiten vermessen
-- Alle vier Check-ins, Rollenmodus-Grenzfälle, Zyklus-Anordnung, Gebete 1/5
-  bis 5/5, Sunnah, Routine-Session mit Template-Schutz, Wochenlogik,
-  Persistenz nach Neuladen
+- **0** Layoutmängel
+- Keine doppelten Funktionsdefinitionen, keine Konsolenfehler

@@ -1,7 +1,7 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "ROLEPLAY 5.4 – Tagesreflexion, Routinen und adaptive Reflexion – lokal auf dem Gerät",
+  "description": "ROLEPLAY 5.5 – Tagesreflexion, Routinen und adaptive Reflexion – lokal auf dem Gerät",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f2f4f8",
