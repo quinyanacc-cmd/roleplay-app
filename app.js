@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.8.0";
+const APP_VERSION = "5.8.1";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1323,10 +1323,18 @@ function pendingPhaseKey() {
    Bewusst eine einzige Formsprache statt gemischter Icon-Stile. */
 function phaseGlyph(key) {
   if (key === "night") {
+    // Die Sichel entsteht als Differenz zweier Kreise – dadurch bekommt sie
+    // durchgehend gleichmäßige Rundungen statt einer eingedellten Scheibe.
+    /* Echte Sichel aus zwei Bögen: außen der Rand des Mondes, innen die
+       Gegenkante. Über fill-rule ginge es nicht – dort würde auch der
+       überstehende Teil des zweiten Kreises mitgefüllt und die Sichel
+       schlösse sich zum Ring. */
     return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
-      <path d="M3.2 -9.4a9.8 9.8 0 1 0 5.1 13.1A7.7 7.7 0 0 1 3.2 -9.4Z"></path>
-      <circle class="spark" cx="8.2" cy="-8.4" r="1.6"></circle>
-      <circle class="spark" cx="11" cy="-2.8" r="1.05"></circle></svg>`;
+      <g transform="rotate(-20)">
+        <path d="M2.60 -10.07 A10.4 10.4 0 1 0 2.60 10.07 A10.4 10.4 0 0 1 2.60 -10.07 Z"></path>
+      </g>
+      <circle class="spark" cx="8.6" cy="-8" r="1.5"></circle>
+      <circle class="spark" cx="11.8" cy="-3" r="1"></circle></svg>`;
   }
   if (key === "midday") {
     const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(d => {
@@ -1337,16 +1345,23 @@ function phaseGlyph(key) {
     return `<svg viewBox="-16 -16 32 32" aria-hidden="true"><circle cx="0" cy="0" r="6"></circle>${rays}</svg>`;
   }
   // Morgen: Sonne steigt über den Horizont. Abend: sie sinkt darunter.
-  const up = key === "morning";
+  if (key === "morning") {
+    // Aufgehende Sonne: volle Halbscheibe über dem Horizont, Strahlen nach oben.
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+      <path d="M-7.4 3.6a7.4 7.4 0 0 1 14.8 0Z"></path>
+      <line x1="-13" y1="3.6" x2="13" y2="3.6"></line>
+      <line x1="0" y1="-12.8" x2="0" y2="-9"></line>
+      <line x1="-9.8" y1="-6.6" x2="-7.1" y2="-3.9"></line>
+      <line x1="9.8" y1="-6.6" x2="7.1" y2="-3.9"></line>
+    </svg>`;
+  }
+  /* Untergehende Sonne: die Scheibe ist bereits zum Teil hinter dem Horizont
+     verschwunden, darunter liegt ihre Spiegelung. Das liest sich ruhiger als
+     die früheren Pfeile und unterscheidet sich klar vom Morgen. */
   return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
-    <path d="M-7.2 4.4a7.2 7.2 0 0 1 14.4 0Z"></path>
-    <line x1="-12.6" y1="4.4" x2="12.6" y2="4.4"></line>
-    ${up
-      ? `<line x1="0" y1="-12.4" x2="0" y2="-8.4"></line>
-         <line x1="-9.4" y1="-6.2" x2="-6.8" y2="-3.6"></line>
-         <line x1="9.4" y1="-6.2" x2="6.8" y2="-3.6"></line>`
-      : `<line x1="-3.6" y1="-9.6" x2="0" y2="-6"></line>
-         <line x1="3.6" y1="-9.6" x2="0" y2="-6"></line>`}
+    <path d="M-8.9 1.4A9 9 0 0 1 8.9 1.4Z"></path>
+    <line x1="-13" y1="1.4" x2="13" y2="1.4"></line>
+    <line x1="-6.2" y1="7.4" x2="6.2" y2="7.4"></line>
   </svg>`;
 }
 
@@ -1398,13 +1413,7 @@ function renderCheckinSlots() {
     </button>`;
   }).join("");
 
-  const currentIndex = stops.findIndex(stop => stop.state === "current");
-  const hint = currentIndex < 0 ? "" : `<span class="stop-hint" aria-hidden="true"
-      style="--hint-x:${positions[currentIndex]}%;--stop-a:${stops[currentIndex].phase.a};--stop-b:${stops[currentIndex].phase.b};--stop-glow:${stops[currentIndex].phase.glow}">
-      ${escapeHTML(stops[currentIndex].phase.short)} eintragen</span>`;
-
   container.innerHTML = `<div class="day-journey">
-    ${hint}
     <span class="journey-line" style="background:${lineGradient}" aria-hidden="true"></span>
     <div class="journey-stops">${nodes}</div>
   </div>`;
