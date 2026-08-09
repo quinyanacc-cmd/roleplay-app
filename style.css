@@ -1886,167 +1886,200 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 
 
 /* ==========================================================================
-   ROLEPLAY STATE CYCLE
-   Ein geschlossener Farbkreis: ein durchgehender Kegelverlauf führt von der
-   tiefblauen Nacht über Violett und Rosé in das Orange des Morgens, weiter
-   über Gold ins Türkis des Mittags und über Blau und Magenta des Abends
-   zurück in die Nacht. Keine Segmentkanten, kein Bruch.
-
-   Ob eine Tagesphase erfasst ist, steuert eine zweite Ebene mit ebenfalls
-   weich verlaufender Abdunklung. Dadurch bleibt auch dieser Wechsel fließend.
+   TAGESBAHN
+   Nacht → Morgen → Mittag → Abend als horizontaler Verlauf.
+   Drei Zustände: erledigt (farbig, kompakt), jetzt (größer, mit Schein),
+   später (ruhig und neutral). Der Rollenmodus steht nicht hier, sondern in
+   der Auswertung darunter.
    ========================================================================== */
-.state-cycle {
+.day-journey {
+  --journey-idle: var(--line-strong);
   position: relative;
-  width: min(300px, 84vw);
-  aspect-ratio: 1;
-  margin: var(--sp-2) auto var(--sp-4);
-  isolation: isolate;
+  overflow: visible;
+  margin: var(--sp-5) 0 var(--sp-4);
+  padding-top: 36px;                 /* Raum für die Aufforderung über dem Knoten */
 }
 
-.cycle-ring {
+/* Verbindungslinie auf Höhe der Knotenmitte. */
+.journey-line {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg,
-    #9A55B7 0deg,
-    #C75AA0 15deg,
-    #F5893F 45deg,
-    #F5B93C 75deg,
-    #7ACBB4 105deg,
-    #24B4CB 135deg,
-    #3E9BD8 165deg,
-    #6A76DA 195deg,
-    #A855C7 225deg,
-    #7A4ECF 255deg,
-    #4A45C6 285deg,
-    #3B49C4 315deg,
-    #6B45C8 345deg,
-    #9A55B7 360deg);
-  /* Das Band reicht weit nach innen; in der Mitte bleibt Platz für den Kern. */
-  -webkit-mask: radial-gradient(closest-side, transparent 0 46%, #000 46.6% 100%);
-  mask: radial-gradient(closest-side, transparent 0 46%, #000 46.6% 100%);
-  box-shadow: 0 12px 34px rgba(40,30,90,.20);
-}
-/* Abdunklung der noch nicht erfassten Tagesphasen. Die Stops sitzen in den
-   Quadrantenmitten, dazwischen blendet der Verlauf weich über. */
-.cycle-ring::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 45deg,
-    rgba(var(--dim-rgb), var(--dim-morning, 0)) 0deg,
-    rgba(var(--dim-rgb), var(--dim-midday, 0)) 90deg,
-    rgba(var(--dim-rgb), var(--dim-evening, 0)) 180deg,
-    rgba(var(--dim-rgb), var(--dim-night, 0)) 270deg,
-    rgba(var(--dim-rgb), var(--dim-morning, 0)) 360deg);
-  transition: background .45s ease;
+  top: calc(36px + 25px);
+  left: 12.5%;
+  right: 12.5%;
+  height: 3px;
+  border-radius: var(--r-pill);
+  opacity: .85;
+  transition: background .4s ease;
 }
 
-/* Trefferfläche: jeweils ein Viertel des Kreises. */
-.cycle-phase {
-  position: absolute;
-  width: 50%;
-  height: 50%;
-  padding: 0;
+.journey-stops {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+}
+
+.journey-stop {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 0 2px;
   border: 0;
   background: none;
   cursor: pointer;
-  transition: transform .18s ease;
-}
-.cycle-phase:nth-of-type(1) { top: 0; left: 0; }
-.cycle-phase:nth-of-type(2) { top: 0; right: 0; }
-.cycle-phase:nth-of-type(3) { bottom: 0; right: 0; }
-.cycle-phase:nth-of-type(4) { bottom: 0; left: 0; }
-.cycle-phase:active { transform: scale(1.04); }
-
-/* Das Symbol sitzt in der Bandmitte des jeweiligen Quadranten. */
-.cycle-symbol {
-  position: absolute;
-  left: var(--qx);
-  top: var(--qy);
-  transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
-  display: block;
-  pointer-events: none;
+  min-width: 0;
 }
 
-.cycle-symbol svg { width: 100%; height: 100%; display: block; overflow: visible; }
-.cycle-symbol svg path,
-.cycle-symbol svg circle { fill: #fff; stroke: none; }
-.cycle-symbol svg line {
-  stroke: #fff;
-  stroke-width: 2.1;
-  stroke-linecap: round;
-  fill: none;
-}
-.cycle-symbol {
-  opacity: .55;
-  filter: drop-shadow(0 1px 4px rgba(20,16,50,.45));
-  transition: opacity .45s ease, transform .3s ease;
-}
-.cycle-phase.is-pending .cycle-symbol { opacity: .82; }
-.cycle-phase.is-lit .cycle-symbol { opacity: 1; }
-
-/* Kern: ruhige Fläche mit der Aussage des Systems. */
-.cycle-core {
-  position: absolute;
-  inset: 28%;
+/* --- Knoten ------------------------------------------------------------- */
+.stop-node {
+  position: relative;
   display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 2px;
-  padding: var(--sp-2);
+  place-items: center;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  text-align: center;
-  pointer-events: none;
-  background: var(--card-solid);
-  box-shadow: 0 8px 24px rgba(40,30,90,.16), inset 0 0 0 1px var(--line);
-  animation: cycleCoreIn .34s ease-out;
+  background: var(--field-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  transition: transform .32s cubic-bezier(.34,1.3,.5,1), background .32s ease, box-shadow .32s ease;
 }
-@keyframes cycleCoreIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+.stop-icon { display: block; width: 26px; height: 26px; }
+.stop-icon svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.stop-icon svg path,
+.stop-icon svg circle { fill: var(--muted); stroke: none; }
+.stop-icon svg line { stroke: var(--muted); stroke-width: 2; stroke-linecap: round; fill: none; }
 
-.cycle-core-icon svg { width: 26px; height: 26px; display: block; }
-.cycle-core-icon circle { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; }
-.cycle-core-icon .dot { fill: var(--mode-color, #4FBF8B); stroke: none; }
-.cycle-core-icon .smile { fill: none; stroke: var(--mode-color, #4FBF8B); stroke-width: 1.6; stroke-linecap: round; }
+/* Erledigt: farbig, kompakt, mit Häkchen. */
+.journey-stop.is-done .stop-node {
+  background: linear-gradient(145deg, var(--stop-a), var(--stop-b));
+  box-shadow: 0 6px 16px var(--stop-glow), inset 0 0 0 2px var(--card-solid);
+}
+.journey-stop.is-done .stop-icon svg path,
+.journey-stop.is-done .stop-icon svg circle { fill: #fff; }
+.journey-stop.is-done .stop-icon svg line { stroke: #fff; }
 
-.cycle-core-role {
-  max-width: 100%;
-  font-size: 8.5px;
-  font-weight: 800;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: var(--muted);
+.stop-check {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 19px;
+  height: 19px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--stop-line);
+  box-shadow: 0 0 0 2.5px var(--card-solid);
 }
-.cycle-core-mode {
-  max-width: 100%;
-  font-size: clamp(12px, 3.6vw, 15px);
-  font-weight: 800;
-  line-height: 1.16;
-  color: var(--mode-color, var(--text));
-  hyphens: auto;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
+.stop-check svg { width: 12px; height: 12px; }
+.stop-check path { fill: none; stroke: #fff; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Jetzt dran: deutlich größer, lebendig, mit weichem Schein. */
+.journey-stop.is-current .stop-node {
+  transform: scale(1.22);
+  background: linear-gradient(145deg, var(--stop-a), var(--stop-b));
+  box-shadow: 0 10px 24px var(--stop-glow), 0 0 0 4px var(--stop-glow), inset 0 0 0 2px var(--card-solid);
 }
-.cycle-core-mode.empty { color: var(--text); }
-.cycle-core-sub {
-  margin-top: 2px;
+.journey-stop.is-current .stop-icon svg path,
+.journey-stop.is-current .stop-icon svg circle { fill: #fff; }
+.journey-stop.is-current .stop-icon svg line { stroke: #fff; }
+
+/* Später: zurückhaltend. */
+.journey-stop.is-upcoming .stop-node { opacity: .62; }
+.journey-stop.is-upcoming .stop-name,
+.journey-stop.is-upcoming .stop-values { opacity: .68; }
+
+/* --- Aufforderung über dem aktiven Knoten -------------------------------- */
+.stop-hint {
+  /* Gehört zur Bahn, nicht zum Knoten – so darf er über die Spaltenbreite
+     hinausragen, ohne abgeschnitten zu werden. */
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: clamp(58px, var(--hint-x), calc(100% - 58px));
+  transform: translateX(-50%);
+  max-width: 100%;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(120deg, var(--stop-a), var(--stop-b));
+  color: #fff;
   font-size: var(--fs-tiny);
-  line-height: 1.3;
-  color: var(--muted);
-  text-wrap: balance;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 5px 14px var(--stop-glow);
+  animation: hintIn .34s ease-out;
 }
-.cycle-core-sub b { font-weight: 800; color: var(--text); }
+.stop-hint::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+  background: var(--stop-b);
+}
+@keyframes hintIn { from { opacity: 0; transform: translateX(-50%) translateY(4px); } to { opacity: 1; } }
+
+/* --- Beschriftung und Werte --------------------------------------------- */
+.stop-name {
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--field-2);
+  font-size: var(--fs-tiny);
+  font-weight: 750;
+  color: var(--muted);
+  transition: background .3s ease, color .3s ease;
+}
+.journey-stop.is-current .stop-name {
+  margin-top: 14px;
+  background: linear-gradient(120deg, var(--stop-a), var(--stop-b));
+  color: #fff;
+}
+.journey-stop.is-done .stop-name { color: var(--stop-line); }
+
+.stop-values {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0 3px;
+  width: 100%;
+  padding: 5px 1px;
+  border-radius: var(--r-field);
+  background: var(--field-2);
+  transition: opacity .3s ease;
+}
+.stop-values > span { display: grid; justify-items: center; min-width: 0; }
+.stop-values b { font-size: 11px; font-weight: 800; white-space: nowrap; color: var(--text); }
+.stop-values small { font-size: 8.5px; letter-spacing: -.01em; white-space: nowrap; color: var(--muted); }
+.stop-values i { width: 1px; height: 18px; background: var(--line); }
+.journey-stop.is-done .stop-values b { color: var(--stop-line); }
+.journey-stop.is-upcoming .stop-values b { color: var(--muted); }
+
+.journey-stop:active .stop-node { transform: scale(1.1); }
+.journey-stop.is-current:active .stop-node { transform: scale(1.3); }
+
+/* Schmale Geräte: Knoten und Schrift leicht reduzieren. */
+@media (max-width: 380px) {
+  .stop-node { width: 46px; height: 46px; }
+  .stop-icon { width: 24px; height: 24px; }
+  .journey-line { top: calc(36px + 23px); }
+  .stop-values b { font-size: 10px; }
+  .stop-values small { font-size: 8px; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .day-journey { --journey-idle: rgba(255,255,255,.14); }
+  .stop-node { background: rgba(255,255,255,.05); }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .cycle-core { animation: none; }
-  .cycle-phase, .cycle-symbol, .cycle-ring::after { transition: none; }
+  .stop-node, .stop-name, .journey-line { transition: none; }
+  .stop-hint { animation: none; }
 }
 
 /* --------------------------------------------------------------------------
-   Auswertung unter dem Kreis
+   Auswertung unter der Tagesbahn
    Liest sich als Ergebnis der Darstellung darüber: Rolle und Modus,
    die beiden Messwerte, die Priorität, die begrenzende Bedingung.
    Bewusst sachlich – ein Schonmodus ist keine Warnung.

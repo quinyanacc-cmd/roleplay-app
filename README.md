@@ -1,63 +1,65 @@
-# ROLEPLAY App 5.7.0
+# ROLEPLAY App 5.8.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Der State Cycle – ein geschlossener Farbkreis
+## Zustand & Rollenmodus: die Tagesbahn
 
-Der Ring ist jetzt ein **durchgehender Kegelverlauf** ohne jede Segmentkante.
-Der Farbweg führt von der tiefblauen Nacht über Violett und Rosé in das Orange
-des Morgens, weiter über Gold ins Türkis des Mittags und über Blau und Magenta
-des Abends zurück in die Nacht. Der Kreis schließt sich also farblich.
+Die kreisförmige Darstellung ist einem horizontalen Tagesverlauf gewichen:
 
-Das Band reicht weit nach innen; in der Mitte bleibt eine ruhige Fläche für
-Tagesrolle, Rollenmodus, Energie und Laune.
+    Nacht  →  Morgen  →  Mittag  →  Abend
 
-**Nur noch Symbole.** Die Beschriftungen NACHT / MORGEN / MITTAG / ABEND sind
-entfallen – sie passten nicht sauber ins Band. Stattdessen trägt jede Phase ihr
-eigenes weißes Symbol, exakt in der Bandmitte des Quadranten zentriert:
-Mondsichel, aufgehende Sonne, Sonne mit Strahlen, untergehende Sonne.
+Vier Stationen auf einer durchgehenden Linie, jede mit Symbol, Namen sowie
+Energie und Laune darunter.
 
-**Erfasst oder offen** steuert eine zweite Ebene mit ebenfalls weich
-verlaufender Abdunklung. Auch dieser Wechsel bleibt dadurch fließend statt
-kantig: erfasste Phasen leuchten voll, offene sind gedämpft, die als nächste
-anstehende dazwischen.
+### Drei Zustände, sofort erkennbar
 
-Der weiße Zeigerpunkt ist entfallen.
+**Erledigt** – farbiger Knoten mit kräftigem Verlauf und einem kleinen Häkchen
+oben rechts. Darunter stehen die gespeicherten Werte.
 
-Technisch: ein CSS-Kegelverlauf mit radialer Maske. Keine hunderte
-SVG-Teilstücke mehr, dadurch keine Streifen, keine Sägezahnkanten und
-deutlich weniger Rechenaufwand.
+**Jetzt dran** – der nächste offene Check-in wird um 22 % vergrößert, erhält
+einen weichen Schein und darüber die Aufforderung „Morgen eintragen“ mit einem
+Pfeil auf den Knoten. Der Name darunter ist farbig gefüllt.
 
-## Weitere Korrekturen
+**Später** – ruhiger Knoten, graues Symbol, reduzierte Deckkraft, „– %“ als
+Platzhalter.
 
-**Energie fehlte im Wochenverlauf.** `dailyAverageEnergy` schloss die Nacht
-noch aus – ein Überbleibsel aus der Zeit, als der Nacht-Check-in keine Energie
-erfasste. An Tagen mit reinem Nacht-Check-in fehlte der Wert deshalb ganz,
-während die Laune angezeigt wurde. Beide Kurven rechnen jetzt gleich.
+Nach dem Speichern wandert die Hervorhebung weiter zur nächsten offenen
+Station. Die Übergänge laufen über CSS-Transitions von 320 ms.
 
-**Der Farbstreifen an der Auswertung** unter dem Kreis ist entfernt; die Karte
-wirkt damit ruhiger und nicht mehr wie eine Warnung.
+### Verbindungslinie
 
-**Die Dialogschaltflächen** liegen jetzt in einem Raster: „Abbrechen“ und
-„Speichern“ gleich breit nebeneinander, „Zurücksetzen“ über die volle Breite
-darunter.
+Die Linie nimmt die Farben der bereits erreichten Stationen auf und wird
+dahinter neutral. Die Farbstopps sitzen genau unter den Knoten, sodass der
+Übergang weich verläuft.
 
-**Die beiden Wochenpanels** – Pflichtgebete und Routinen – teilen sich jetzt
-Gestaltung, Raster, Punktgröße und Abstand. Zuvor hatten sie unterschiedliche
-Punktgrößen (7 px gegen 9 px), verschiedene Hintergründe und einen zu großen
-Abstand zueinander. Beim Gebets-Panel lagen außerdem zwei sich überschreibende
-Regeln vor, die zusammengeführt wurden.
+### Farbwelten
+
+- Nacht: Blau nach Indigo-Violett
+- Morgen: Violett über Koralle nach warmem Orange
+- Mittag: Gold nach Türkis
+- Abend: Rosé nach Violett
+
+### Trennung von Eingabe und Ergebnis
+
+Die Tagesbahn oben ist die **Eingabe** und der zeitliche Verlauf. Die Karte
+darunter ist das **Ergebnis** – Tagesrolle, Rollenmodus, Priorität und
+begrenzende Bedingung. Der Rollenmodus steht deshalb nicht mehr mitten im
+Verlauf.
 
 ## Datenmodell
 
-**Unverändert.** Keine Migration, kein neuer Schlüssel. Namespace bleibt
-`roleplay-v25`.
+**Unverändert.** Es wurde ausschließlich die Darstellungsschicht getauscht:
+`renderCheckinSlots` und das zugehörige CSS. Speicherung, Modusberechnung,
+Check-in-Dialog, Wochenrückblick, Routinen und Navigation blieben unberührt.
+Namespace bleibt `roleplay-v25`.
 
 ## Tests
 
-- **333** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
-- Darunter dauerhafte Geometrieprüfungen: Symbole zentriert im Ring und ohne
-  Überlappung mit dem Kern, kein Überlauf der Dialogschaltflächen
+- **339** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
+- Darunter neu: Reihenfolge der Stationen, horizontale Anordnung, genau eine
+  aktive Station, Häkchen an erledigten, Platzhalter an offenen, keine
+  Überlappung benachbarter Knoten, Aufforderung bleibt in der Karte,
+  Stationsnamen und Werte ohne Umbruch
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
 - **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler
