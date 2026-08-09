@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.9.0";
+const APP_VERSION = "5.9.1";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -2360,15 +2360,38 @@ function renderRoutineCards() {
   if (!routines || !currentData) return;
   $("routineCards").innerHTML = orderedRoutineKeys().map(key => {
     const routine = routines[key];
-    return `<button type="button" class="routine-hero ${routine.theme}" data-open-routine="${key}">
+    const progress = routineProgress(key);
+    const progressMap = currentData.routineProgress?.[key] || {};
+    const remaining = routine.items
+      .filter(item => !["done", "skipped"].includes(progressMap[item.id]))
+      .reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+    const percent = progress.total ? Math.round(progress.resolved / progress.total * 100) : 0;
+    const started = progress.resolved > 0;
+    const finished = progress.total > 0 && progress.resolved === progress.total;
+
+    // Die Zeile unter dem Titel beantwortet: Wo stehe ich heute damit?
+    // Kurz halten: die Zeile steht neben der Starttaste und darf nicht umbrechen.
+    const meta = !routine.items.length
+      ? "Noch keine Schritte"
+      : finished
+        ? "Abgeschlossen"
+        : started
+          ? `${progress.resolved}/${progress.total} · noch ${remaining} Min.`
+          : `${routine.items.length} Schritte · ${routineMinutes(routine)} Min.`;
+
+    return `<button type="button" class="routine-hero ${routine.theme} ${finished ? "is-finished" : started ? "is-started" : ""}" data-open-routine="${key}">
       <span class="routine-thread" aria-hidden="true"></span>
+      ${finished ? `<span class="routine-hero-badge" aria-hidden="true">✓</span>` : ""}
       <div class="routine-hero-top simple">
         <div>
           <h2>${escapeHTML(routine.title)}</h2>
           <p>${escapeHTML(routine.description)}</p>
+          <span class="routine-hero-meta">${escapeHTML(meta)}</span>
         </div>
       </div>
-      <span class="routine-hero-play" data-start-routine="${key}" role="button" aria-label="${escapeHTML(routine.title)} starten" tabindex="0">▶</span>
+      ${progress.total ? `<span class="routine-hero-track" aria-hidden="true"><i style="width:${percent}%"></i></span>` : ""}
+      <span class="routine-hero-play ${finished ? "done" : ""}" data-start-routine="${key}" role="button"
+        aria-label="${escapeHTML(routine.title)} ${started && !finished ? "fortsetzen" : "starten"}" tabindex="0">${finished ? "↻" : "▶"}</span>
     </button>`;
   }).join("");
   document.querySelectorAll("[data-open-routine]").forEach(card => card.addEventListener("click", event => {

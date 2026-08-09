@@ -1297,8 +1297,8 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   justify-content: space-between;
   gap: var(--sp-3);
   width: 100%;
-  min-height: 118px;
-  padding: var(--sp-3) var(--sp-4);
+  min-height: 164px;
+  padding: var(--sp-4) var(--sp-4) calc(var(--sp-4) + 6px);
   border: 0;
   border-radius: var(--r-card);
   overflow: hidden;
@@ -1341,7 +1341,76 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
 }
 /* Inhalte über den Verlauf heben. */
 .routine-hero-top,
-.routine-hero-play { position: relative; z-index: 1; }
+.routine-hero-play,
+.routine-hero-badge,
+.routine-hero-track { position: relative; z-index: 1; }
+
+/* Der Textblock endet vor der Starttaste, damit nichts darunter läuft. */
+.routine-hero-top.simple { padding-right: 70px; min-width: 0; }
+.routine-hero-top.simple h2 { margin-bottom: 2px; }
+.routine-hero-top.simple p {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Statuszeile: Schritte und Restzeit beziehungsweise Tagesfortschritt. */
+.routine-hero-meta {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(255,255,255,.20);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: var(--fs-tiny);
+  font-weight: 700;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  color: #fff;
+}
+
+/* Fortschritt des heutigen Tages als feine Linie am unteren Kartenrand. */
+.routine-hero-track {
+  position: absolute;
+  left: var(--sp-4);
+  right: var(--sp-4);
+  bottom: 13px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: rgba(255,255,255,.26);
+  overflow: hidden;
+}
+.routine-hero-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255,255,255,.55);
+  transition: width .45s ease;
+}
+
+/* Häkchen für eine abgeschlossene Routine. */
+.routine-hero-badge {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-3);
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.92);
+  color: #1C7A43;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(10,14,26,.28);
+}
+.routine-hero.is-finished::after { background: linear-gradient(180deg, rgba(10,14,26,.14) 0%, rgba(10,14,26,.50) 55%, rgba(10,14,26,.70) 100%); }
+.routine-hero-play.done { font-size: 20px; }
 .routine-thread { display: none; }
 .routine-hero-top { min-width: 0; }
 .routine-hero-top h2 { margin: 0; font-size: var(--fs-h3); text-shadow: 0 1px 5px rgba(0,0,0,.45); }

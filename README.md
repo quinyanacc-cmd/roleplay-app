@@ -1,4 +1,4 @@
-# ROLEPLAY App 5.9.0
+# ROLEPLAY App 5.9.1
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
@@ -50,6 +50,19 @@ neu dazu – eine gelöschte Morgen- oder Abendroutine kehrte deshalb nach dem
 Neuladen zurück. Liegt ein Speicherstand vor, ist er jetzt maßgeblich; die
 Vorlagen dienen nur noch als Grundgerüst für fehlende Felder.
 
+### Routinenübersicht
+
+Die Kacheln sind von 118 auf 164 px gewachsen und zeigen jetzt den Stand des
+heutigen Tages statt nur ein Bild:
+
+- noch unberührt: „13 Schritte · 119 Min.“
+- begonnen: „3/13 · noch 90 Min.“ und ein Fortschrittsbalken am unteren Rand
+- abgeschlossen: „Abgeschlossen“, ein Häkchen oben rechts, die Starttaste wird
+  zum Wiederholen-Symbol
+
+Der Textblock endet vor der Starttaste, damit nichts darunter läuft; die
+Statuszeile bleibt immer einzeilig.
+
 ### Laufende Routine: neues Design
 
 Die Session übernimmt das Kopfbild ihrer Routine als weich ausblendende
@@ -67,8 +80,10 @@ bleibt `roleplay-v25`.
 ## Tests
 
 - **348** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
-- **15** Routinen-Tests: Reihenfolge der Tagesreflexion, Bearbeiten-Dialog,
+- **20** Routinen-Tests: Reihenfolge der Tagesreflexion, Bearbeiten-Dialog,
   Kopfbildauswahl und -vorschau, Speichern ohne Verlust der Schritte, Löschen
-  mit Bestand nach Neuladen, Start der Session mit Kopfbild und Fortschrittsring
+  mit Bestand nach Neuladen, Start der Session mit Kopfbild und Fortschrittsring,
+  Kachelgröße, erkannter Tagesfortschritt, Statuszeile ohne Umbruch, kein Text
+  unter der Starttaste
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
 - **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler
