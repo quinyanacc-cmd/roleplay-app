@@ -646,7 +646,7 @@ const DEFAULT_ROUTINES = {
 };
 
 const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.8.1";
+const APP_VERSION = "5.9.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -2298,7 +2298,11 @@ function openCalendar() {
 function normalizeRoutines(value) {
   const defaults = JSON.parse(JSON.stringify(DEFAULT_ROUTINES));
   const incoming = value && typeof value === "object" ? value : {};
-  const keys = Array.from(new Set([...Object.keys(defaults), ...Object.keys(incoming)]));
+  /* Liegt bereits ein Speicherstand vor, ist er maßgeblich: sonst kehrte eine
+     gelöschte Standardroutine beim nächsten Start zurück. Die Vorlagen dienen
+     dann nur noch als Grundgerüst für fehlende Felder. */
+  const hasStored = Object.keys(incoming).length > 0;
+  const keys = hasStored ? Object.keys(incoming) : Object.keys(defaults);
   const output = {};
   keys.forEach((key, index) => {
     const base = defaults[key] || {
@@ -2381,6 +2385,7 @@ function openRoutineDetail(key) {
   activeRoutineKey = key;
   $("routineOverview").hidden = true;
   $("routineDetail").hidden = false;
+  $("routineDetail").dataset.routineKey = key;
   renderRoutineDetail(key);
 }
 
@@ -2693,6 +2698,13 @@ function renderRoutineSession() {
   $("sessionRoutineName").textContent = routine.title;
   const items = sessionItems();
   $("sessionProgress").textContent = `Schritt ${routineSession.index + 1} von ${items.length}`;
+  // Die Session übernimmt das Kopfbild ihrer Routine als ruhige Atmosphäre.
+  const dialogEl = $("routineSessionDialog");
+  dialogEl.dataset.theme = routine.theme || "focus";
+  // Fortschrittsring um den Timer: Anteil der bereits erledigten Schritte.
+  const resolved = items.filter(item => (currentData?.routineProgress?.[routineSession.key] || {})[item.id]).length;
+  const ring = Math.round(resolved / Math.max(1, items.length) * 100);
+  $("sessionTimerCircle").style.setProperty("--session-progress", `${ring}%`);
   $("sessionItemTitle").textContent = item.title;
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
@@ -2929,29 +2941,70 @@ function createRoutineKey(title) {
   return key;
 }
 
-function openRoutineDialog() {
-  $("routineTitle").value = "";
-  $("routineDescription").value = "";
-  $("routineTheme").value = "focus";
-  $("routineDialog").showModal();
+/* Derselbe Dialog legt neue Routinen an und bearbeitet bestehende. Wird ein
+   Schlüssel übergeben, sind Löschen möglich und die Felder vorbelegt. */
+function openRoutineDialog(key = null) {
+  const routine = key ? routines[key] : null;
+  const dialog = $("routineDialog");
+  dialog.dataset.editingRoutine = key || "";
+  $("routineTitle").value = routine?.title || "";
+  $("routineDescription").value = routine?.description || "";
+  $("routineTheme").value = routine?.theme || "focus";
+  const heading = dialog.querySelector("h3");
+  if (heading) heading.textContent = routine ? "Routine bearbeiten" : "Routine hinzufügen";
+  if ($("routineDialogSubmit")) $("routineDialogSubmit").textContent = routine ? "Sichern" : "Erstellen";
+  // Die letzte verbliebene Routine bleibt erhalten – sonst stünde die Seite leer.
+  if ($("deleteRoutine")) $("deleteRoutine").hidden = !routine || Object.keys(routines).length <= 1;
+  updateRoutineThemePreview();
+  dialog.showModal();
+}
+
+function updateRoutineThemePreview() {
+  const preview = $("routineThemePreview");
+  if (!preview) return;
+  preview.className = `routine-theme-preview ${$("routineTheme").value}`;
+}
+
+/* Entfernt eine Routine samt ihrem Fortschritt des laufenden Tages.
+   Gespeicherte Tage bleiben unberührt – dort steht der Fortschritt weiterhin. */
+function deleteRoutine() {
+  const key = $("routineDialog").dataset.editingRoutine;
+  if (!key || !routines[key]) return;
+  if (Object.keys(routines).length <= 1) return;
+  if (!window.confirm(`„${routines[key].title}" wirklich löschen? Die Schritte gehen dabei verloren.`)) return;
+  if (routineSession?.key === key) closeRoutineSession();
+  delete routines[key];
+  saveRoutines();
+  $("routineDialog").close();
+  if ($("routineDetail")) $("routineDetail").hidden = true;
+  renderRoutineCards();
 }
 
 function saveRoutineFromForm(event) {
   event.preventDefault();
   const title = $("routineTitle").value.trim();
   if (!title) return;
-  const key = createRoutineKey(title);
-  routines[key] = {
-    key,
-    title,
-    description: $("routineDescription").value.trim() || "Eigene Routine",
-    theme: $("routineTheme").value || "focus",
-    autoNext: false,
-    items: []
-  };
+  const editing = $("routineDialog").dataset.editingRoutine;
+  if (editing && routines[editing]) {
+    // Beim Bearbeiten bleiben Schlüssel und Schritte unangetastet.
+    routines[editing].title = title;
+    routines[editing].description = $("routineDescription").value.trim() || routines[editing].description;
+    routines[editing].theme = $("routineTheme").value || "focus";
+  } else {
+    const key = createRoutineKey(title);
+    routines[key] = {
+      key,
+      title,
+      description: $("routineDescription").value.trim() || "Eigene Routine",
+      theme: $("routineTheme").value || "focus",
+      autoNext: false,
+      items: []
+    };
+  }
   saveRoutines();
   $("routineDialog").close();
   renderRoutineCards();
+  if (editing && $("routineDetail") && !$("routineDetail").hidden) openRoutineDetail(editing);
 }
 
 // Beim Scrollen klappen Titel und Rollenwähler ein; sichtbar bleibt nur die kompakte
@@ -3054,7 +3107,13 @@ function bindEvents() {
   $("openRoutines").addEventListener("click", () => switchPage("routines"));
   $("backToRoutineOverview").addEventListener("click", closeRoutineDetail);
   $("startRoutineDetail").addEventListener("click", () => startRoutine(activeRoutineKey));
-  if ($("addRoutine")) $("addRoutine").addEventListener("click", openRoutineDialog);
+  if ($("addRoutine")) $("addRoutine").addEventListener("click", () => openRoutineDialog());
+  if ($("deleteRoutine")) $("deleteRoutine").addEventListener("click", deleteRoutine);
+  if ($("routineTheme")) $("routineTheme").addEventListener("change", updateRoutineThemePreview);
+  if ($("editRoutineMeta")) $("editRoutineMeta").addEventListener("click", () => {
+    const key = $("routineDetail")?.dataset.routineKey;
+    if (key) openRoutineDialog(key);
+  });
   $("routineDialogForm").addEventListener("submit", saveRoutineFromForm);
   $("cancelRoutine").addEventListener("click", () => $("routineDialog").close());
   $("addRoutineItem").addEventListener("click", () => openRoutineItemDialog());

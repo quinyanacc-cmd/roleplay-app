@@ -1,60 +1,74 @@
-# ROLEPLAY App 5.8.1
+# ROLEPLAY App 5.9.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Zustand & Rollenmodus: die Tagesbahn
+## Neu in 5.9.0
 
-    Nacht  →  Morgen  →  Mittag  →  Abend
+### Reihenfolge der Tagesreflexion
 
-Vier Stationen auf einer durchgehenden Linie, jede mit Symbol, Namen sowie
-Energie und Laune darunter.
+    Zustand & Rollenmodus · Islam · Aktivitäten · Routinen ·
+    Vitalität · Dankbarkeit · Tagesnotiz
 
-**Erledigt** – farbiger Knoten mit kräftigem Verlauf und Häkchen, darunter die
-gespeicherten Werte.
-**Jetzt dran** – der nächste offene Check-in ist um 22 % vergrößert, hat einen
-weichen Schein und einen farbig gefüllten Namen.
-**Später** – ruhiger Knoten, graues Symbol, „– %“ als Platzhalter.
+Darunter folgen wie bisher Wochenrückblick sowie Export & Sicherung.
 
-Die Verbindungslinie nimmt die Farben der bereits erreichten Stationen auf und
-wird dahinter neutral.
+### Prozentwerte in der Tagesbahn
 
-## Änderungen in 5.8.1
+Auf 12 px verkleinert, damit sie in den Stationen mehr Luft haben. Der
+Extremfall „100 %“ auf allen vier Stationen bleibt weiterhin einzeilig und
+überlappungsfrei – geprüft bei 375, 390, 393 und 430 px.
 
-**Alles größer und breiter.** Knoten von 50 auf 58 px, Symbole von 26 auf
-31 px, Stationsnamen eine Stufe größer. Die Bahn zieht sich jetzt leicht in den
-Kartenrand hinein und gewinnt dadurch Breite.
+### Routinen: Kopfbilder
 
-**Prozentwerte deutlich lesbarer.** Von 11 auf 13,5 px erhöht und gegen
-Umbruch gesichert. Nachgemessen bei 375, 390, 393 und 430 px Breite mit dem
-Extremfall „100 %“ auf allen vier Stationen: kein Umbruch, keine Überlappung.
-Dieser Fall läuft jetzt dauerhaft im Test mit.
+Jede Routine lässt sich mit einem von fünf Kopfbildern versehen:
 
-**Die Aufforderung „Morgen eintragen“ ist entfallen.** Der aktive Knoten ist
-durch Größe, Schein und farbigen Namen ohnehin eindeutig; der zusätzliche
-Hinweis kostete nur Platz.
+- Sonnenaufgang
+- Nachthimmel
+- Bergsee am Tag *(neu)*
+- Dämmerung *(neu)*
+- Zuhause *(neu)*
+- Ohne Bild
 
-**Mondsichel neu gezeichnet.** Sie besteht jetzt aus zwei Bögen mit exakt
-berechneten Spitzen. Über zwei Kreise mit `fill-rule` ging es nicht: dort wird
-auch der überstehende Teil des zweiten Kreises gefüllt, wodurch die Sichel sich
-zum Ring schloss. Ein senkrechter Versatz zwischen den Kreisen hätte unten
-ebenfalls einen Rand stehen lassen – die Neigung übernimmt deshalb eine
-Drehung.
+Der Bearbeiten-Dialog zeigt eine Vorschau des gewählten Motivs. Das Kopfbild
+erscheint auf der Routinenkarte, in der Wochenübersicht und als Atmosphäre in
+der laufenden Routine.
 
-**Sonnenuntergang neu gezeichnet.** Statt zweier Pfeile ist die Sonnenscheibe
-jetzt zum Teil hinter dem Horizont verschwunden, darunter liegt ihre
-Spiegelung. Das unterscheidet sich klar vom Morgen und wirkt ruhiger.
+Die Bilder wurden für die PWA aufbereitet: von 8,8 MB auf zusammen 124 KB
+(900 px breit, JPEG). Der Service-Worker-Cache wurde entsprechend angepasst.
+
+### Routinen: bearbeiten und löschen
+
+Über „Kopfbild & Titel ändern“ in der Routinenansicht lassen sich Titel,
+Beschreibung und Kopfbild nachträglich anpassen – die Schritte bleiben dabei
+unangetastet. Im selben Dialog steht „Routine löschen“.
+
+Gelöscht wird mit Rückfrage. Die jeweils letzte verbliebene Routine lässt sich
+nicht löschen, damit die Seite nicht leer zurückbleibt.
+
+**Behoben:** `normalizeRoutines` mischte die Standardroutinen bei jedem Start
+neu dazu – eine gelöschte Morgen- oder Abendroutine kehrte deshalb nach dem
+Neuladen zurück. Liegt ein Speicherstand vor, ist er jetzt maßgeblich; die
+Vorlagen dienen nur noch als Grundgerüst für fehlende Felder.
+
+### Laufende Routine: neues Design
+
+Die Session übernimmt das Kopfbild ihrer Routine als weich ausblendende
+Atmosphäre im oberen Bereich. Der Timer sitzt in einem Fortschrittsring, der
+den Anteil der bereits erledigten Schritte zeigt. Emoji und Kreis haben
+weichere Schatten bekommen.
 
 ## Datenmodell
 
-**Unverändert.** Es wurde ausschließlich die Darstellungsschicht geändert:
-`renderCheckinSlots` und das zugehörige CSS. Namespace bleibt `roleplay-v25`.
+Erweitert um ein bestehendes, bereits vorhandenes Feld: `routines[key].theme`
+nimmt nun auch die Werte `tag`, `daemmerung` und `zuhause` an. Alte Werte
+(`morning`, `evening`, `focus`) funktionieren unverändert weiter. Namespace
+bleibt `roleplay-v25`.
 
 ## Tests
 
 - **348** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
-- Darunter dauerhaft: dreistellige Werte ohne Umbruch, keine Überlappung
-  benachbarter Knoten, Mindestschriftgröße der Prozentwerte, Stationsnamen
-  vollständig, Bahn bleibt in der Karte
+- **15** Routinen-Tests: Reihenfolge der Tagesreflexion, Bearbeiten-Dialog,
+  Kopfbildauswahl und -vorschau, Speichern ohne Verlust der Schritte, Löschen
+  mit Bestand nach Neuladen, Start der Session mit Kopfbild und Fortschrittsring
 - **15** Tests mit Altdatensätzen aus 3.x und 5.x
 - **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler

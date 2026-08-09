@@ -875,8 +875,11 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   z-index: -1;
   background: linear-gradient(180deg, rgba(10,14,26,.06), rgba(10,14,26,.52));
 }
-.routine-review-card.morning { background-image: url('./morning-header.png'); }
-.routine-review-card.evening { background-image: url('./evening-header.png'); }
+.routine-review-card.morning { background-image: url('./morning-header.jpg'); }
+.routine-review-card.evening { background-image: url('./evening-header.jpg'); }
+.routine-review-card.tag { background-image: url('./header-tag.jpg'); }
+.routine-review-card.daemmerung { background-image: url('./header-daemmerung.jpg'); }
+.routine-review-card.zuhause { background-image: url('./header-zuhause.jpg'); }
 
 .routine-review-open {
   flex: 1 1 auto;
@@ -1305,8 +1308,26 @@ details.card[open] > .lean-card-summary { margin-bottom: var(--sp-4); }
   box-shadow: var(--shadow-card);
   isolation: isolate;
 }
-.routine-hero.morning { background: url('./morning-header.png') center/cover no-repeat; }
-.routine-hero.evening { background: url('./evening-header.png') center/cover no-repeat; }
+.routine-hero.morning { background: url('./morning-header.jpg') center/cover no-repeat; }
+.routine-hero.evening { background: url('./evening-header.jpg') center/cover no-repeat; }
+.routine-hero.tag { background: url('./header-tag.jpg') center/cover no-repeat; }
+.routine-hero.daemmerung { background: url('./header-daemmerung.jpg') center/cover no-repeat; }
+.routine-hero.zuhause { background: url('./header-zuhause.jpg') center/cover no-repeat; }
+
+/* Vorschau des gewählten Kopfbildes im Bearbeiten-Dialog. */
+.routine-theme-preview {
+  height: 74px;
+  margin: 0 0 var(--sp-2);
+  border-radius: var(--r-field);
+  border: 1px solid var(--line);
+  background: var(--field-2) center/cover no-repeat;
+  transition: background-image .25s ease;
+}
+.routine-theme-preview.morning { background-image: url('./morning-header.jpg'); }
+.routine-theme-preview.evening { background-image: url('./evening-header.jpg'); }
+.routine-theme-preview.tag { background-image: url('./header-tag.jpg'); }
+.routine-theme-preview.daemmerung { background-image: url('./header-daemmerung.jpg'); }
+.routine-theme-preview.zuhause { background-image: url('./header-zuhause.jpg'); }
 /* Der Verlauf muss ÜBER dem Bild liegen, sonst ist weiße Schrift auf dem
    hellen Morgenbild unlesbar. Zuvor lag er wegen z-index:-1 dahinter. */
 .routine-hero::after {
@@ -2020,8 +2041,8 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 }
 .stop-values > span { display: grid; justify-items: center; min-width: 0; }
 /* Die Werte müssen auch bei „100 %“ einzeilig bleiben. */
-.stop-values b { font-size: 13.5px; font-weight: 800; white-space: nowrap; color: var(--text); }
-.stop-values small { font-size: 9.5px; letter-spacing: -.01em; white-space: nowrap; color: var(--muted); }
+.stop-values b { font-size: 12px; font-weight: 800; white-space: nowrap; color: var(--text); }
+.stop-values small { font-size: 9px; letter-spacing: -.01em; white-space: nowrap; color: var(--muted); }
 .stop-values i { width: 1px; height: 22px; background: var(--line); }
 .journey-stop.is-done .stop-values b { color: var(--stop-line); }
 .journey-stop.is-upcoming .stop-values b { color: var(--muted); }
@@ -2034,7 +2055,7 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
   .stop-node { width: 52px; height: 52px; }
   .stop-icon { width: 28px; height: 28px; }
   .journey-line { top: calc(10px + 26px); }
-  .stop-values b { font-size: 12.5px; }
+  .stop-values b { font-size: 11px; }
   .stop-values small { font-size: 9px; }
 }
 
@@ -2173,3 +2194,57 @@ body.session-editor-sorting { user-select: none; -webkit-user-select: none; }
 .state-checkin-dialog .phase-mark .cycle-glyph-body.hollow { fill: none; stroke: var(--phase-b); }
 .state-checkin-dialog .phase-mark .cycle-glyph-ray,
 .state-checkin-dialog .phase-mark .cycle-glyph-spark { stroke: var(--phase-b); fill: var(--phase-b); opacity: .9; }
+
+/* --------------------------------------------------------------------------
+   Laufende Routine
+   Die Session übernimmt das Kopfbild ihrer Routine als weiche Atmosphäre und
+   zeigt den Fortschritt als Ring um den Timer.
+   -------------------------------------------------------------------------- */
+.routine-session-dialog::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: 46vh;
+  z-index: 0;
+  background: var(--session-bg, none) center/cover no-repeat;
+  opacity: .30;
+  -webkit-mask: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 46%, transparent 100%);
+  mask: linear-gradient(180deg, #000 0%, rgba(0,0,0,.55) 46%, transparent 100%);
+  pointer-events: none;
+}
+.routine-session-dialog[data-theme="morning"] { --session-bg: url('./morning-header.jpg'); }
+.routine-session-dialog[data-theme="evening"] { --session-bg: url('./evening-header.jpg'); }
+.routine-session-dialog[data-theme="tag"] { --session-bg: url('./header-tag.jpg'); }
+.routine-session-dialog[data-theme="daemmerung"] { --session-bg: url('./header-daemmerung.jpg'); }
+.routine-session-dialog[data-theme="zuhause"] { --session-bg: url('./header-zuhause.jpg'); }
+.session-topbar, .session-content { position: relative; z-index: 1; }
+
+/* Fortschrittsring um den Timer. */
+.session-timer-circle {
+  position: relative;
+  border: 0;
+  background:
+    conic-gradient(var(--accent) 0 var(--session-progress, 0%), var(--line) var(--session-progress, 0%) 100%)
+    border-box;
+  box-shadow: 0 18px 48px rgba(30,24,70,.16);
+}
+.session-timer-circle::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--card-solid);
+}
+.session-timer-circle > * { position: relative; z-index: 1; }
+.session-item-emoji {
+  filter: drop-shadow(0 6px 14px rgba(30,24,70,.22));
+}
+.session-timer-circle strong { letter-spacing: -.02em; }
+
+@media (prefers-color-scheme: dark) {
+  .routine-session-dialog::before { opacity: .22; }
+  .session-timer-circle { box-shadow: 0 18px 48px rgba(0,0,0,.45); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .session-timer-circle { transition: none; }
+}

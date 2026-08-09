@@ -47,6 +47,55 @@
         </section>
 
         <section class="card">
+          <h2>Islam</h2>
+          <div id="prayerList" class="prayer-strip"></div>
+          <details class="sunnah-prayer-details">
+            <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
+            <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
+          </details>
+          <div class="ramadan-box">
+            <div>
+              <span class="subheading">Fastentage</span>
+              <strong id="ramadanDisplay">–29 Tage offen</strong>
+              <small class="carry-hint">Der Stand wird beim nächsten Tag automatisch übernommen.</small>
+            </div>
+            <div class="ramadan-controls">
+              <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
+              <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-title-row">
+            <h2>Aktivitäten</h2>
+            <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
+          </div>
+          <div id="activityList" class="stack activity-list"></div>
+        </section>
+
+        <section class="card routine-review-section">
+          <div class="section-title-row">
+            <h2>Routinen</h2>
+            <button id="openRoutines" class="text-button" type="button">Öffnen</button>
+          </div>
+          <div class="routine-review-grid">
+            <article class="routine-review-card routine-review-image morning">
+              <button class="routine-review-open" type="button" data-review-open-routine="morning" aria-label="Morgenroutine öffnen">
+                <span class="routine-review-copy"><strong>Morgenroutine</strong><small>Heute Morgen</small></span>
+              </button>
+              <button class="routine-cycle-button" type="button" data-routine-cycle="morning" aria-label="Status Morgenroutine ändern"></button>
+            </article>
+            <article class="routine-review-card routine-review-image evening">
+              <button class="routine-review-open" type="button" data-review-open-routine="evening" aria-label="Abendroutine öffnen">
+                <span class="routine-review-copy"><strong>Abendroutine</strong><small>Heute Abend</small></span>
+              </button>
+              <button class="routine-cycle-button" type="button" data-routine-cycle="evening" aria-label="Status Abendroutine ändern"></button>
+            </article>
+          </div>
+        </section>
+
+        <section class="card">
           <h2>Vitalität</h2>
 
           <div class="meal-list">
@@ -92,55 +141,6 @@
           </div>
         </section>
 
-        <section class="card routine-review-section">
-          <div class="section-title-row">
-            <h2>Routinen</h2>
-            <button id="openRoutines" class="text-button" type="button">Öffnen</button>
-          </div>
-          <div class="routine-review-grid">
-            <article class="routine-review-card routine-review-image morning">
-              <button class="routine-review-open" type="button" data-review-open-routine="morning" aria-label="Morgenroutine öffnen">
-                <span class="routine-review-copy"><strong>Morgenroutine</strong><small>Heute Morgen</small></span>
-              </button>
-              <button class="routine-cycle-button" type="button" data-routine-cycle="morning" aria-label="Status Morgenroutine ändern"></button>
-            </article>
-            <article class="routine-review-card routine-review-image evening">
-              <button class="routine-review-open" type="button" data-review-open-routine="evening" aria-label="Abendroutine öffnen">
-                <span class="routine-review-copy"><strong>Abendroutine</strong><small>Heute Abend</small></span>
-              </button>
-              <button class="routine-cycle-button" type="button" data-routine-cycle="evening" aria-label="Status Abendroutine ändern"></button>
-            </article>
-          </div>
-        </section>
-
-        <section class="card">
-          <h2>Islam</h2>
-          <div id="prayerList" class="prayer-strip"></div>
-          <details class="sunnah-prayer-details">
-            <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
-            <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
-          </details>
-          <div class="ramadan-box">
-            <div>
-              <span class="subheading">Fastentage</span>
-              <strong id="ramadanDisplay">–29 Tage offen</strong>
-              <small class="carry-hint">Der Stand wird beim nächsten Tag automatisch übernommen.</small>
-            </div>
-            <div class="ramadan-controls">
-              <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
-              <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="section-title-row">
-            <h2>Aktivitäten</h2>
-            <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
-          </div>
-          <div id="activityList" class="stack activity-list"></div>
-        </section>
-
         <section class="card mindfulness-card">
           <h2>Dankbarkeit</h2>
           <div class="reflection-stack">
@@ -158,8 +158,6 @@
             </div>
           </div>
         </section>
-
-        
 
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
@@ -210,6 +208,7 @@
               <p id="routineDetailEyebrow" class="eyebrow"></p>
               <h2 id="routineDetailTitle"></h2>
               <p id="routineDetailMeta" class="section-hint"></p>
+              <button id="editRoutineMeta" class="text-button" type="button">Kopfbild &amp; Titel ändern</button>
             </div>
             <button id="startRoutineDetail" class="round-play-button" type="button" aria-label="Routine starten">▶</button>
           </div>
@@ -339,13 +338,18 @@
       <input id="routineDescription" placeholder="Wofür ist diese Routine gedacht?">
       <label for="routineTheme">Design-Stimmung</label>
       <select id="routineTheme">
-        <option value="morning">Morgen / warm</option>
-        <option value="evening">Abend / ruhig</option>
-        <option value="focus">Fokus / klar</option>
+        <option value="morning">Sonnenaufgang</option>
+        <option value="evening">Nachthimmel</option>
+        <option value="tag">Bergsee am Tag</option>
+        <option value="daemmerung">Dämmerung</option>
+        <option value="zuhause">Zuhause</option>
+        <option value="focus">Ohne Bild</option>
       </select>
+      <p class="routine-theme-preview" id="routineThemePreview" aria-hidden="true"></p>
       <div class="dialog-actions">
+        <button id="deleteRoutine" type="button" class="ghost-button danger" hidden>Routine löschen</button>
         <button id="cancelRoutine" type="button" class="secondary-button">Abbrechen</button>
-        <button type="submit" class="primary-button compact">Erstellen</button>
+        <button type="submit" class="primary-button compact" id="routineDialogSubmit">Erstellen</button>
       </div>
     </form>
   </dialog>
