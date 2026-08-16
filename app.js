@@ -162,9 +162,14 @@ const CHECKIN_SLOTS = [
   { key: "night", label: "Nacht", icon: "🌙", time: "07:00", color: "#6256C7" },
   { key: "morning", label: "Morgens", icon: "🌅", time: "08:00", color: "#F2A93B" },
   { key: "midday", label: "Mittags", icon: "☀️", time: "13:00", color: "#E5B52E" },
+  { key: "afternoon", label: "Nachmittags", icon: "🌤️", time: "16:00", color: "#E29A63" },
   { key: "evening", label: "Abends", icon: "🌇", time: "19:00", color: "#B268C4" }
 ];
-const CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "evening"];
+/* Verbindliche Reihenfolge der Tagesreise. Sie bestimmt allein, welcher
+   Check-in als nächster offen ist – die Uhrzeit tut das ausdrücklich nicht. */
+const CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "afternoon", "evening"];
+// Tage vor Version 6 kennen nur vier Phasen; der Nachmittag fehlt dort.
+const LEGACY_CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "evening"];
 const LOAD_OPTIONS = {
   low: { label: "Niedrig", score: 86, icon: "○" },
   normal: { label: "Normal", score: 62, icon: "◐" },
@@ -193,8 +198,35 @@ const HEAVY_EMOTIONS = new Set(["Ängstlich", "Panik", "Wütend", "Überfordert"
    Die Oberfläche liest daraus – nirgends sonst werden diese Zahlen wiederholt.
    ========================================================================== */
 
-// Modus-Leiter, aufsteigend: Index 0 ist der schonendste Modus.
-const MODE_LADDER = ["stabilization", "gentle", "maintenance", "balance", "focus", "design", "development"];
+/* Fünf verbindliche Modi, aufsteigend: Index 0 ist der schonendste Modus.
+   Es gibt keine weiteren sichtbaren Modusbezeichnungen mehr. */
+const MODE_LADDER = ["gentle", "minimum", "standard", "focus", "development"];
+
+// Sichtbare Beschriftung und Farbe je Modus. Einzige Quelle für beides.
+const MODES = [
+  { key: "gentle",      label: "Schon-Modus",       icon: "◔", color: "#E77D4D" },
+  { key: "minimum",     label: "Minimum",           icon: "⌁", color: "#E5A22E" },
+  { key: "standard",    label: "Standard",          icon: "◐", color: "#27B9A9" },
+  { key: "focus",       label: "Fokus",             icon: "◎", color: "#3D7BE8" },
+  { key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#7258E8" }
+];
+
+/* Frühere Modusschlüssel werden beim Laden auf die neue Fünfer-Systematik
+   abgebildet. Gespeicherte Tage behalten dadurch ihre Aussage. */
+const LEGACY_MODE_KEYS = {
+  stabilization: "gentle", recovery: "gentle", protection: "gentle",
+  maintenance: "minimum", balance: "standard", design: "focus", peak: "development"
+};
+
+function modeKey(value) {
+  const mapped = LEGACY_MODE_KEYS[value] || value;
+  return MODES.some(mode => mode.key === mapped) ? mapped : "";
+}
+
+function modeMeta(value) {
+  const key = modeKey(value);
+  return key ? MODES.find(mode => mode.key === key) : null;
+}
 
 // Gewichtung des Zustands. Laune zählt bewusst etwas stärker als Energie.
 const STATE_WEIGHTS = {
@@ -204,12 +236,10 @@ const STATE_WEIGHTS = {
 
 // Untergrenze je Modus, bezogen auf den gewichteten Wert 0–100.
 const MODE_THRESHOLDS = {
-  stabilization: 0,
-  gentle: 25,
-  maintenance: 40,
-  balance: 55,
+  gentle: 0,
+  minimum: 40,
+  standard: 55,
   focus: 70,
-  design: 82,
   development: 92
 };
 
@@ -217,18 +247,18 @@ const MODE_THRESHOLDS = {
    damit ein sehr niedriger Einzelwert nicht durch einen hohen anderen Wert
    wegkompensiert wird.
 
-   floor  = erzwingt genau diesen Modus
-   cap    = höchstens dieser Modus
-   lift   = Ausnahme, die eine Begrenzung um n Stufen anheben darf          */
+   hardFloor = erzwingt genau diesen Modus
+   caps      = höchstens dieser Modus
+   lift      = Ausnahme, die eine Begrenzung um n Stufen anheben darf        */
 const MODE_RULES = {
-  // Ein extrem niedriger Einzelwert bedeutet immer Stabilisierung.
-  hardFloor: { threshold: 15, mode: "stabilization" },
+  // Ein extrem niedriger Einzelwert bedeutet immer den Schon-Modus.
+  hardFloor: { threshold: 15, mode: "gentle" },
 
   caps: [
-    { when: { energyBelow: 25 }, cap: "gentle", reason: "Energie" },
-    { when: { moodBelow: 25 }, cap: "gentle", reason: "Laune" },
-    { when: { moodBelow: 35 }, cap: "maintenance", reason: "Laune" },
-    { when: { energyBelow: 35 }, cap: "maintenance", reason: "Energie" }
+    { when: { energyBelow: 25 }, cap: "gentle" },
+    { when: { moodBelow: 25 }, cap: "gentle" },
+    { when: { moodBelow: 35 }, cap: "minimum" },
+    { when: { energyBelow: 35 }, cap: "minimum" }
   ],
 
   // Sehr gute Laune darf eine energiebedingte Begrenzung um eine Stufe anheben.
@@ -249,110 +279,16 @@ const DAY_ROLE_MAP = {
   0: "familienmensch"
 };
 
-// Zuordnung Modus → Handlungsebene der Rollenleiter.
-const MODE_LEVEL_MAP = {
-  stabilization: "base",
-  gentle: "base",
-  maintenance: "minimum",
-  balance: "standard",
-  focus: "focus",
-  design: "design",
-  development: "peak"
-};
-
-/* Rollenmatrix. Jede Ebene beschreibt den heutigen Rahmen – nicht eine Summe
-   von Aufgaben. Höhere Ebenen ersetzen die niedrigere Form, wo es semantisch
-   sinnvoll ist (Spaziergang → Gym 1 h → Gym 2 h). */
+/* Tagesrollen. Der Modus erteilt bewusst keine rollenspezifischen Aufgaben
+   mehr – hier steht deshalb nur noch, wie die Rolle des Tages heißt. */
 const ROLE_CONFIG = {
-  ich: {
-    label: "Ich",
-    roleName: "Ich-Person",
-    levels: {
-      minimum: { tasks: ["Post & E-Mails"], text: "Post & E-Mails." },
-      standard: { tasks: ["Post & E-Mails", "Search"], text: "Post & E-Mails und Search." },
-      focus: { tasks: ["Post & E-Mails", "Search", "Lernen"], text: "Post & E-Mails, Search und Lernen." },
-      design: { tasks: ["Post & E-Mails", "Search", "Lernen"], text: "Post & E-Mails, Search und Lernen." },
-      peak: { tasks: ["Post & E-Mails", "Search", "Lernen", "Entwicklungsblock"], text: "Post & E-Mails, Search, Lernen und ein Entwicklungsblock." }
-    },
-    // Wöchentliche Mindestverantwortung: einmal pro Woche genügt.
-    weeklyTasks: [{ id: "post", label: "Post & E-Mails" }]
-  },
-  vitalist: {
-    label: "Vitalist",
-    roleName: "Vitalist",
-    levels: {
-      minimum: { tasks: ["Spaziergang"], text: "Ein kurzer Spaziergang." },
-      standard: { tasks: ["Gym"], text: "Gym · ca. 1 Stunde." },
-      focus: { tasks: ["Gym"], text: "Gym · ca. 2 Stunden." },
-      design: { tasks: ["Gym", "Search"], text: "Gym und Search." },
-      peak: { tasks: ["Gym", "Search", "Entwicklungsblock"], text: "Gym, Search und ein Entwicklungsblock." }
-    }
-  },
-  absolvent: {
-    label: "Absolvent",
-    roleName: "Absolvent",
-    // Vorbereitungsphase – nach Studienbeginn hier anpassen.
-    levels: {
-      minimum: { tasks: ["Lesen"], text: "Lesen." },
-      standard: { tasks: ["Lesen", "Arabisch"], text: "Lesen und Arabisch lernen." },
-      focus: { tasks: ["Lesen", "Arabisch", "Lernblock"], text: "Lesen, Arabisch und ein längerer Lernblock." },
-      design: { tasks: ["Lernblock", "Arabisch", "Search"], text: "Lern- und Lesebasis plus Search." },
-      peak: { tasks: ["Lernblock", "Arabisch", "Search", "Lernkapazität"], text: "Voller Lernblock, Search und zusätzliche Lernkapazität." }
-    }
-  },
-  unternehmer: {
-    label: "Unternehmer",
-    roleName: "Unternehmer",
-    levels: {
-      minimum: { tasks: ["Buch"], text: "Bucharbeit." },
-      standard: { tasks: ["Buch", "Search"], text: "Buch und Search." },
-      focus: { tasks: ["Buch", "Search"], text: "Buch als geschützter Fokusblock, dazu Search." },
-      design: { tasks: ["Buch", "Search", "Gestaltung"], text: "Buch, Search und zusätzliche Gestaltungsarbeit." },
-      peak: { tasks: ["Buch", "Search", "Entwicklungsblock"], text: "Buch, Search und ein Entwicklungsblock." }
-    }
-  },
-  muslim: {
-    label: "Muslim",
-    roleName: "Muslim",
-    // Bewusst auf allen Stufen gleich – keine religiöse Leistungsskala.
-    levels: {
-      minimum: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
-      standard: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
-      focus: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
-      design: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." },
-      peak: { tasks: ["Allah lobpreisen"], text: "Allah lobpreisen." }
-    },
-    // Verpflichtung, unabhängig vom Zustand – keine Leistungsstufe.
-    obligations: ["Jumuʿah"]
-  },
-  wirt: {
-    label: "Wirt",
-    roleName: "Wirt",
-    levels: {
-      minimum: { tasks: ["CleanUp Basic"], text: "CleanUp Basic." },
-      standard: { tasks: ["CleanUp"], text: "CleanUp." },
-      focus: { tasks: ["CleanUp", "Search"], text: "CleanUp und Search." },
-      design: { tasks: ["CleanUp", "Search", "Haushaltsaufgabe"], text: "CleanUp, Search und eine umfangreichere Haushaltsaufgabe." },
-      peak: { tasks: ["CleanUp", "Search", "Entwicklungsblock"], text: "CleanUp, Search und ein Entwicklungsblock." }
-    }
-  },
-  familienmensch: {
-    label: "Familienmensch",
-    roleName: "Familienmensch",
-    levels: {
-      minimum: { tasks: ["Weekly Family light"], text: "Weekly Family light – kurzer bewusster Kontakt." },
-      standard: { tasks: ["Weekly Family"], text: "Weekly Family." },
-      focus: { tasks: ["Weekly Family", "Search", "Gym"], text: "Weekly Family, Search und Gym." },
-      design: { tasks: ["Weekly Family", "Search", "Gym", "Familienaktivität"], text: "Weekly Family, Search, Gym und eine größere Familienaktivität." },
-      peak: { tasks: ["Weekly Family", "Search", "Gym", "Entwicklungsblock"], text: "Weekly Family, Search, Gym und ein Entwicklungsblock." }
-    }
-  }
-};
-
-// Text der beiden Schutzstufen. Bewusst ohne fordernde oder schuldinduzierende Sprache.
-const PROTECTIVE_LEVEL_TEXT = {
-  stabilization: "Heute nur die Gebete.",
-  gentle: "Heute nur die Gebete."
+  ich: { label: "Ich", roleName: "Ich-Person" },
+  vitalist: { label: "Vitalist", roleName: "Vitalist" },
+  absolvent: { label: "Absolvent", roleName: "Absolvent" },
+  unternehmer: { label: "Unternehmer", roleName: "Unternehmer" },
+  muslim: { label: "Muslim", roleName: "Muslim" },
+  wirt: { label: "Wirt", roleName: "Wirt" },
+  familienmensch: { label: "Familienmensch", roleName: "Familienmensch" }
 };
 
 /* --------------------------------------------------------------------------
@@ -361,7 +297,7 @@ const PROTECTIVE_LEVEL_TEXT = {
 
 function modeIndex(key) {
   const i = MODE_LADDER.indexOf(key);
-  return i < 0 ? MODE_LADDER.indexOf("balance") : i;
+  return i < 0 ? MODE_LADDER.indexOf("standard") : i;
 }
 
 // Gewichteter Zustandswert aus Energie und Laune.
@@ -379,29 +315,22 @@ function modeFromScore(score) {
   return result;
 }
 
-/* Ermittelt den Rollenmodus aus Energie und Laune.
-   Rückgabe enthält zusätzlich, welche Regel begrenzt hat – damit die
-   Begründung den tatsächlichen Grund benennen kann. */
+/* Ermittelt den Rollenmodus aus Energie und Laune. */
 function resolveMode(energy, mood) {
   const score = stateScore(energy, mood);
   if (score === null) return null;
   const e = clamp(Number(energy), 0, 100);
   const m = clamp(Number(mood), 0, 100);
 
-  // Harte Untergrenze: ein extrem niedriger Wert bedeutet immer Stabilisierung.
+  // Harte Untergrenze: ein extrem niedriger Wert bedeutet immer Schon-Modus.
   const floor = MODE_RULES.hardFloor;
   if (e <= floor.threshold || m <= floor.threshold) {
-    return {
-      key: floor.mode,
-      score,
-      limitedBy: e <= floor.threshold && m <= floor.threshold ? ["Energie", "Laune"] : e <= floor.threshold ? ["Energie"] : ["Laune"],
-      lifted: false
-    };
+    return { key: floor.mode, score, capped: true, lifted: false };
   }
 
   const base = modeFromScore(score);
   let index = modeIndex(base);
-  let limitedBy = [];
+  let capped = false;
 
   // Obergrenzen anwenden: die strengste gewinnt.
   MODE_RULES.caps.forEach(rule => {
@@ -409,21 +338,20 @@ function resolveMode(energy, mood) {
       || (rule.when.moodBelow !== undefined && m < rule.when.moodBelow);
     if (!hit) return;
     const capIndex = modeIndex(rule.cap);
-    if (capIndex < index) { index = capIndex; limitedBy = [rule.reason]; }
-    else if (capIndex === index && !limitedBy.includes(rule.reason)) limitedBy.push(rule.reason);
+    if (capIndex <= index) { capped = capped || capIndex < index; index = Math.min(index, capIndex); }
   });
 
   // Ausnahme: sehr gute Laune hebt eine energiebedingte Begrenzung um eine Stufe.
   const lift = MODE_RULES.lift;
   let lifted = false;
-  if (limitedBy.length
+  if (capped
       && e >= lift.when.energyFrom && e <= lift.when.energyTo
       && m >= lift.when.moodFrom) {
     const raised = Math.min(index + lift.steps, modeIndex(base));
     if (raised > index) { index = raised; lifted = true; }
   }
 
-  return { key: MODE_LADDER[index], score, limitedBy, lifted };
+  return { key: MODE_LADDER[index], score, capped, lifted };
 }
 
 // Tagesrolle aus dem Datum – fest zugeordnet, unabhängig vom Zustand.
@@ -435,42 +363,84 @@ function dayRoleConfig(iso = selectedDate) {
   return ROLE_CONFIG[dayRoleKey(iso)] || ROLE_CONFIG.ich;
 }
 
-/* Konkrete Handlungsempfehlung aus Tagesrolle und Modus.
-   Kurze, klare Sprache – keine Motivationsrede, keine Bewertung. */
-function dayPriorityText(modeKey, iso = selectedDate, options = {}) {
-  const level = MODE_LEVEL_MAP[modeKey];
-  if (level === "base") return PROTECTIVE_LEVEL_TEXT[modeKey] || PROTECTIVE_LEVEL_TEXT.gentle;
-  const role = dayRoleConfig(iso);
-  const entry = role.levels[level] || role.levels.standard;
-  if (!entry) return "";
-  // Bereits in dieser Woche erfüllte Wochenaufgaben nicht erneut verlangen.
-  const done = options.completedWeeklyTasks || [];
-  if (role.weeklyTasks?.length && done.length) {
-    const drop = role.weeklyTasks.filter(t => done.includes(t.id)).map(t => t.label);
-    const rest = entry.tasks.filter(t => !drop.includes(t));
-    if (rest.length && rest.length !== entry.tasks.length) {
-      return rest.length === 1 ? `${rest[0]}.` : `${rest.slice(0, -1).join(", ")} und ${rest.at(-1)}.`;
-    }
+/* ==========================================================================
+   COACH-IMPULS
+   Der Modus beschreibt Umfang, Tempo und Form des Handelns – nicht die
+   Aufgaben. Der Coach besteht aus einem festen Kernsatz je Modus und einem
+   deterministischen Zusatzsatz je Zustandskategorie. Gleiche Werte ergeben
+   immer denselben Text; es gibt keinerlei Zufall.
+   ========================================================================== */
+
+const MODE_COACH_CORE = {
+  gentle: "Fahr heute bewusst einen Gang runter.",
+  minimum: "Mach es klein – aber geh den nächsten Schritt.",
+  standard: "Du bist solide aufgestellt. Geh den Tag verlässlich an.",
+  focus: "Bündele deine Kraft auf das, was heute wirklich zählt.",
+  development: "Heute ist Raum, über das Gewohnte hinauszugehen."
+};
+
+const MODE_COACH_ADDITION = {
+  gentle: {
+    bothLow: "Halte den Tag leicht und entscheide nach jedem kleinen Schritt neu.",
+    moodLeads: "Deine Stimmung trägt dich, aber deine Kraft braucht heute Maß.",
+    energyLeads: "Kraft ist vorhanden, doch innerlich brauchst du heute weniger Druck.",
+    balanced: "Ein ruhiger, leichter Rhythmus ist heute vollkommen angemessen.",
+    bothHigh: "Trotz des Schwungs bleibt heute ein schonender Rahmen sinnvoll."
+  },
+  minimum: {
+    bothLow: "Ein überschaubarer Anfang genügt; danach darfst du neu entscheiden.",
+    moodLeads: "Deine Stimmung hilft dir beim Anfangen – teile deine Kraft dennoch klug ein.",
+    energyLeads: "Warte nicht auf perfekte Motivation; ein klarer Anfang kann dich tragen.",
+    balanced: "Ein verlässlicher nächster Schritt reicht als gute Richtung.",
+    bothHigh: "Nutze den Schwung für einen klaren Schritt, ohne den Rahmen unnötig auszuweiten."
+  },
+  standard: {
+    bothLow: "Halte den Rhythmus einfach und verlässlich, ohne zusätzlichen Druck.",
+    moodLeads: "Die innere Bereitschaft ist da; plane deine Kraft mit Augenmaß.",
+    energyLeads: "Energie ist verfügbar; ein klarer Rhythmus gibt ihr Richtung.",
+    balanced: "Energie und Laune bilden eine tragfähige Basis.",
+    bothHigh: "Die Basis trägt gut; bleib klar, statt unnötig zu beschleunigen."
+  },
+  focus: {
+    bothLow: "Wähle einen einzigen Schwerpunkt und schütze deine verbleibende Kraft.",
+    moodLeads: "Deine innere Bereitschaft ist stark; bündele sie, statt dich zu verzetteln.",
+    energyLeads: "Kraft ist da; gib ihr eine klare Richtung, ohne auf den perfekten Antrieb zu warten.",
+    balanced: "Du hast genug Stabilität für Tiefe – halte Ablenkungen klein.",
+    bothHigh: "Energie und Laune ziehen gemeinsam – schütze deinen Fokus vor zu vielen Baustellen."
+  },
+  development: {
+    bothLow: "Entwicklung bedeutet heute nicht mehr Menge, sondern eine kluge Verbesserung.",
+    moodLeads: "Deine Begeisterung öffnet Raum; gib ihr eine klare Entwicklungsrichtung.",
+    energyLeads: "Deine Kraft ist hoch; setze sie für Aufbau statt für bloßes Tempo ein.",
+    balanced: "Setze einen mutigen Entwicklungsakzent, statt einfach nur mehr zu tun.",
+    bothHigh: "Nutze den Schwung mutig – aber verliere dich nicht im bloßen Mehr."
   }
-  return entry.text;
+};
+
+/* Zustandskategorie. Die Prüfreihenfolge ist verbindlich und darf nicht
+   verändert werden: bothHigh, bothLow, moodLeads, energyLeads, balanced. */
+function coachStateCategory(energy, mood) {
+  const e = clamp(Number(energy), 0, 100);
+  const m = clamp(Number(mood), 0, 100);
+  if (e >= 80 && m >= 80) return "bothHigh";
+  if (e < 40 && m < 40) return "bothLow";
+  if (m - e >= 15) return "moodLeads";
+  if (e - m >= 15) return "energyLeads";
+  return "balanced";
 }
 
-const FRAMEWORKS = [
-  { min: 88, key: "development", label: "Entwicklungsmodus", icon: "✦", color: "#7258E8" },
-  { min: 76, key: "design", label: "Gestaltungsmodus", icon: "◆", color: "#4D7EEA" },
-  { min: 64, key: "focus", label: "Fokusmodus", icon: "◎", color: "#2D9BC7" },
-  { min: 52, key: "balance", label: "Regulärer Modus", icon: "◐", color: "#27B9A9" },
-  { min: 40, key: "maintenance", label: "Reduzierter Modus", icon: "⌁", color: "#E5A22E" },
-  { min: 27, key: "gentle", label: "Schonmodus", icon: "◔", color: "#E77D4D" },
-  { min: 0, key: "stabilization", label: "Stabilisierungsmodus", icon: "☾", color: "#D85F83" }
-];
-
-// Frühere Modus-Schlüssel bleiben mit der erweiterten Modus-Skala kompatibel.
-const LEGACY_FRAMEWORK_KEYS = { recovery: "stabilization", protection: "stabilization" };
-
-function frameworkKey(value) {
-  const mapped = LEGACY_FRAMEWORK_KEYS[value] || value;
-  return FRAMEWORKS.some(item => item.key === mapped) ? mapped : "";
+/* Einzige Textquelle des Coaches. Hauptansicht und Check-in-Vorschau rufen
+   ausschließlich diese Funktion auf – doppelte Logik gibt es nicht. */
+function coachImpulse(energy, mood, key) {
+  const mode = modeMeta(key);
+  if (!mode || energy === null || energy === undefined || mood === null || mood === undefined) return null;
+  const category = coachStateCategory(energy, mood);
+  return {
+    modeKey: mode.key,
+    category,
+    core: MODE_COACH_CORE[mode.key],
+    addition: MODE_COACH_ADDITION[mode.key][category]
+  };
 }
 
 const RESPONSIBILITY_KEYS = ["situationState", "responsibilityClarity", "roleScope", "appropriateness", "effectLearning"];
@@ -483,6 +453,73 @@ const ROLE_REFLECTION_META = {
   missed: { label: "Nicht angemessen beantwortet", short: "Versäumt", icon: "×", score: 0 },
   overextended: { label: "Rolle überdehnt", short: "Überdehnt", icon: "!", score: 0 }
 };
+
+/* ==========================================================================
+   ROLEPLAY-BILANZ
+   Strukturierter Tagesabschluss ohne Freitext und ohne Punktzahl. Die
+   Hauptantwort baut auf ROLE_REFLECTION_META auf; jede Antwort führt zu
+   genau einer kurzen, kontrollierten Folgeauswahl.
+   ========================================================================== */
+
+const BALANCE_OUTCOMES = ["fulfilled", "adapted", "deferred", "missed", "overextended"];
+
+// Mehrfachauswahl, höchstens zwei Angaben.
+const BALANCE_DETAILS = {
+  fulfilled: {
+    question: "Was hat heute getragen?",
+    max: 2,
+    options: [
+      ["clearMandate", "Klarer Auftrag"], ["fittingMode", "Passender Modus"], ["goodPreparation", "Gute Vorbereitung"],
+      ["support", "Unterstützung"], ["enoughTime", "Ausreichend Zeit"], ["concentration", "Konzentration"]
+    ]
+  },
+  adapted: {
+    question: "Was wurde angepasst?",
+    max: 2,
+    options: [
+      ["scope", "Umfang"], ["pace", "Tempo"], ["timing", "Zeitpunkt"],
+      ["order", "Reihenfolge"], ["approach", "Vorgehen"], ["supportUsed", "Unterstützung genutzt"]
+    ]
+  },
+  overextended: {
+    question: "Was hat gefehlt?",
+    max: 2,
+    options: [
+      ["boundary", "Klare Grenze"], ["time", "Zeit"], ["energy", "Energie"],
+      ["authority", "Befugnis"], ["support", "Unterstützung"], ["prioritization", "Priorisierung"]
+    ]
+  }
+};
+
+// Einzelauswahl. dateFor benennt die Antworten mit nativem Datumsfeld.
+const BALANCE_FOLLOW_UPS = {
+  deferred: {
+    question: "Wie wird die Restverantwortung wieder aufgenommen?",
+    dateFor: ["specificDate"],
+    options: [
+      ["nextRoleDay", "Am nächsten Rollentag"], ["specificDate", "Zu einem konkreten Termin"],
+      ["clarifyFirst", "Zuerst klären"], ["delegate", "Übergeben oder delegieren"]
+    ]
+  },
+  missed: {
+    question: "Was ist jetzt der nächste verantwortliche Umgang?",
+    dateFor: ["catchUp", "replan"],
+    options: [
+      ["catchUp", "Nachholen"], ["makeAmends", "Wiedergutmachen"], ["clarify", "Klären"],
+      ["getSupport", "Unterstützung holen"], ["replan", "Neu planen"]
+    ]
+  }
+};
+
+const BALANCE_MODE_FIT = [
+  ["tooDemanding", "Zu fordernd"],
+  ["fitting", "Passend"],
+  ["tooGentle", "Zu schonend"]
+];
+
+function emptyRoleplayBalance() {
+  return { outcome: "", detailKeys: [], followUpAction: "", followUpDate: "", modeFit: "", evaluatedModeKey: "", evaluatedRoleName: "" };
+}
 
 const ROUTINE_STATE_ORDER = ["", "done", "missed", "responsiblySkipped"];
 const TASK_STATE_META = {
@@ -645,8 +682,9 @@ const DEFAULT_ROUTINES = {
   }
 };
 
-const QUICK_EMOJIS = ["🕯️","🔛","🧎🏻","🤸🏻","🛏️","🥗","🪷","📋","💡","🔤","📒","📝","🎒","👕","🚿","🐈","🧹","📓","🤲","📵","🛌","🌙"];
-const APP_VERSION = "5.9.1";
+// Dauerauswahl im Schritt-Editor: 1 bis 180 Minuten als native iOS-Auswahl.
+const ROUTINE_MINUTE_CHOICES = Array.from({ length: 180 }, (_, index) => index + 1);
+const APP_VERSION = "6.0.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -694,28 +732,6 @@ function mondayOf(iso) {
 }
 
 // Stabiler Schlüssel einer Kalenderwoche: das Datum ihres Montags.
-function weekKey(iso) {
-  return mondayOf(iso);
-}
-
-const WEEKLY_TASKS_KEY = `${STORAGE_NAMESPACE}-weekly-tasks`;
-
-// Erledigte Wochenaufgaben je Kalenderwoche. Additiv – bestehende Daten bleiben unberührt.
-function completedWeeklyTasks(iso = selectedDate) {
-  const store = safeParse(localStorage.getItem(WEEKLY_TASKS_KEY)) || {};
-  const entry = store[weekKey(iso)];
-  return Array.isArray(entry) ? entry : [];
-}
-
-function setWeeklyTaskDone(taskId, done, iso = selectedDate) {
-  const store = safeParse(localStorage.getItem(WEEKLY_TASKS_KEY)) || {};
-  const key = weekKey(iso);
-  const list = new Set(Array.isArray(store[key]) ? store[key] : []);
-  if (done) list.add(taskId); else list.delete(taskId);
-  store[key] = [...list];
-  localStorage.setItem(WEEKLY_TASKS_KEY, JSON.stringify(store));
-}
-
 function firstOfMonth(iso) {
   return `${iso.slice(0, 7)}-01`;
 }
@@ -794,8 +810,43 @@ function emptyReview(date) {
     roleReflections: Object.fromEntries(ROLES.map(role => [role.name, ""])),
     responsibilityNote: "",
     responsibilityMain: "", responsibilityAdaptation: "", responsibilityNextStep: "",
+    roleplayBalance: emptyRoleplayBalance(),
+    // Neue Tage arbeiten mit fünf Check-ins; historische Tage bleiben bei vier.
+    checkinStructure: 5,
     notes: ""
   };
+}
+
+/* Prüft die Bilanz gegen feste erlaubte Listen. Unbekannte oder nicht mehr
+   passende Werte werden verworfen, ohne andere Angaben zu verlieren. */
+function normalizeRoleplayBalance(raw, fallbackOutcome = "") {
+  const balance = emptyRoleplayBalance();
+  balance.outcome = BALANCE_OUTCOMES.includes(raw?.outcome) ? raw.outcome
+    : BALANCE_OUTCOMES.includes(fallbackOutcome) ? fallbackOutcome : "";
+
+  const detail = BALANCE_DETAILS[balance.outcome];
+  if (detail) {
+    const allowed = detail.options.map(([key]) => key);
+    const seen = new Set();
+    balance.detailKeys = (Array.isArray(raw?.detailKeys) ? raw.detailKeys : [])
+      .filter(key => allowed.includes(key) && !seen.has(key) && seen.add(key) !== false)
+      .slice(0, detail.max);
+  }
+
+  const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
+  if (followUp) {
+    const allowed = followUp.options.map(([key]) => key);
+    balance.followUpAction = allowed.includes(raw?.followUpAction) ? raw.followUpAction : "";
+    if (balance.followUpAction && followUp.dateFor.includes(balance.followUpAction)
+        && /^\d{4}-\d{2}-\d{2}$/.test(String(raw?.followUpDate || ""))) {
+      balance.followUpDate = raw.followUpDate;
+    }
+  }
+
+  balance.modeFit = BALANCE_MODE_FIT.some(([key]) => key === raw?.modeFit) ? raw.modeFit : "";
+  balance.evaluatedModeKey = modeKey(raw?.evaluatedModeKey);
+  balance.evaluatedRoleName = String(raw?.evaluatedRoleName || "");
+  return balance;
 }
 
 function legacySleepScore(value) {
@@ -834,10 +885,10 @@ function normalizeReview(raw, date, hasStoredValue) {
   };
   merged.stateCheckins = Array.isArray(raw?.stateCheckins) ? raw.stateCheckins.map((entry, index) => {
     const time = /^\d{2}:\d{2}$/.test(entry.time || "") ? entry.time : "12:00";
-    const inferredSlot = entry.slot || slotForTime(time);
+    const inferredSlot = entry.slot || legacySlotForTime(time);
     return {
       id: String(entry.id || `state-${date}-${index}`),
-      slot: CHECKIN_SLOTS.some(slot => slot.key === inferredSlot) ? inferredSlot : slotForTime(time),
+      slot: CHECKIN_SLOTS.some(slot => slot.key === inferredSlot) ? inferredSlot : legacySlotForTime(time),
       time,
       energy: entry.energy === "" || entry.energy === undefined || entry.energy === null ? null : clamp(Number(entry.energy), 0, 100),
       mood: entry.mood === "" || entry.mood === undefined || entry.mood === null ? null : clamp(Number(entry.mood), 0, 100),
@@ -860,8 +911,8 @@ function normalizeReview(raw, date, hasStoredValue) {
       sleepQualityScore: entry.sleepQualityScore === "" || entry.sleepQualityScore === undefined || entry.sleepQualityScore === null ? "" : clamp(Number(entry.sleepQualityScore), 0, 6),
       dreamCategory: DREAM_CATEGORIES.some(([value]) => value === entry.dreamCategory) ? entry.dreamCategory : "",
       dreamNote: String(entry.dreamNote || ""),
-      selectedFrameworkKey: frameworkKey(entry.selectedFrameworkKey),
-      recommendedFrameworkKey: frameworkKey(entry.recommendedFrameworkKey),
+      selectedFrameworkKey: modeKey(entry.selectedFrameworkKey),
+      recommendedFrameworkKey: modeKey(entry.recommendedFrameworkKey),
       frameworkOverrideReason: String(entry.frameworkOverrideReason || ""),
       note: String(entry.note || ""),
       createdAt: entry.createdAt || `${date}T${time}:00`
@@ -910,6 +961,20 @@ function normalizeReview(raw, date, hasStoredValue) {
   merged.responsibilityMain = String(raw?.responsibilityMain || "");
   merged.responsibilityAdaptation = String(raw?.responsibilityAdaptation || "");
   merged.responsibilityNextStep = String(raw?.responsibilityNextStep || raw?.responsibilityNote || "");
+  /* Tagesstruktur: gespeicherte Angabe hat Vorrang. Fehlt sie, gilt ein
+     bereits gespeicherter zurückliegender Tag als Vierer-Tag – der Nachmittag
+     wird dort nicht rückwirkend als Versäumnis gewertet. Sobald dort ein
+     Nachmittag eingetragen ist, gilt die Fünfer-Struktur. */
+  const storedStructure = Number(raw?.checkinStructure);
+  merged.checkinStructure = storedStructure === 4 || storedStructure === 5
+    ? storedStructure
+    : (hasStoredValue && date < todayISO() ? 4 : 5);
+  if (merged.stateCheckins.some(entry => entry.slot === "afternoon")) merged.checkinStructure = 5;
+
+  /* Bilanz: ältere Tage können ihre bisherige Rollenreflexion als
+     Hauptantwort weiterverwenden. Vorhandene Felder bleiben unberührt. */
+  merged.roleplayBalance = normalizeRoleplayBalance(raw?.roleplayBalance, merged.roleReflections?.[merged.role] || "");
+
   merged.streaks = hasStoredValue ? { ...base.streaks } : base.streaks;
   STREAKS.forEach(streak => {
     const old = raw?.streaks?.[streak.key];
@@ -977,6 +1042,7 @@ function formatShortDate(iso) {
 
 function setDate(date) {
   weekOffset = 0;
+  balanceModeFitNotice = false;
   selectedDate = date;
   calendarCursor = firstOfMonth(date);
   currentData = loadReview(date);
@@ -1008,6 +1074,7 @@ function fillForm() {
   renderActivities();
   renderStateOverview();
   renderResponsibilityReflection();
+  renderRoleplayBalance();
   renderStreaks();
 }
 
@@ -1016,12 +1083,26 @@ function currentClockTime() {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
-function slotForTime(time = currentClockTime()) {
+/* Nur noch für Altdaten: Einträge aus früheren Versionen ohne gespeicherte
+   Phase bekommen daraus ihre Zuordnung. Für die Frage, welcher Check-in als
+   nächster offen ist, wird die Uhrzeit ausdrücklich nicht mehr verwendet. */
+function legacySlotForTime(time = currentClockTime()) {
   const hour = Number(String(time).slice(0, 2));
   if (hour < 10) return "morning";
   if (hour < 16) return "midday";
   if (hour < 21) return "evening";
   return "night";
+}
+
+/* Struktur des angezeigten Tages: 5 Phasen (ab Version 6) oder 4 Phasen
+   (historische Tage). Historische Tage bekommen den Nachmittag nicht
+   nachträglich als Versäumnis angerechnet. */
+function checkinStructure(data = currentData) {
+  return Number(data?.checkinStructure) === 4 ? 4 : 5;
+}
+
+function activeChronology(data = currentData) {
+  return checkinStructure(data) === 4 ? LEGACY_CHECKIN_CHRONOLOGY : CHECKIN_CHRONOLOGY;
 }
 
 function slotIndex(key) {
@@ -1049,6 +1130,7 @@ function sleepCapacityScore(value) {
 function mealKeysForSlot(slot) {
   if (slot === "morning") return ["breakfast"];
   if (slot === "midday") return ["breakfast", "lunch"];
+  if (slot === "afternoon") return ["breakfast", "lunch", "snack"];
   if (slot === "evening") return ["breakfast", "lunch", "snack", "dinner"];
   return ["breakfast", "lunch", "snack", "dinner"];
 }
@@ -1080,7 +1162,7 @@ function innerStateCapacity(checkin) {
 }
 
 function hydrationContextScore(slot, ml) {
-  const thresholds = { morning: 500, midday: 1000, evening: 1500, night: 1800 };
+  const thresholds = { morning: 500, midday: 1000, afternoon: 1250, evening: 1500, night: 1800 };
   const target = thresholds[slot] || 1000;
   if (!Number.isFinite(Number(ml)) || Number(ml) <= 0) return null;
   return clamp(Math.round(Number(ml) / target * 100), 0, 100);
@@ -1119,61 +1201,29 @@ function checkinValues(checkin) {
   return { energy: e, mood: m };
 }
 
-function recommendedFrameworkForCheckin(checkin, data = currentData) {
+function recommendedModeForCheckin(checkin, data = currentData) {
   const values = checkinValues(checkin);
   if (!values) return null;
   const resolved = resolveMode(values.energy, values.mood);
   if (!resolved) return null;
-  const framework = FRAMEWORKS.find(item => item.key === resolved.key) || FRAMEWORKS.at(-1);
+  const mode = modeMeta(resolved.key) || MODES[0];
   return {
-    ...framework,
+    ...mode,
     score: resolved.score,
-    limitedBy: resolved.limitedBy || [],
     lifted: Boolean(resolved.lifted),
     energy: values.energy,
     mood: values.mood
   };
 }
 
-// Ohne manuelle Auswahl ist der empfohlene Modus zugleich der gültige.
-function frameworkForCheckin(checkin, data = currentData) {
-  const recommended = recommendedFrameworkForCheckin(checkin, data);
-  if (!recommended) return null;
-  return { ...recommended, recommendedKey: recommended.key, recommendedLabel: recommended.label, isOverride: false };
+// Es gibt keine manuelle Auswahl: der empfohlene Modus ist zugleich der gültige.
+function modeForCheckin(checkin, data = currentData) {
+  return recommendedModeForCheckin(checkin, data);
 }
 
-
-/* Konkrete Handlungsempfehlung: Tagesrolle plus heutige Priorität.
-   Kurze, klare Sprache – keine Motivationsrede, keine Bewertung.
-   Die Aufgaben stammen ausschließlich aus ROLE_CONFIG. */
-function recommendationForCheckin(checkin, framework = frameworkForCheckin(checkin), data = currentData) {
-  if (!checkin || !framework) return "";
-  const priority = dayPriorityText(framework.key, selectedDate, {
-    completedWeeklyTasks: completedWeeklyTasks(selectedDate)
-  });
-  return priority;
-}
-
-/* Kurze Begründung aus Energie und Laune – ohne Punktzahl und ohne Wertung.
-   Genannt wird der Wert, der den Modus tatsächlich begrenzt hat. */
-function stateCauseSentence(checkin, data = currentData, framework = null) {
-  if (!checkin) return "";
-  const energy = checkin.energy === null || checkin.energy === undefined ? null : Number(checkin.energy);
-  const mood = checkin.mood === null || checkin.mood === undefined ? null : Number(checkin.mood);
-  if (energy === null || mood === null) return "";
-
-  const limits = framework?.limitedBy || [];
-  if (limits.length) {
-    const phrases = { Energie: `die Energie bei ${energy} % liegt`, Laune: `die Laune bei ${mood} % liegt` };
-    const named = limits.map(l => phrases[l]).filter(Boolean);
-    if (named.length) {
-      const joined = named.length === 1 ? named[0] : `${named[0]} und ${named[1]}`;
-      if (framework?.lifted) return `Die Energie ist niedrig, die gute Laune trägt heute aber ein Stück mit.`;
-      return `Begrenzend wirkt, dass ${joined}.`;
-    }
-  }
-  if (energy >= 80 && mood >= 80) return "Energie und Laune tragen heute gut.";
-  return `Energie ${energy} %, Laune ${mood} %.`;
+// Maßgeblicher Modus des Tages: der zuletzt erfasste Check-in bestimmt ihn.
+function currentDayMode(data = currentData) {
+  return modeForCheckin(latestStateCheckin(data), data);
 }
 
 
@@ -1229,10 +1279,12 @@ function latestStateCheckin(data = currentData) {
 /* Farbwelten der vier Tageszeiten. a und b spannen den Verlauf des Knotens,
    line ist die Farbe in der Verbindungslinie, glow der weiche Schein. */
 const CYCLE_PHASES = {
-  night:   { short: "Nacht",  from: 180, a: "#4F5BD5", b: "#8145D8", line: "#6B4FD6", glow: "rgba(101,79,214,.42)" },
-  morning: { short: "Morgen", from: 270, a: "#9B5CF0", b: "#F79A3C", line: "#E4735F", glow: "rgba(233,124,80,.45)" },
-  midday:  { short: "Mittag", from: 0,   a: "#F7B733", b: "#2FBEDD", line: "#63C3C9", glow: "rgba(60,190,214,.40)" },
-  evening: { short: "Abend",  from: 90,  a: "#E0619B", b: "#6A4FCF", line: "#A65AB6", glow: "rgba(166,90,182,.40)" }
+  night:     { short: "Nacht",      from: 180, a: "#4F5BD5", b: "#8145D8", line: "#6B4FD6", glow: "rgba(101,79,214,.42)" },
+  morning:   { short: "Morgen",     from: 270, a: "#9B5CF0", b: "#F79A3C", line: "#E4735F", glow: "rgba(233,124,80,.45)" },
+  midday:    { short: "Mittag",     from: 0,   a: "#F7B733", b: "#2FBEDD", line: "#63C3C9", glow: "rgba(60,190,214,.40)" },
+  // Nachmittag: der Türkis-Gold-Ton des Mittags läuft in wärmere Abendfarben.
+  afternoon: { short: "Nachmittag", from: 60,  a: "#54C6D6", b: "#F0A15C", line: "#E29A63", glow: "rgba(226,154,99,.40)" },
+  evening:   { short: "Abend",      from: 120, a: "#E0619B", b: "#6A4FCF", line: "#A65AB6", glow: "rgba(166,90,182,.40)" }
 };
 
 /* Farbanker rund um den Tag. Zwischen ihnen wird interpoliert, deshalb gibt
@@ -1305,18 +1357,12 @@ function cycleColorAt(angle) {
 }
 
 
-// Welche Tagesphase steht als nächste an? Sie wird weniger stark abgedunkelt.
+/* Hervorgehoben wird immer der erste noch nicht ausgefüllte Check-in in der
+   festen Reihenfolge – unabhängig von der Uhrzeit. Sind alle erledigt,
+   leuchtet keiner mehr. */
 function pendingPhaseKey() {
   const bySlot = Object.fromEntries((currentData?.stateCheckins || []).map(e => [e.slot, e]));
-  const open = CHECKIN_CHRONOLOGY.filter(key => !bySlot[key]);
-  if (!open.length) return null;
-  if (selectedDate !== todayISO()) return open[0];
-  const from = CHECKIN_CHRONOLOGY.indexOf(slotForTime());
-  for (let i = 0; i < CHECKIN_CHRONOLOGY.length; i += 1) {
-    const key = CHECKIN_CHRONOLOGY[(from + i) % CHECKIN_CHRONOLOGY.length];
-    if (!bySlot[key]) return key;
-  }
-  return open[0];
+  return activeChronology().find(key => !bySlot[key]) || null;
 }
 
 /* Tageszeit-Symbole in einheitlichem Strichstil, mittig auf 0 0 gezeichnet.
@@ -1344,6 +1390,20 @@ function phaseGlyph(key) {
     }).join("");
     return `<svg viewBox="-16 -16 32 32" aria-hidden="true"><circle cx="0" cy="0" r="6"></circle>${rays}</svg>`;
   }
+  /* Nachmittag: die Sonne steht noch klar über dem Horizont, aber nicht mehr
+     im Zenit. Gleiche Strichsprache wie die übrigen Phasen, tiefer gesetzter
+     Horizont als beim Abend. */
+  if (key === "afternoon") {
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+      <circle cx="0" cy="-3.4" r="5.4"></circle>
+      <line x1="0" y1="-13.2" x2="0" y2="-10.8"></line>
+      <line x1="-8.3" y1="-11.7" x2="-6.5" y2="-9.9"></line>
+      <line x1="8.3" y1="-11.7" x2="6.5" y2="-9.9"></line>
+      <line x1="-12.2" y1="-3.4" x2="-9.8" y2="-3.4"></line>
+      <line x1="12.2" y1="-3.4" x2="9.8" y2="-3.4"></line>
+      <line x1="-11.5" y1="8.4" x2="11.5" y2="8.4"></line>
+    </svg>`;
+  }
   // Morgen: Sonne steigt über den Horizont. Abend: sie sinkt darunter.
   if (key === "morning") {
     // Aufgehende Sonne: volle Halbscheibe über dem Horizont, Strahlen nach oben.
@@ -1365,62 +1425,79 @@ function phaseGlyph(key) {
   </svg>`;
 }
 
-/* Horizontale Tagesbahn: Nacht → Morgen → Mittag → Abend.
-   Drei Zustände, sofort unterscheidbar:
-     erledigt  – farbig und kompakt
-     jetzt     – deutlich größer, farbig, mit Aufforderung
+/* Horizontale Tagesbahn über fünf Phasen: Nacht → Morgen → Mittag →
+   Nachmittag → Abend. Vier sichtbar unterscheidbare Zustände:
+     erledigt  – farbig, mit Haken
+     jetzt     – moderat größer und farbig
      später    – ruhig und neutral
-   Der Rollenmodus steht bewusst nicht hier, sondern in der Auswertung
-   darunter: oben der zeitliche Verlauf, unten die Interpretation. */
+     nicht Teil des Tages – historische Vierer-Tage ohne Nachmittag
+   Die Verbindungslinie besteht aus eigenständigen Segmenten, die
+   ausschließlich die Zwischenräume füllen und die Kreise nicht berühren. */
 function renderCheckinSlots() {
   const container = $("checkinSlots");
   if (!container || !currentData) return;
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
   const pending = pendingPhaseKey();
+  const active = activeChronology();
 
   const stops = CHECKIN_CHRONOLOGY.map(key => {
     const phase = CYCLE_PHASES[key];
     const entry = bySlot[key];
-    const state = entry ? "done" : (key === pending ? "current" : "upcoming");
+    const state = entry ? "done"
+      : !active.includes(key) ? "outside"
+      : key === pending ? "current" : "upcoming";
     return { key, phase, entry, state };
   });
 
-  // Die Verbindungslinie nimmt die Farben der bereits erreichten Stationen auf
-  // und wird dahinter wieder neutral.
-  const positions = [12.5, 37.5, 62.5, 87.5];
-  const lineStops = stops.map((stop, index) =>
-    `${stop.state === "upcoming" ? "var(--journey-idle)" : stop.phase.line} ${positions[index]}%`);
-  const lineGradient = `linear-gradient(90deg, ${lineStops[0].replace(/ \d+(\.\d+)?%$/, " 0%")}, ${lineStops.join(", ")}, ${lineStops.at(-1).replace(/ \d+(\.\d+)?%$/, " 100%")})`;
+  // Ein Segment je Zwischenraum. Farbe links und rechts aus den Nachbarn.
+  const linkColor = stop => (stop.state === "done" || stop.state === "current") ? stop.phase.line : "var(--journey-idle)";
+  const links = stops.slice(0, -1).map((stop, index) =>
+    `<i style="--i:${index};--from:${linkColor(stop)};--to:${linkColor(stops[index + 1])}"></i>`).join("");
 
   const nodes = stops.map(stop => {
     const { key, phase, entry, state } = stop;
     const energy = entry && entry.energy !== null && entry.energy !== undefined ? `${entry.energy} %` : "– %";
     const mood = entry && entry.mood !== null && entry.mood !== undefined ? `${entry.mood} %` : "– %";
-    const label = state === "done" ? "bearbeiten" : "eintragen";
+    const action = state === "done" ? "bearbeiten" : "eintragen";
+    const status = entry ? `Energie ${energy}, Laune ${mood}`
+      : state === "outside" ? "für diesen Tag nicht erfasst" : "noch nicht erfasst";
     return `<button type="button" class="journey-stop is-${state}" data-open-checkin-slot="${key}"
         style="--stop-a:${phase.a};--stop-b:${phase.b};--stop-line:${phase.line};--stop-glow:${phase.glow}"
-        aria-label="${escapeHTML(phase.short)} ${escapeHTML(label)}. ${entry ? `Energie ${energy}, Laune ${mood}` : "noch nicht erfasst"}.">
+        aria-label="${escapeHTML(phase.short)} ${action}. ${status}.">
       <span class="stop-node">
         <span class="stop-icon">${phaseGlyph(key)}</span>
         ${state === "done" ? `<span class="stop-check" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="M3 7.4 5.9 10.2 11 4.6"></path></svg></span>` : ""}
       </span>
       <span class="stop-name">${escapeHTML(phase.short)}</span>
       <span class="stop-values">
-        <span><b>${energy}</b><small>Energie</small></span>
-        <i aria-hidden="true"></i>
-        <span><b>${mood}</b><small>Laune</small></span>
+        <span class="stop-value"><small>Energie</small><b>${energy}</b></span>
+        <span class="stop-value"><small>Laune</small><b>${mood}</b></span>
       </span>
     </button>`;
   }).join("");
 
   container.innerHTML = `<div class="day-journey">
-    <span class="journey-line" style="background:${lineGradient}" aria-hidden="true"></span>
-    <div class="journey-stops">${nodes}</div>
+    <div class="journey-stops">
+      <span class="journey-links" aria-hidden="true">${links}</span>
+      ${nodes}
+    </div>
   </div>`;
 
   container.querySelectorAll("[data-open-checkin-slot]").forEach(element => {
     element.addEventListener("click", () => openStateCheckinDialog(element.dataset.openCheckinSlot));
   });
+}
+
+/* Coach-Fläche: kleine Überschrift, kräftiger Kernsatz, ruhiger Zusatzsatz.
+   Beide Texte stammen ausschließlich aus coachImpulse(). */
+function coachImpulseHTML(energy, mood, key) {
+  const impulse = coachImpulse(energy, mood, key);
+  if (!impulse) return "";
+  return `<div class="coach-impulse">
+    <span class="coach-eyebrow">Impuls für jetzt</span>
+    <strong class="coach-core">${escapeHTML(impulse.core)}</strong>
+    <span class="coach-addition">${escapeHTML(impulse.addition)}</span>
+  </div>`;
 }
 
 function renderStateOverview() {
@@ -1431,25 +1508,25 @@ function renderStateOverview() {
   const checkins = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || (a.time || "").localeCompare(b.time || ""));
   // Maßgeblich ist der neueste vorhandene Check-in des Tages.
   const latest = [...checkins].at(-1);
-  const framework = frameworkForCheckin(latest);
+  const mode = modeForCheckin(latest);
   const role = dayRoleConfig(selectedDate);
 
-  if (!latest || !framework) {
+  if (!latest || !mode) {
     summary.className = "current-state-summary state-readout is-empty";
     summary.removeAttribute("style");
     summary.innerHTML = `<p class="readout-empty">Noch kein Check-in</p>`;
   } else {
-    /* Die Auswertung sitzt unter dem Kreis und liest sich als Ergebnis:
-       zuerst Rolle und Modus, dann die beiden Messwerte, dann die Priorität
-       und schließlich die begrenzende Bedingung. */
+    /* Die Auswertung liest sich als Ergebnis: zuerst Tagesrolle und Modus,
+       dann die beiden Messwerte, darunter der Coach-Impuls. Es erscheinen
+       hier bewusst keine Aufgaben und keine Begründungstexte. */
     summary.className = "current-state-summary state-readout";
-    summary.style.setProperty("--mode-color", framework.color);
-    summary.style.setProperty("--mode-soft", hexToRgba(framework.color, .13));
-    const cause = stateCauseSentence(latest, currentData, framework);
+    summary.style.setProperty("--mode-color", mode.color);
+    summary.style.setProperty("--mode-soft", hexToRgba(mode.color, .13));
+    summary.style.setProperty("--mode-line", hexToRgba(mode.color, .28));
     summary.innerHTML = `
       <div class="readout-head">
         <span class="readout-role">${escapeHTML(role.roleName)}</span>
-        <strong class="readout-mode">${escapeHTML(framework.label)}</strong>
+        <strong class="readout-mode">${escapeHTML(mode.label)}</strong>
       </div>
       <div class="readout-metrics">
         <div class="readout-metric energy">
@@ -1461,30 +1538,31 @@ function renderStateOverview() {
           <i style="--fill:${clamp(Number(latest.mood ?? 0), 0, 100)}%"></i>
         </div>
       </div>
-      <p class="readout-priority">${escapeHTML(recommendationForCheckin(latest, framework))}</p>
-      ${cause ? `<p class="readout-cause">${escapeHTML(cause)}</p>` : ""}`;
+      ${coachImpulseHTML(latest.energy, latest.mood, mode.key)}`;
   }
 
   timeline.innerHTML = checkins.length ? [...checkins].reverse().map(entry => {
-    const entryFramework = frameworkForCheckin(entry);
+    const entryMode = modeForCheckin(entry);
     const slot = checkinSlot(entry.slot);
     const sleep = entry.slot === "night" && entry.sleepQualityScore !== "" && entry.sleepQualityScore !== undefined
       ? ` · ${SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Schlaf erfasst"}` : "";
     const details = `${entry.energy ?? "–"} % Energie · ${entry.mood ?? "–"} % Laune${sleep}`;
-    return `<article class="state-timeline-item" style="--framework-color:${entryFramework?.color || "var(--muted)"}">
+    return `<article class="state-timeline-item" style="--framework-color:${entryMode?.color || "var(--muted)"}">
       <div class="state-timeline-marker"></div>
       <div class="state-timeline-copy">
-        <div class="state-timeline-title"><strong>${slot.icon} ${escapeHTML(slot.label)} · ${escapeHTML(entry.time || "")}</strong><span>${escapeHTML((entryFramework?.label || "").replace(" Modus", ""))}</span></div>
+        <div class="state-timeline-title"><strong>${slot.icon} ${escapeHTML(slot.label)} · ${escapeHTML(entry.time || "")}</strong><span>${escapeHTML(entryMode?.label || "")}</span></div>
         <small>${escapeHTML(details)}</small>
       </div>
       <button type="button" class="state-delete-button" data-delete-state-checkin="${escapeHTML(entry.id)}" aria-label="Check-in löschen">×</button>
     </article>`;
   }).join("") : `<p class="state-timeline-empty">Noch keine Momentaufnahme gespeichert.</p>`;
 
-  document.querySelectorAll("[data-delete-state-checkin]").forEach(button => button.addEventListener("click", () => {
+  timeline.querySelectorAll("[data-delete-state-checkin]").forEach(button => button.addEventListener("click", () => {
     currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.id !== button.dataset.deleteStateCheckin);
     saveReview(true);
+    syncRoleplayBalanceMode();
     renderStateOverview();
+    renderRoleplayBalance();
   }));
 }
 
@@ -1506,7 +1584,7 @@ function toggleNightCheckinFields(slotKey) {
 }
 
 function fillStateCheckinForm(slotKey) {
-  const requestedSlot = slotKey || slotForTime();
+  const requestedSlot = CHECKIN_CHRONOLOGY.includes(slotKey) ? slotKey : (pendingPhaseKey() || CHECKIN_CHRONOLOGY[0]);
   const existing = (currentData.stateCheckins || []).find(entry => entry.slot === requestedSlot);
   const latest = [...(currentData.stateCheckins || [])].sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot)).at(-1);
   const slot = checkinSlot(requestedSlot);
@@ -1548,7 +1626,7 @@ function fillStateCheckinForm(slotKey) {
 }
 
 function openStateCheckinDialog(slotKey = null) {
-  fillStateCheckinForm(slotKey || slotForTime());
+  fillStateCheckinForm(slotKey || pendingPhaseKey() || CHECKIN_CHRONOLOGY[0]);
   $("stateCheckinDialog").showModal();
 }
 
@@ -1560,7 +1638,9 @@ function resetStateCheckin(slotKey) {
   currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.slot !== slotKey);
   if (currentData.stateCheckins.length === before) return;
   saveReview(true);
+  syncRoleplayBalanceMode();
   renderStateOverview();
+  renderRoleplayBalance();
   renderStats();
 }
 
@@ -1596,24 +1676,28 @@ function stateCheckinFromForm() {
 function updateStateCheckinPreview() {
   if (!$("stateEnergy")) return;
   const draft = stateCheckinFromForm();
-  const framework = frameworkForCheckin(draft);
+  const mode = modeForCheckin(draft);
   $("stateEnergyValue").textContent = `${draft.energy ?? 0} %`;
   $("stateMoodValue").textContent = `${draft.mood ?? 0} %`;
-  if (!framework) return;
-  const role = dayRoleConfig(selectedDate);
   const preview = $("stateFrameworkPreviewText");
-  preview.style.setProperty("--framework-color", framework.color);
-  preview.style.setProperty("--framework-soft", hexToRgba(framework.color, .12));
-  preview.style.setProperty("--framework-glow", hexToRgba(framework.color, .24));
-  preview.innerHTML = `<strong>${framework.icon} ${escapeHTML(role.roleName)} · ${escapeHTML(framework.label)}</strong>`
-    + `<span>${escapeHTML(recommendationForCheckin(draft, framework))}</span>`
-    + `<small>${escapeHTML(stateCauseSentence(draft, currentData, framework))}</small>`;
+  if (!preview) return;
+  if (!mode) { preview.innerHTML = ""; return; }
+  const role = dayRoleConfig(selectedDate);
+  preview.style.setProperty("--framework-color", mode.color);
+  preview.style.setProperty("--framework-soft", hexToRgba(mode.color, .12));
+  preview.style.setProperty("--framework-glow", hexToRgba(mode.color, .24));
+  preview.style.setProperty("--mode-color", mode.color);
+  preview.style.setProperty("--mode-soft", hexToRgba(mode.color, .13));
+  preview.style.setProperty("--mode-line", hexToRgba(mode.color, .28));
+  // Dieselbe zentrale Textfunktion wie in der Hauptansicht.
+  preview.innerHTML = `<strong>${escapeHTML(role.roleName)} · ${escapeHTML(mode.label)}</strong>`
+    + coachImpulseHTML(draft.energy, draft.mood, mode.key);
 }
 
 function saveStateCheckin(event) {
   event.preventDefault();
   const entry = stateCheckinFromForm();
-  const recommended = recommendedFrameworkForCheckin(entry);
+  const recommended = recommendedModeForCheckin(entry);
   entry.recommendedFrameworkKey = recommended?.key || "";
     const existing = (currentData.stateCheckins || []).find(item => item.slot === entry.slot);
   entry.id = existing?.id || `state-${selectedDate}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -1625,9 +1709,154 @@ function saveStateCheckin(event) {
     currentData.dreamCategory = entry.dreamCategory;
     currentData.dreams = entry.dreamNote;
   }
+  // Wird ein Nachmittag bewusst eingetragen, wechselt der Tag dauerhaft
+  // auf die Fünfer-Struktur. Werte werden dabei nie erfunden.
+  if (entry.slot === "afternoon") currentData.checkinStructure = 5;
   $("stateCheckinDialog").close();
   saveReview(true);
+  syncRoleplayBalanceMode();
   renderStateOverview();
+  renderRoleplayBalance();
+}
+
+/* Hinweis nach einer kontrollierten Rücksetzung der Moduspassung.
+   Gilt nur für die laufende Ansicht, wird nicht gespeichert. */
+let balanceModeFitNotice = false;
+
+/* Ändert sich der maßgebliche Modus nachträglich, wird ausschließlich die
+   Passungsbewertung zurückgesetzt. Die Verantwortungsbilanz bleibt erhalten. */
+function syncRoleplayBalanceMode() {
+  if (!currentData) return;
+  const balance = currentData.roleplayBalance;
+  const mode = currentDayMode();
+  if (!balance || !mode) return;
+  if (balance.modeFit && balance.evaluatedModeKey && balance.evaluatedModeKey !== mode.key) {
+    balance.modeFit = "";
+    balance.evaluatedModeKey = mode.key;
+    balance.evaluatedRoleName = dayRoleConfig(selectedDate).roleName;
+    balanceModeFitNotice = true;
+    saveReview(true);
+  }
+}
+
+function balanceChipHTML(action, value, label, selected, disabled = false) {
+  return `<button type="button" class="balance-chip${selected ? " is-selected" : ""}${disabled ? " is-disabled" : ""}"
+    data-balance-action="${action}" data-balance-value="${escapeHTML(value)}"
+    aria-pressed="${selected ? "true" : "false"}"${disabled ? " aria-disabled=\"true\"" : ""}>${escapeHTML(label)}</button>`;
+}
+
+function renderRoleplayBalance() {
+  const container = $("roleplayBalance");
+  if (!container || !currentData) return;
+  const balance = currentData.roleplayBalance = normalizeRoleplayBalance(currentData.roleplayBalance);
+  const mode = currentDayMode();
+
+  const outcomeChips = BALANCE_OUTCOMES
+    .map(key => balanceChipHTML("outcome", key, ROLE_REFLECTION_META[key].short, balance.outcome === key))
+    .join("");
+
+  let followUpBlock = "";
+  const detail = BALANCE_DETAILS[balance.outcome];
+  if (detail) {
+    const full = balance.detailKeys.length >= detail.max;
+    followUpBlock = `<div class="balance-block">
+      <p class="balance-question" id="balanceDetailQuestion">${escapeHTML(detail.question)}</p>
+      <div class="balance-options" role="group" aria-labelledby="balanceDetailQuestion">
+        ${detail.options.map(([key, label]) => {
+          const selected = balance.detailKeys.includes(key);
+          return balanceChipHTML("detail", key, label, selected, !selected && full);
+        }).join("")}
+      </div>
+      <small class="balance-hint">Höchstens zwei Angaben.</small>
+    </div>`;
+  }
+
+  const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
+  if (followUp) {
+    const showDate = balance.followUpAction && followUp.dateFor.includes(balance.followUpAction);
+    followUpBlock = `<div class="balance-block">
+      <p class="balance-question" id="balanceFollowUpQuestion">${escapeHTML(followUp.question)}</p>
+      <div class="balance-options" role="group" aria-labelledby="balanceFollowUpQuestion">
+        ${followUp.options.map(([key, label]) => balanceChipHTML("followUp", key, label, balance.followUpAction === key)).join("")}
+      </div>
+      ${showDate ? `<div class="balance-date field-group">
+        <label for="balanceFollowUpDate">Datum</label>
+        <input id="balanceFollowUpDate" type="date" value="${escapeHTML(balance.followUpDate)}">
+      </div>` : ""}
+    </div>`;
+  }
+
+  const fitLabel = mode ? `${mode.label} bewerten` : "Nach dem ersten Check-in verfügbar.";
+  const fitOptions = BALANCE_MODE_FIT.map(([key, label]) =>
+    `<button type="button" class="balance-segment${balance.modeFit === key ? " is-selected" : ""}"
+      data-balance-action="modeFit" data-balance-value="${key}"
+      aria-pressed="${balance.modeFit === key ? "true" : "false"}"${mode ? "" : " disabled"}>${escapeHTML(label)}</button>`).join("");
+
+  container.innerHTML = `
+    <div class="balance-block">
+      <p class="balance-question" id="balanceOutcomeQuestion">Wie habe ich meine Verantwortung heute beantwortet?</p>
+      <div class="balance-options" role="group" aria-labelledby="balanceOutcomeQuestion">${outcomeChips}</div>
+    </div>
+    ${followUpBlock}
+    <div class="balance-block">
+      <p class="balance-question" id="balanceModeFitQuestion">War der empfohlene Rollenmodus rückblickend passend?</p>
+      <small class="balance-hint${mode ? " is-mode" : ""}"${mode ? ` style="color:${mode.color}"` : ""}>${escapeHTML(fitLabel)}</small>
+      <div class="balance-segmented${mode ? "" : " is-disabled"}" role="group" aria-labelledby="balanceModeFitQuestion">${fitOptions}</div>
+      ${balanceModeFitNotice && mode ? `<small class="balance-hint">Der maßgebliche Modus hat sich geändert – bitte erneut einschätzen.</small>` : ""}
+    </div>`;
+}
+
+/* Ein einziger delegierter Listener für die gesamte Bilanz. Die Karte wird
+   bei jeder Änderung neu gezeichnet; es entstehen keine verwaisten Handler. */
+function bindRoleplayBalance() {
+  const container = $("roleplayBalance");
+  if (!container) return;
+
+  container.addEventListener("click", event => {
+    const button = event.target.closest("button[data-balance-action]");
+    if (!button || button.disabled || button.classList.contains("is-disabled") || !currentData) return;
+    const balance = currentData.roleplayBalance = normalizeRoleplayBalance(currentData.roleplayBalance);
+    const value = button.dataset.balanceValue;
+
+    if (button.dataset.balanceAction === "outcome") {
+      // Wechselt die Hauptantwort, werden unpassende Detailangaben verworfen.
+      balance.outcome = balance.outcome === value ? "" : value;
+      balance.detailKeys = [];
+      balance.followUpAction = "";
+      balance.followUpDate = "";
+    } else if (button.dataset.balanceAction === "detail") {
+      const detail = BALANCE_DETAILS[balance.outcome];
+      if (!detail) return;
+      if (balance.detailKeys.includes(value)) balance.detailKeys = balance.detailKeys.filter(key => key !== value);
+      else if (balance.detailKeys.length < detail.max) balance.detailKeys = [...balance.detailKeys, value];
+    } else if (button.dataset.balanceAction === "followUp") {
+      const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
+      if (!followUp) return;
+      balance.followUpAction = balance.followUpAction === value ? "" : value;
+      if (!balance.followUpAction || !followUp.dateFor.includes(balance.followUpAction)) balance.followUpDate = "";
+    } else if (button.dataset.balanceAction === "modeFit") {
+      const mode = currentDayMode();
+      if (!mode) return;
+      balance.modeFit = balance.modeFit === value ? "" : value;
+      balance.evaluatedModeKey = balance.modeFit ? mode.key : "";
+      balance.evaluatedRoleName = balance.modeFit ? dayRoleConfig(selectedDate).roleName : "";
+      balanceModeFitNotice = false;
+    } else return;
+
+    saveReview(true);
+    renderRoleplayBalance();
+  });
+
+  container.addEventListener("change", event => {
+    if (event.target.id !== "balanceFollowUpDate" || !currentData) return;
+    const balance = currentData.roleplayBalance;
+    balance.followUpDate = /^\d{4}-\d{2}-\d{2}$/.test(event.target.value) ? event.target.value : "";
+    saveReview(true);
+  });
+}
+
+function balanceOptionLabel(source, key) {
+  return source?.options.find(([value]) => value === key)?.[1] || "";
 }
 
 function prayerWasPerformed(value) {
@@ -2185,7 +2414,7 @@ function exportBackup() {
   const payload = {
     app: "Roleplay",
     version: APP_VERSION,
-    schemaVersion: 5,
+    schemaVersion: 6,
     exportedAt: new Date().toISOString(),
     reviews: getAllReviews(),
     routines
@@ -2227,6 +2456,7 @@ function exportCsv() {
     "Ramadan_Tage", "Fastentag", "Schlafqualität", "Traumkategorie", "Traumnotiz",
     "Checkins_Anzahl", "Letzter_Checkin", "Empfohlener_Rollenmodus", "Gewählter_Rollenmodus", "Abweichungsbegründung", "Energie", "Laune", "Gefühl", "Belastung", "Kontextnotiz",
     "Dankbarkeit", "Bewusste_Wahrnehmung", "Name_Allahs",
+    "Verantwortungsbilanz", "Bilanz_Detailauswahl", "Bilanz_Folgehandlung", "Bilanz_Folgedatum", "Moduspassung", "Bewerteter_Modus",
     "Wichtigste_Verantwortung", "Anpassung_oder_Vermeidung", "Nächster_verantwortlicher_Schritt",
     ...STREAKS.flatMap(streak => [`${streak.label}_Tage`, `${streak.label}_Heute`]), "Aktivitäten", "Notizen"
   ];
@@ -2234,8 +2464,10 @@ function exportCsv() {
   getAllReviews().forEach(({ date, data }) => {
     const activities = (data.activities || []).map(activity => `${activity.title} | ${activity.role}`).join(" / ");
     const latest = latestStateCheckin(data);
-    const framework = frameworkForCheckin(latest, data);
-    const recommended = latest ? recommendedFrameworkForCheckin(latest, data) : null;
+    const mode = modeForCheckin(latest, data);
+    const balance = data.roleplayBalance || emptyRoleplayBalance();
+    const balanceDetails = (balance.detailKeys || [])
+      .map(key => balanceOptionLabel(BALANCE_DETAILS[balance.outcome], key)).filter(Boolean).join(" · ");
     const row = [
       date, data.role,
       mealCategoryLabel(data.mealCategories?.breakfast || ""), data.breakfast,
@@ -2246,15 +2478,21 @@ function exportCsv() {
       TASK_STATE_META[data.morningRoutineState]?.label || "Offen", TASK_STATE_META[data.eveningRoutineState]?.label || "Offen",
       ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), ...SUNNAH_PRAYERS.map(prayer => data.sunnahPrayers?.[prayer] || ""),
       data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, dreamCategoryLabel(data.dreamCategory || ""), data.dreams,
-      data.stateCheckins?.length || 0, latest ? checkinSlot(latest.slot).label : "", recommended?.label || "", framework?.label || "", latest?.frameworkOverrideReason || "", latest?.energy ?? "", latest?.mood ?? "", latest?.emotion || "", LOAD_OPTIONS[latest?.load]?.label || "", latest?.note || "",
+      data.stateCheckins?.length || 0, latest ? checkinSlot(latest.slot).label : "", mode?.label || "", mode?.label || "", latest?.frameworkOverrideReason || "", latest?.energy ?? "", latest?.mood ?? "", latest?.emotion || "", LOAD_OPTIONS[latest?.load]?.label || "", latest?.note || "",
       data.gratitude1, data.gratitude2, data.allahName,
+      balance.outcome ? ROLE_REFLECTION_META[balance.outcome].short : "",
+      balanceDetails,
+      balanceOptionLabel(BALANCE_FOLLOW_UPS[balance.outcome], balance.followUpAction),
+      balance.followUpDate || "",
+      BALANCE_MODE_FIT.find(([key]) => key === balance.modeFit)?.[1] || "",
+      modeMeta(balance.evaluatedModeKey)?.label || "",
       data.responsibilityMain, data.responsibilityAdaptation, data.responsibilityNextStep,
       ...STREAKS.flatMap(streak => [Number(data.streaks?.[streak.key]?.days || 0), data.streaks?.[streak.key]?.todayStatus || ""]), activities, data.notes
     ];
     lines.push(row.map(csvEscape).join(";"));
   });
   downloadTextFile(`roleplay-export-${todayISO()}.csv`, `﻿${lines.join("\r\n")}`, "text/csv;charset=utf-8");
-  $("backupStatus").textContent = "CSV-Export mit Check-ins, Gebeten und Reflexion wurde erstellt.";
+  $("backupStatus").textContent = "CSV-Export mit Check-ins, Gebeten, Bilanz und Reflexion wurde erstellt.";
 }
 
 function hexToRgba(hex, alpha) {
@@ -2592,27 +2830,65 @@ function toggleSessionRoutineEditor(force) {
   if (show) renderSessionRoutineEditor();
 }
 
+/* Minutenauswahl als natives select – auf dem iPhone öffnet dadurch das
+   Auswahlrad. Eine abweichend gespeicherte Dauer (etwa 2,5) bleibt als
+   zusätzliche Option erhalten und wird nicht verändert. */
+function fillRoutineMinuteOptions(currentValue) {
+  const select = $("routineItemMinutes");
+  if (!select) return;
+  const value = Number(currentValue);
+  const options = ROUTINE_MINUTE_CHOICES.map(minutes =>
+    `<option value="${minutes}">${minutes} ${minutes === 1 ? "Minute" : "Minuten"}</option>`);
+  if (Number.isFinite(value) && value > 0 && !ROUTINE_MINUTE_CHOICES.includes(value)) {
+    const label = String(value).replace(".", ",");
+    options.unshift(`<option value="${value}">${label} ${value === 1 ? "Minute" : "Minuten"}</option>`);
+  }
+  select.innerHTML = options.join("");
+  select.value = String(Number.isFinite(value) && value > 0 ? value : 5);
+}
+
+function setRoutineEmojiError(visible) {
+  const field = $("routineItemEmoji");
+  const error = $("routineItemEmojiError");
+  if (error) error.hidden = !visible;
+  if (field) {
+    field.classList.toggle("has-error", visible);
+    field.setAttribute("aria-invalid", visible ? "true" : "false");
+  }
+}
+
 function openRoutineItemDialog(itemId = null) {
   editingRoutineItemId = itemId;
   const item = itemId ? routines[activeRoutineKey].items.find(entry => entry.id === itemId) : null;
   $("routineItemDialogTitle").textContent = item ? "Schritt bearbeiten" : "Schritt hinzufügen";
-  $("routineItemEmoji").value = item?.emoji || "✨";
+  // Neuer Schritt: leeres Emoji-Feld, kein Standardwert.
+  $("routineItemEmoji").value = item?.emoji || "";
   $("routineItemTitle").value = item?.title || "";
-  $("routineItemMinutes").value = item?.minutes || 5;
+  fillRoutineMinuteOptions(item?.minutes ?? 5);
   $("routineItemContext").value = item?.context || "";
   $("deleteRoutineItem").hidden = !item;
+  setRoutineEmojiError(false);
   $("routineItemDialog").showModal();
 }
 
 function saveRoutineItemFromForm(event) {
   event.preventDefault();
   const title = $("routineItemTitle").value.trim();
+  const emoji = $("routineItemEmoji").value.trim();
+  // Das Emoji ist Pflicht; es wird kein Standardwert eingesetzt.
+  if (!emoji) {
+    setRoutineEmojiError(true);
+    $("routineItemEmoji").focus();
+    return;
+  }
+  setRoutineEmojiError(false);
   if (!title) return;
+  const selectedMinutes = Number($("routineItemMinutes").value);
   const item = {
     id: editingRoutineItemId || `${activeRoutineKey}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    emoji: $("routineItemEmoji").value.trim() || "✨",
+    emoji,
     title,
-    minutes: clamp(Number($("routineItemMinutes").value || 5), 1, 180),
+    minutes: Number.isFinite(selectedMinutes) && selectedMinutes > 0 ? clamp(selectedMinutes, 0.5, 180) : 5,
     context: $("routineItemContext").value.trim()
   };
   const list = routines[activeRoutineKey].items;
@@ -2953,7 +3229,7 @@ function initOptions() {
   if ($("stateSleepQuality")) $("stateSleepQuality").innerHTML = `<option value="">Nicht erfasst</option>${SLEEP_CHOICES.map(value => `<option value="${value}">${escapeHTML(SLEEP_LABELS[value] || "-")}</option>`).join("")}`;
   if ($("stateDreamCategory")) $("stateDreamCategory").innerHTML = DREAM_CATEGORIES.map(([value, label]) => `<option value="${escapeHTML(value)}">${escapeHTML(label)}</option>`).join("");
   $("allahName").innerHTML = `<option value="">Name Allahs auswählen …</option>${ALLAH_NAMES.map(name => `<option>${escapeHTML(name)}</option>`).join("")}`;
-  $("emojiQuickPicks").innerHTML = QUICK_EMOJIS.map(emoji => `<button type="button" data-emoji="${escapeHTML(emoji)}">${escapeHTML(emoji)}</button>`).join("");
+  fillRoutineMinuteOptions(5);
 }
 
 
@@ -3143,7 +3419,10 @@ function bindEvents() {
   $("routineItemForm").addEventListener("submit", saveRoutineItemFromForm);
   $("cancelRoutineItem").addEventListener("click", () => $("routineItemDialog").close());
   $("deleteRoutineItem").addEventListener("click", deleteRoutineItem);
-  document.querySelectorAll("[data-emoji]").forEach(button => button.addEventListener("click", () => { $("routineItemEmoji").value = button.dataset.emoji; }));
+  $("routineItemEmoji").addEventListener("input", () => {
+    if ($("routineItemEmoji").value.trim()) setRoutineEmojiError(false);
+  });
+  bindRoleplayBalance();
 
   $("closeRoutineSession").addEventListener("click", closeRoutineSession);
   $("routineSessionDialog").addEventListener("cancel", event => {
@@ -3175,6 +3454,7 @@ function bindEvents() {
 
 function init() {
   initOptions();
+  if ($("appVersionLabel")) $("appVersionLabel").textContent = `ROLEPLAY ${APP_VERSION}`;
   routines = loadRoutines();
   bindEvents();
   const lastBackupAt = localStorage.getItem(BACKUP_TIMESTAMP_KEY);
@@ -3182,7 +3462,24 @@ function init() {
   setDate(todayISO());
   switchPage("review");
   restoreRoutineSession();
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  registerServiceWorker();
+}
+
+/* Aktualisierung: Der neue Service Worker übernimmt sofort (skipWaiting und
+   clients.claim). Nur wenn die Seite vorher bereits von einem Worker
+   kontrolliert wurde, wird einmalig neu geladen – so greift die neue
+   Version zuverlässig, ohne beim ersten Installieren eine Schleife zu
+   erzeugen. */
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 }
 
 document.addEventListener("DOMContentLoaded", init);
