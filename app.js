@@ -1879,13 +1879,29 @@ function applyRolePickerStyle() {
   applyHeaderTheme(role);
 }
 
+/* Mischt eine Farbe in Richtung einer Zielfarbe. Rein visuell – die
+   gespeicherten Rollenfarben selbst bleiben unverändert. */
+function mixHex(hex, target, amount) {
+  const a = hexToRgbTriple(hex);
+  const b = hexToRgbTriple(target);
+  const mixed = a.map((value, index) => Math.round(value + (b[index] - value) * amount));
+  return `rgb(${mixed.join(",")})`;
+}
+
+/* Die Kopfzeile ist Glas: die Rollenfarbe trägt nur noch Verlauf, Akzentlinie
+   und Schrifttönung. Weil helle Rollenfarben auf Glas sonst verschwinden
+   würden, wird die Schriftfarbe aus der Rollenfarbe abgeleitet statt aus dem
+   früheren Vollton-Kontrastwert. */
 function applyHeaderTheme(role = getRole($("dayRole")?.value || currentData?.role || ROLES[0].name)) {
   const header = $("appHeader");
   if (!header) return;
   header.style.setProperty("--header-role", role.color);
   header.style.setProperty("--header-role-soft", hexToRgba(role.color, .88));
   header.style.setProperty("--header-role-fade", hexToRgba(role.color, .16));
-  header.style.setProperty("--header-role-text", role.text);
+  header.style.setProperty("--header-role-veil", hexToRgba(role.color, .17));
+  header.style.setProperty("--header-role-line", hexToRgba(role.color, .34));
+  header.style.setProperty("--header-role-ink-light", mixHex(role.color, "#0d1017", .58));
+  header.style.setProperty("--header-role-ink-dark", mixHex(role.color, "#ffffff", .62));
 }
 
 function statusCircle(icon, variant = "neutral", size = "medium") {

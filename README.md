@@ -4,6 +4,37 @@ Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
 kein Framework, keine externen Bibliotheken.
 
+## Visueller Relaunch (6.0.0-Design)
+
+Rein gestalterische Überarbeitung: Inhalte, Texte, Daten, Berechnungen,
+Speicherformate, Service Worker und Manifest sind unverändert geblieben.
+
+**Designsystem.** Vier Radienstufen (`--r-sm/md/lg/pill`) statt einer, vier
+Oberflächen (`card`, `raised`, `glass`, `base`), vier Höhenstufen (`--e-0…3`)
+mit Randlicht statt Schlagschatten im Dark Mode, Bewegungs-Tokens
+(`--dur-*`, `--ease-*`) und ein einziger `--focus-ring` für die ganze App.
+
+**Futura bleibt** die Grundschrift. Die Typoskala wurde an ihre kleine x-Höhe
+angepasst: offenere Zeilenhöhen, `--ls-display` für Überschriften,
+`--ls-caps` für Versalien-Labels.
+
+**Kopfzeile** ist jetzt Glas mit Rollenfarbe als Verlauf und Akzentlinie
+statt Vollton. Die Schriftfarbe wird aus der Rollenfarbe abgeleitet
+(`--header-role-ink-light/-dark`), damit helle Rollen auf Glas lesbar bleiben.
+Die gespeicherten Rollenfarben selbst sind unverändert.
+
+**Navigation** trägt eigene SVG-Icons im Strichstil der Tagesphasen-Symbole;
+der aktive Tab wird durch Pille **und** Farbe markiert. `aria-label`, `title`
+und `data-page` sind unverändert.
+
+**Herzstück.** Der Modus-Readout trägt die Modusfarbe als weiches Licht von
+oben, die aktive Station der Tagesbahn ist der hellste Punkt.
+
+**Barrierearmut.** Auswahl wird nie nur über Farbe angezeigt (Bilanz-Chips
+mit Haken, ausgewählter Kalendertag zusätzlich fett), `prefers-reduced-motion`
+schaltet Bewegung zentral ab, `@supports`-Fallback liefert deckende Flächen,
+wenn `backdrop-filter` fehlt.
+
 ## Neu in 6.0.0
 
 ### Rollenmodus ohne Aufgaben
@@ -131,6 +162,10 @@ Alle Werte werden beim Laden gegen feste erlaubte Listen geprüft. Vorhandene
 Verantwortungsbilanz. CSV-Export und Backup enthalten die neuen Felder.
 
 ## Tests
+
+`node test-regression.js` (42 Prüfungen) vergleicht die redesignte App mit der
+Fassung davor: sichtbare Texte, IDs, `data-*`-Attribute, DOM-Zugriffe,
+Speicherschlüssel und Logikkonstanten müssen identisch sein.
 
 `node test-logic.js` (98 Prüfungen) und `node test-dom.js` (74 Prüfungen) decken
 Modusleiter, Schutzregeln, Coach-Texte, Check-in-Reihenfolge, Migration alter
