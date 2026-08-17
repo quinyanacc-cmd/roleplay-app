@@ -32,98 +32,6 @@ const ROLES = [
   { name: "Familienmensch", emoji: "💌", color: "#72C472", text: "#205B29" }
 ];
 
-
-/* ==========================================================================
-   ICON-SYSTEM (ROLEPLAY 8.0)
-   Ein einziges SVG-System für die gesamte App: 24er-Raster, gleiche optische
-   Größe, Strichstärke 1.7, runde Enden und Ecken, currentColor. Es gibt
-   bewusst keine zweite Icon-Quelle und keine Emoji in der Bedienoberfläche –
-   Emoji bleiben ausschließlich dort, wo sie Inhalt sind (Routineschritte).
-   ========================================================================== */
-const ICON_PATHS = {
-  "chevron-left": '<path d="M14.25 5.5 7.75 12l6.5 6.5"/>',
-  "chevron-right": '<path d="M9.75 5.5 16.25 12l-6.5 6.5"/>',
-  "chevron-down": '<path d="M5.5 9.25 12 15.75l6.5-6.5"/>',
-  "chevron-updown": '<path d="M8.4 10.1 12 6.5l3.6 3.6"/><path d="M8.4 13.9 12 17.5l3.6-3.6"/>',
-  plus: '<path d="M12 5.6v12.8M5.6 12h12.8"/>',
-  minus: '<path d="M5.6 12h12.8"/>',
-  close: '<path d="m6.9 6.9 10.2 10.2M17.1 6.9 6.9 17.1"/>',
-  check: '<path d="m5.8 12.4 4.3 4.3 8.1-9.4"/>',
-  "check-small": '<path d="m6 12.2 4 4 8-9"/>',
-  dot: '<circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/>',
-  circle: '<circle cx="12" cy="12" r="6.6"/>',
-  dash: '<path d="M7.5 12h9"/>',
-  play: '<path d="M9 6.4v11.2L18 12z" stroke-linejoin="round"/>',
-  pause: '<path d="M9.5 6.5v11M14.5 6.5v11"/>',
-  skip: '<path d="M7 6.5 14 12l-7 5.5z" stroke-linejoin="round"/><path d="M17.4 6.5v11"/>',
-  replay: '<path d="M4.9 12a7.1 7.1 0 1 0 2.2-5.1"/><path d="M4.6 5.4v3.9h3.9"/>',
-  sliders: '<path d="M6 8.5h12M6 15.5h12"/><circle cx="9.6" cy="8.5" r="2.1"/><circle cx="14.4" cy="15.5" r="2.1"/>',
-  info: '<circle cx="12" cy="12" r="8.1"/><path d="M12 11.1v5"/><circle cx="12" cy="8.1" r="1.05" fill="currentColor" stroke="none"/>',
-  today: '<rect x="4.2" y="5.4" width="15.6" height="14.4" rx="3.6"/><path d="M4.2 9.9h15.6M8.6 3.9v3M15.4 3.9v3"/><circle cx="12" cy="14.9" r="1.9" fill="currentColor" stroke="none"/>',
-  lock: '<rect x="5.2" y="10.3" width="13.6" height="9.5" rx="3.2"/><path d="M8.6 10.3V8.1a3.4 3.4 0 0 1 6.8 0v2.2"/>',
-  drop: '<path d="M12 4.4c3.1 3.4 5.4 6 5.4 8.9A5.4 5.4 0 0 1 12 19.6a5.4 5.4 0 0 1-5.4-6.3c0-2.9 2.3-5.5 5.4-8.9Z"/>',
-  mosque: '<path d="M12 4.2c2.4 1.9 3.7 3.5 3.7 5.3H8.3c0-1.8 1.3-3.4 3.7-5.3Z"/><path d="M5.6 19.8v-6.2a2.4 2.4 0 0 1 4.8 0v6.2M13.6 19.8v-6.2a2.4 2.4 0 0 1 4.8 0v6.2M4 19.8h16"/>',
-  clock: '<circle cx="12" cy="12" r="7.9"/><path d="M12 7.7V12l2.9 1.9"/>',
-  "arrow-return": '<path d="M18.6 6.6v3.2a3.4 3.4 0 0 1-3.4 3.4H5.6"/><path d="m9.4 9.2-3.8 4 3.8 4"/>',
-  trash: '<path d="M6.4 7.6h11.2M9.9 7.6V6.2a1.6 1.6 0 0 1 1.6-1.6h1a1.6 1.6 0 0 1 1.6 1.6v1.4"/><path d="M7.9 7.6v10.2a2 2 0 0 0 2 2h4.2a2 2 0 0 0 2-2V7.6"/>',
-  "nav-review": '<rect x="4.8" y="3.6" width="14.4" height="16.8" rx="3.8"/><path d="M8.6 8.8h6.8M8.6 12h6.8M8.6 15.2h4.2"/>',
-  "nav-routines": '<path d="M7.2 15.4a4.8 4.8 0 0 1 9.6 0"/><path d="M3.8 15.4h16.4M12 4.2v2.6M6.1 6.6l1.8 1.8M17.9 6.6l-1.8 1.8M6.9 19.2h10.2"/>',
-  "nav-streaks": '<path d="M12 20.6a5.6 5.6 0 0 0 5.6-5.6c0-3.9-2.9-6.4-5.6-9.4-2.7 3-5.6 5.5-5.6 9.4A5.6 5.6 0 0 0 12 20.6Z"/><path d="M12 20.6a2.5 2.5 0 0 0 2.5-2.5c0-1.6-1.2-2.7-2.5-4-1.3 1.3-2.5 2.4-2.5 4a2.5 2.5 0 0 0 2.5 2.5Z"/>',
-  star: '<path d="m12 4.6 2.35 4.9 5.25.72-3.8 3.75.92 5.32L12 16.75l-4.72 2.54.92-5.32-3.8-3.75 5.25-.72z" stroke-linejoin="round"/>',
-  fingerprint: '<path d="M5.6 12a6.4 6.4 0 0 1 12.8 0"/><path d="M8.6 12.6a3.4 3.4 0 0 1 6.8-.3"/><path d="M8.7 19.1c1-1.4 1.5-3 1.5-4.7M15.3 18.9c.6-1.5.9-3.1.9-4.7"/><circle cx="12" cy="12.2" r="1.15" fill="currentColor" stroke="none"/><path d="M3.9 8.6A9.1 9.1 0 0 1 20.1 8.6"/>',
-  pulse: '<path d="M3.6 12.4h3.5l2.1-5 3.2 9.6 2.3-4.6h5.7"/>',
-  cap: '<path d="m12 5.1 8.2 3.7-8.2 3.7-8.2-3.7z" stroke-linejoin="round"/><path d="M7.2 10.7v4.4c0 1.6 2.1 2.9 4.8 2.9s4.8-1.3 4.8-2.9v-4.4M20.2 8.8v4.7"/>',
-  growth: '<path d="M4.4 18.2v-4.5M9.6 18.2V9.9M14.8 18.2v-6.4M20 18.2V6.2"/>',
-  crescent: '<path d="M17.4 15.1A6.9 6.9 0 0 1 9.1 6.4a7.6 7.6 0 1 0 8.3 8.7Z" stroke-linejoin="round"/>',
-  home: '<path d="M4.6 10.6 12 4.6l7.4 6v7.2a2 2 0 0 1-2 2H6.6a2 2 0 0 1-2-2z" stroke-linejoin="round"/><path d="M9.9 19.8v-5.3h4.2v5.3"/>',
-  heart: '<path d="M12 19.3s-6.9-4.2-6.9-9a3.9 3.9 0 0 1 6.9-2.5 3.9 3.9 0 0 1 6.9 2.5c0 4.8-6.9 9-6.9 9Z" stroke-linejoin="round"/>',
-  handle: '<path d="M8 8.6h8M8 12h8M8 15.4h8"/>'
-};
-
-/* Baut ein Icon. Größe und Farbe kommen ausschließlich aus dem CSS. */
-function icon(name, extraClass = "") {
-  const body = ICON_PATHS[name];
-  if (!body) return "";
-  const cls = extraClass ? `rp-icon ${extraClass}` : "rp-icon";
-  return `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${body}</svg>`;
-}
-
-/* Ersetzt alle im Markup vorgemerkten Icon-Platzhalter. Dadurch steht das
-   gesamte Icon-Inventar an genau einer Stelle im Code. */
-function hydrateIcons(root = document) {
-  root.querySelectorAll("[data-icon]").forEach(element => {
-    const markup = icon(element.dataset.icon);
-    if (markup) element.innerHTML = markup;
-  });
-}
-
-/* Rollen-Embleme: je Rolle ein eigenes Zeichen im selben Strichstil.
-   Sie ersetzen die früheren Emoji, die auf älteren Systemen als leeres
-   Kästchen erschienen. Die gespeicherten Rollennamen bleiben unverändert. */
-const ROLE_EMBLEMS = {
-  "Ich-Person": "fingerprint",
-  Vitalist: "pulse",
-  Absolvent: "cap",
-  Unternehmer: "growth",
-  Muslim: "crescent",
-  Wirt: "home",
-  Familienmensch: "heart"
-};
-
-function roleEmblem(roleName) {
-  return icon(ROLE_EMBLEMS[roleName] || "fingerprint");
-}
-
-/* Kurze, unaufdringliche Rückmeldung auf Geräten, die Vibration unterstützen.
-   Ohne Unterstützung passiert schlicht nichts. */
-function haptic(pattern = 8) {
-  try {
-    if (navigator.vibrate && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      navigator.vibrate(pattern);
-    }
-  } catch (error) { /* Vibration ist optional */ }
-}
-
 const STREAKS = [
   { key: "cannabisFree", label: "Cannabisfrei" },
   { key: "compulsionFree", label: "Begierde" },
@@ -776,7 +684,7 @@ const DEFAULT_ROUTINES = {
 
 // Dauerauswahl im Schritt-Editor: 1 bis 180 Minuten als native iOS-Auswahl.
 const ROUTINE_MINUTE_CHOICES = Array.from({ length: 180 }, (_, index) => index + 1);
-const APP_VERSION = "8.0";
+const APP_VERSION = "6.0.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -1114,11 +1022,9 @@ function saveReview(silent = false) {
   renderRoutineCards();
   if (!silent) {
     const button = $("saveButton");
-    const original = button.innerHTML;
-    button.innerHTML = `${icon("check")}<span>Gespeichert</span>`;
-    button.classList.add("is-saved");
-    haptic();
-    setTimeout(() => { button.innerHTML = original; button.classList.remove("is-saved"); }, 1200);
+    const original = button.textContent;
+    button.textContent = "✓ Gespeichert";
+    setTimeout(() => { button.textContent = original; }, 1100);
   }
 }
 
@@ -1141,8 +1047,6 @@ function setDate(date) {
   calendarCursor = firstOfMonth(date);
   currentData = loadReview(date);
   $("dateButton").textContent = formatDate(date);
-  updateTodayJump();
-  dismissUndo();
   fillForm();
   renderStats();
   renderRoutineCards();
@@ -1465,54 +1369,59 @@ function pendingPhaseKey() {
    Bewusst eine einzige Formsprache statt gemischter Icon-Stile. */
 function phaseGlyph(key) {
   if (key === "night") {
-    // Sichel aus zwei Bögen, dazu zwei ruhige Lichtpunkte.
-    return `<svg viewBox="-16 -16 32 32" class="phase-glyph" aria-hidden="true">
-      <g transform="rotate(-18)">
-        <path d="M6.2 -8.1A10.2 10.2 0 1 0 6.2 8.1A9.2 9.2 0 0 1 6.2 -8.1Z"></path>
+    // Die Sichel entsteht als Differenz zweier Kreise – dadurch bekommt sie
+    // durchgehend gleichmäßige Rundungen statt einer eingedellten Scheibe.
+    /* Echte Sichel aus zwei Bögen: außen der Rand des Mondes, innen die
+       Gegenkante. Über fill-rule ginge es nicht – dort würde auch der
+       überstehende Teil des zweiten Kreises mitgefüllt und die Sichel
+       schlösse sich zum Ring. */
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+      <g transform="rotate(-20)">
+        <path d="M2.60 -10.07 A10.4 10.4 0 1 0 2.60 10.07 A10.4 10.4 0 0 1 2.60 -10.07 Z"></path>
       </g>
-      <circle class="phase-spark" cx="9.4" cy="-8.6" r="1.25"></circle>
-      <circle class="phase-spark" cx="12.4" cy="-3.4" r="0.9"></circle>
-    </svg>`;
-  }
-  if (key === "morning") {
-    // Aufgehende Sonne: Halbbogen über dem Horizont, Strahlen nach oben.
-    return `<svg viewBox="-16 -16 32 32" class="phase-glyph" aria-hidden="true">
-      <path d="M-7.2 3.4A7.2 7.2 0 0 1 7.2 3.4"></path>
-      <path d="M-12.6 3.4H12.6"></path>
-      <path d="M0 -12.6V-9.6"></path>
-      <path d="M-9.6 -6.4 -7.4 -4.2"></path>
-      <path d="M9.6 -6.4 7.4 -4.2"></path>
-      <path d="M-6.4 8.6H6.4"></path>
-    </svg>`;
+      <circle class="spark" cx="8.6" cy="-8" r="1.5"></circle>
+      <circle class="spark" cx="11.8" cy="-3" r="1"></circle></svg>`;
   }
   if (key === "midday") {
-    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(degree => {
-      const angle = degree * Math.PI / 180;
-      return `<path d="M${(Math.cos(angle) * 9.4).toFixed(2)} ${(Math.sin(angle) * 9.4).toFixed(2)}
-        L${(Math.cos(angle) * 12.8).toFixed(2)} ${(Math.sin(angle) * 12.8).toFixed(2)}"></path>`;
+    const rays = [0, 45, 90, 135, 180, 225, 270, 315].map(d => {
+      const a = d * Math.PI / 180;
+      return `<line x1="${(Math.cos(a) * 9.2).toFixed(2)}" y1="${(Math.sin(a) * 9.2).toFixed(2)}"
+        x2="${(Math.cos(a) * 13).toFixed(2)}" y2="${(Math.sin(a) * 13).toFixed(2)}"></line>`;
     }).join("");
-    return `<svg viewBox="-16 -16 32 32" class="phase-glyph" aria-hidden="true">
-      <circle cx="0" cy="0" r="6"></circle>${rays}
-    </svg>`;
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true"><circle cx="0" cy="0" r="6"></circle>${rays}</svg>`;
   }
+  /* Nachmittag: die Sonne steht noch klar über dem Horizont, aber nicht mehr
+     im Zenit. Gleiche Strichsprache wie die übrigen Phasen, tiefer gesetzter
+     Horizont als beim Abend. */
   if (key === "afternoon") {
-    // Sonne steht klar über dem Horizont, aber nicht mehr im Zenit.
-    return `<svg viewBox="-16 -16 32 32" class="phase-glyph" aria-hidden="true">
-      <circle cx="0" cy="-3.2" r="5.2"></circle>
-      <path d="M0 -13V-10.6"></path>
-      <path d="M-8.2 -11.4 -6.5 -9.7"></path>
-      <path d="M8.2 -11.4 6.5 -9.7"></path>
-      <path d="M-12.2 -3.2H-9.8"></path>
-      <path d="M12.2 -3.2H9.8"></path>
-      <path d="M-11.6 8.2H11.6"></path>
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+      <circle cx="0" cy="-3.4" r="5.4"></circle>
+      <line x1="0" y1="-13.2" x2="0" y2="-10.8"></line>
+      <line x1="-8.3" y1="-11.7" x2="-6.5" y2="-9.9"></line>
+      <line x1="8.3" y1="-11.7" x2="6.5" y2="-9.9"></line>
+      <line x1="-12.2" y1="-3.4" x2="-9.8" y2="-3.4"></line>
+      <line x1="12.2" y1="-3.4" x2="9.8" y2="-3.4"></line>
+      <line x1="-11.5" y1="8.4" x2="11.5" y2="8.4"></line>
     </svg>`;
   }
-  // Abend: die Scheibe sinkt hinter den Horizont, darunter die Spiegelung.
-  return `<svg viewBox="-16 -16 32 32" class="phase-glyph" aria-hidden="true">
-    <path d="M-7.6 1.2A7.6 7.6 0 0 1 7.6 1.2"></path>
-    <path d="M-12.6 1.2H12.6"></path>
-    <path d="M-7.4 6.4H7.4"></path>
-    <path d="M-3.8 11H3.8"></path>
+  // Morgen: Sonne steigt über den Horizont. Abend: sie sinkt darunter.
+  if (key === "morning") {
+    // Aufgehende Sonne: volle Halbscheibe über dem Horizont, Strahlen nach oben.
+    return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+      <path d="M-7.4 3.6a7.4 7.4 0 0 1 14.8 0Z"></path>
+      <line x1="-13" y1="3.6" x2="13" y2="3.6"></line>
+      <line x1="0" y1="-12.8" x2="0" y2="-9"></line>
+      <line x1="-9.8" y1="-6.6" x2="-7.1" y2="-3.9"></line>
+      <line x1="9.8" y1="-6.6" x2="7.1" y2="-3.9"></line>
+    </svg>`;
+  }
+  /* Untergehende Sonne: die Scheibe ist bereits zum Teil hinter dem Horizont
+     verschwunden, darunter liegt ihre Spiegelung. Das liest sich ruhiger als
+     die früheren Pfeile und unterscheidet sich klar vom Morgen. */
+  return `<svg viewBox="-16 -16 32 32" aria-hidden="true">
+    <path d="M-8.9 1.4A9 9 0 0 1 8.9 1.4Z"></path>
+    <line x1="-13" y1="1.4" x2="13" y2="1.4"></line>
+    <line x1="-6.2" y1="7.4" x2="6.2" y2="7.4"></line>
   </svg>`;
 }
 
@@ -1545,37 +1454,25 @@ function renderCheckinSlots() {
   const links = stops.slice(0, -1).map((stop, index) =>
     `<i style="--i:${index};--from:${linkColor(stop)};--to:${linkColor(stops[index + 1])}"></i>`).join("");
 
-  /* Ab Version 8 stehen in der gespeicherten Übersicht keine Zahlen und keine
-     Prozentzeichen mehr. Der Status wird über Farbe, Häkchen, Wortmarke und –
-     bei erfassten Phasen – über zwei feine Intensitätsbalken vermittelt.
-     Energie und Laune bleiben unverändert gespeichert, fließen weiterhin
-     vollständig in die Modusberechnung ein und stehen für Hilfstechnologien
-     im aria-label sowie sichtbar unter „Verlauf & Details“. */
   const nodes = stops.map(stop => {
     const { key, phase, entry, state } = stop;
+    const energy = entry && entry.energy !== null && entry.energy !== undefined ? `${entry.energy} %` : "– %";
+    const mood = entry && entry.mood !== null && entry.mood !== undefined ? `${entry.mood} %` : "– %";
     const action = state === "done" ? "bearbeiten" : "eintragen";
-    const readable = entry
-      ? `erfasst, Energie ${entry.energy ?? "nicht angegeben"} von 100, Laune ${entry.mood ?? "nicht angegeben"} von 100`
-      : state === "outside" ? "für diesen Tag nicht vorgesehen"
-      : state === "current" ? "jetzt an der Reihe" : "noch nicht erfasst";
-    const statusWord = state === "done" ? "Erfasst"
-      : state === "current" ? "Jetzt"
-      : state === "outside" ? "–" : "Offen";
-    const foot = state === "done"
-      ? `<span class="stop-meters" aria-hidden="true">
-           <i class="stop-meter energy" style="--fill:${clamp(Number(entry.energy ?? 0), 0, 100)}%"></i>
-           <i class="stop-meter mood" style="--fill:${clamp(Number(entry.mood ?? 0), 0, 100)}%"></i>
-         </span>`
-      : `<span class="stop-status" aria-hidden="true">${statusWord}</span>`;
+    const status = entry ? `Energie ${energy}, Laune ${mood}`
+      : state === "outside" ? "für diesen Tag nicht erfasst" : "noch nicht erfasst";
     return `<button type="button" class="journey-stop is-${state}" data-open-checkin-slot="${key}"
         style="--stop-a:${phase.a};--stop-b:${phase.b};--stop-line:${phase.line};--stop-glow:${phase.glow}"
-        aria-label="${escapeHTML(phase.short)} ${action}. ${escapeHTML(readable)}.">
+        aria-label="${escapeHTML(phase.short)} ${action}. ${status}.">
       <span class="stop-node">
         <span class="stop-icon">${phaseGlyph(key)}</span>
-        ${state === "done" ? `<span class="stop-check" aria-hidden="true">${icon("check-small")}</span>` : ""}
+        ${state === "done" ? `<span class="stop-check" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="M3 7.4 5.9 10.2 11 4.6"></path></svg></span>` : ""}
       </span>
       <span class="stop-name">${escapeHTML(phase.short)}</span>
-      <span class="stop-foot">${foot}</span>
+      <span class="stop-values">
+        <span class="stop-value"><small>Energie</small><b>${energy}</b></span>
+        <span class="stop-value"><small>Laune</small><b>${mood}</b></span>
+      </span>
     </button>`;
   }).join("");
 
@@ -1587,26 +1484,8 @@ function renderCheckinSlots() {
   </div>`;
 
   container.querySelectorAll("[data-open-checkin-slot]").forEach(element => {
-    element.addEventListener("click", () => { haptic(); openStateCheckinDialog(element.dataset.openCheckinSlot); });
+    element.addEventListener("click", () => openStateCheckinDialog(element.dataset.openCheckinSlot));
   });
-
-  renderCheckinProgress(stops);
-}
-
-/* Ruhige Orientierungszeile über der Tagesbahn: wie viele Phasen sind
-   erfasst und welche ist als nächste dran. Ersetzt keine Anzeige, sondern
-   nutzt bereits vorhandene Daten. */
-function renderCheckinProgress(stops) {
-  const label = $("checkinProgress");
-  if (!label) return;
-  const relevant = stops.filter(stop => stop.state !== "outside");
-  const done = relevant.filter(stop => stop.state === "done").length;
-  const next = stops.find(stop => stop.state === "current");
-  label.textContent = done === 0
-    ? `Noch nichts erfasst · Start mit ${next ? next.phase.short : "der Nacht"}`
-    : done >= relevant.length
-      ? `Alle ${relevant.length} Phasen erfasst`
-      : `${done} von ${relevant.length} erfasst · Als Nächstes ${next ? next.phase.short : ""}`.trim();
 }
 
 /* Coach-Fläche: kleine Überschrift, kräftiger Kernsatz, ruhiger Zusatzsatz.
@@ -1633,19 +1512,9 @@ function renderStateOverview() {
   const role = dayRoleConfig(selectedDate);
 
   if (!latest || !mode) {
-    /* Leerzustand mit konkreter Orientierung: er benennt, was zu tun ist,
-       und führt mit einem Tippen genau dorthin. */
-    const nextKey = pendingPhaseKey() || CHECKIN_CHRONOLOGY[0];
-    const nextPhase = CYCLE_PHASES[nextKey] || CYCLE_PHASES.morning;
     summary.className = "current-state-summary state-readout is-empty";
     summary.removeAttribute("style");
-    summary.innerHTML = `
-      <p class="readout-empty"><strong>Noch kein Check-in</strong>Energie und Laune genügen – daraus ergibt sich der Rollenmodus für diesen Tag.</p>
-      <button type="button" class="readout-empty-action" data-open-checkin-slot="${nextKey}">
-        ${icon("plus")}<span>${escapeHTML(nextPhase.short)} eintragen</span>
-      </button>`;
-    summary.querySelectorAll("[data-open-checkin-slot]").forEach(button =>
-      button.addEventListener("click", () => { haptic(); openStateCheckinDialog(button.dataset.openCheckinSlot); }));
+    summary.innerHTML = `<p class="readout-empty">Noch kein Check-in</p>`;
   } else {
     /* Die Auswertung liest sich als Ergebnis: zuerst Tagesrolle und Modus,
        dann die beiden Messwerte, darunter der Coach-Impuls. Es erscheinen
@@ -1681,29 +1550,19 @@ function renderStateOverview() {
     return `<article class="state-timeline-item" style="--framework-color:${entryMode?.color || "var(--muted)"}">
       <div class="state-timeline-marker"></div>
       <div class="state-timeline-copy">
-        <div class="state-timeline-title"><strong><span class="timeline-phase" aria-hidden="true">${phaseGlyph(entry.slot)}</span>${escapeHTML(slot.label)} · ${escapeHTML(entry.time || "")}</strong><span>${escapeHTML(entryMode?.label || "")}</span></div>
+        <div class="state-timeline-title"><strong>${slot.icon} ${escapeHTML(slot.label)} · ${escapeHTML(entry.time || "")}</strong><span>${escapeHTML(entryMode?.label || "")}</span></div>
         <small>${escapeHTML(details)}</small>
       </div>
-      <button type="button" class="state-delete-button" data-delete-state-checkin="${escapeHTML(entry.id)}" aria-label="Check-in löschen">${icon("trash")}</button>
+      <button type="button" class="state-delete-button" data-delete-state-checkin="${escapeHTML(entry.id)}" aria-label="Check-in löschen">×</button>
     </article>`;
   }).join("") : `<p class="state-timeline-empty">Noch keine Momentaufnahme gespeichert.</p>`;
 
   timeline.querySelectorAll("[data-delete-state-checkin]").forEach(button => button.addEventListener("click", () => {
-    const removed = (currentData.stateCheckins || []).find(entry => entry.id === button.dataset.deleteStateCheckin);
     currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.id !== button.dataset.deleteStateCheckin);
     saveReview(true);
     syncRoleplayBalanceMode();
     renderStateOverview();
     renderRoleplayBalance();
-    haptic(12);
-    if (removed) offerUndo(`${checkinSlot(removed.slot).label} gelöscht`, () => {
-      currentData.stateCheckins = [...(currentData.stateCheckins || []), removed];
-      saveReview(true);
-      syncRoleplayBalanceMode();
-      renderStateOverview();
-      renderRoleplayBalance();
-      renderStats();
-    });
   }));
 }
 
@@ -1776,17 +1635,8 @@ function openStateCheckinDialog(slotKey = null) {
 function resetStateCheckin(slotKey) {
   if (!currentData || !slotKey) return;
   const before = (currentData.stateCheckins || []).length;
-  const removed = (currentData.stateCheckins || []).filter(entry => entry.slot === slotKey);
   currentData.stateCheckins = (currentData.stateCheckins || []).filter(entry => entry.slot !== slotKey);
   if (currentData.stateCheckins.length === before) return;
-  if (removed.length) offerUndo(`${checkinSlot(slotKey).label} zurückgesetzt`, () => {
-    currentData.stateCheckins = [...(currentData.stateCheckins || []), ...removed];
-    saveReview(true);
-    syncRoleplayBalanceMode();
-    renderStateOverview();
-    renderRoleplayBalance();
-    renderStats();
-  });
   saveReview(true);
   syncRoleplayBalanceMode();
   renderStateOverview();
@@ -2026,127 +1876,7 @@ function applyRolePickerStyle() {
   picker.style.setProperty("--role-color", role.color);
   picker.style.setProperty("--role-soft", hexToRgba(role.color, .18));
   picker.style.setProperty("--role-text", role.text);
-  renderRoleCapsule(role);
   applyHeaderTheme(role);
-}
-
-/* Rollen-Control oben rechts: Emblem, Name und Wechselhinweis in einer
-   Kapsel. Der native Auswahlfeld-Wert bleibt die einzige Datenquelle –
-   die Kapsel schreibt ausschließlich über ihn. */
-function renderRoleCapsule(role = getRole($("dayRole")?.value || currentData?.role || ROLES[0].name)) {
-  const capsule = $("roleCapsule");
-  if (!capsule) return;
-  capsule.style.setProperty("--role-color", role.color);
-  capsule.style.setProperty("--role-soft", hexToRgba(role.color, .16));
-  capsule.style.setProperty("--role-line", hexToRgba(role.color, .38));
-  capsule.style.setProperty("--role-glow", hexToRgba(role.color, .26));
-  capsule.setAttribute("aria-label", `Rolle des Tages: ${role.name}. Antippen zum Wechseln.`);
-  if ($("roleCapsuleEmblem")) $("roleCapsuleEmblem").innerHTML = roleEmblem(role.name);
-  if ($("roleCapsuleName")) $("roleCapsuleName").textContent = role.name;
-}
-
-function renderRoleSheet() {
-  const list = $("roleSheetList");
-  if (!list) return;
-  const activeName = getRole($("dayRole")?.value || currentData?.role).name;
-  list.innerHTML = ROLES.map(role => {
-    const selected = role.name === activeName;
-    return `<button type="button" role="radio" aria-checked="${selected}" class="role-option${selected ? " is-selected" : ""}"
-        data-role-option="${escapeHTML(role.name)}"
-        style="--role-color:${role.color};--role-soft:${hexToRgba(role.color, .14)};--role-line:${hexToRgba(role.color, .40)}">
-      <span class="role-option-emblem" aria-hidden="true">${roleEmblem(role.name)}</span>
-      <span class="role-option-name">${escapeHTML(role.name)}</span>
-      <span class="role-option-check" aria-hidden="true">${selected ? icon("check-small") : ""}</span>
-    </button>`;
-  }).join("");
-  list.querySelectorAll("[data-role-option]").forEach(button => button.addEventListener("click", () => {
-    const picker = $("dayRole");
-    if (picker.value !== button.dataset.roleOption) {
-      picker.value = button.dataset.roleOption;
-      picker.dispatchEvent(new Event("change"));
-      haptic();
-    }
-    closeRoleSheet();
-  }));
-}
-
-function openRoleSheet() {
-  renderRoleSheet();
-  if ($("roleCapsule")) $("roleCapsule").setAttribute("aria-expanded", "true");
-  $("roleSheet").showModal();
-}
-
-function closeRoleSheet() {
-  if ($("roleCapsule")) $("roleCapsule").setAttribute("aria-expanded", "false");
-  if ($("roleSheet").open) $("roleSheet").close();
-}
-
-/* Dezente Erklärung des Rollenmodus. Sämtliche Angaben werden aus den
-   vorhandenen Konstanten erzeugt – die Berechnung selbst bleibt unberührt. */
-function openModeInfo() {
-  const ladder = $("modeInfoLadder");
-  const rules = $("modeInfoRules");
-  if (ladder) {
-    ladder.innerHTML = MODE_LADDER.map(key => {
-      const mode = modeMeta(key);
-      const from = MODE_THRESHOLDS[key];
-      const nextKey = MODE_LADDER[MODE_LADDER.indexOf(key) + 1];
-      const to = nextKey ? MODE_THRESHOLDS[nextKey] - 1 : 100;
-      return `<div class="mode-info-row" style="--mode-color:${mode.color};--mode-soft:${hexToRgba(mode.color, .14)}">
-        <span class="mode-info-dot" aria-hidden="true"></span>
-        <strong>${escapeHTML(mode.label)}</strong>
-        <span class="mode-info-range">${from}–${to}</span>
-      </div>`;
-    }).join("");
-  }
-  if (rules) {
-    const moodWeight = Math.round(STATE_WEIGHTS.mood * 100);
-    const energyWeight = Math.round(STATE_WEIGHTS.energy * 100);
-    rules.innerHTML = `
-      <p><strong>Zustandswert.</strong> Laune zählt ${moodWeight} Prozent, Energie ${energyWeight} Prozent.</p>
-      <p><strong>Schutzregeln.</strong> Ein Einzelwert von höchstens ${MODE_RULES.hardFloor.threshold} führt immer in den Schon-Modus. Unter 25 wird auf Schon-Modus, unter 35 auf Minimum begrenzt.</p>
-      <p><strong>Ausnahme.</strong> Eine sehr gute Laune ab ${MODE_RULES.lift.when.moodFrom} hebt eine energiebedingte Begrenzung um eine Stufe an.</p>
-      <p class="mode-info-note">Maßgeblich ist immer der zuletzt erfasste Check-in des Tages. Eine manuelle Auswahl des Modus gibt es bewusst nicht.</p>`;
-  }
-  $("modeInfoDialog").showModal();
-}
-
-/* Rückkehr zum heutigen Tag – erscheint nur, wenn ein anderer Tag offen ist. */
-function updateTodayJump() {
-  const button = $("jumpToToday");
-  if (!button) return;
-  button.hidden = selectedDate === todayISO();
-}
-
-/* Ein sicherer Rückgängig-Schritt nach löschenden Aktionen. Immer nur eine
-   Rückmeldung gleichzeitig, sie verschwindet nach wenigen Sekunden. */
-let undoTimer = null;
-let undoAction = null;
-
-function offerUndo(text, action) {
-  const toast = $("undoToast");
-  if (!toast) return;
-  undoAction = action;
-  if ($("undoToastText")) $("undoToastText").textContent = text;
-  toast.hidden = false;
-  toast.classList.add("is-visible");
-  window.clearTimeout(undoTimer);
-  undoTimer = window.setTimeout(dismissUndo, 6000);
-}
-
-function dismissUndo() {
-  const toast = $("undoToast");
-  if (!toast) return;
-  window.clearTimeout(undoTimer);
-  undoAction = null;
-  toast.classList.remove("is-visible");
-  toast.hidden = true;
-}
-
-function runUndo() {
-  const action = undoAction;
-  dismissUndo();
-  if (typeof action === "function") { action(); haptic(); }
 }
 
 /* Mischt eine Farbe in Richtung einer Zielfarbe. Rein visuell – die
@@ -2203,18 +1933,18 @@ function prayerStateIconHTML(value, size = "medium") {
   const meta = prayerStateMeta(value);
   // Die Farbe folgt dem Status, nicht dem Namen des Gebets.
   if (value === "") return statusCircle("", "neutral", size);
-  if (value === "Nicht gebetet") return statusCircle(icon("close"), "missed", size);
-  if (value === "Nachgeholt") return statusCircle(icon("arrow-return"), "recovered", size);
-  if (value === "Verspätet") return statusCircle(icon("clock"), "warning", size);
-  if (value === "Gemeinschaft") return statusCircle(icon("mosque"), "conscientious", size);
-  return statusCircle(icon("check"), "gradient", size);
+  if (value === "Nicht gebetet") return statusCircle("✕", "missed", size);
+  if (value === "Nachgeholt") return statusCircle(meta.icon, "recovered", size);
+  if (value === "Verspätet") return statusCircle(meta.icon, "warning", size);
+  if (value === "Gemeinschaft") return statusCircle(meta.icon, "conscientious", size);
+  return statusCircle("✓", "gradient", size);
 }
 
 function routineStateIconHTML(value, size = "small") {
-  if (value === "done") return statusCircle(icon("check"), "gradient", size);
-  if (value === "responsiblySkipped") return statusCircle(icon("check"), "conscientious", size);
-  if (value === "missed") return statusCircle(icon("close"), "missed", size);
-  return statusCircle(icon("dash"), "neutral", size);
+  if (value === "done") return statusCircle("✓", "gradient", size);
+  if (value === "responsiblySkipped") return statusCircle("✓", "conscientious", size);
+  if (value === "missed") return statusCircle("✕", "missed", size);
+  return statusCircle("–", "neutral", size);
 }
 
 function renderWaterControl() {
@@ -2224,7 +1954,7 @@ function renderWaterControl() {
   if ($("waterDroplets")) {
     const count = Math.max(1, Math.min(8, Math.round(waterMl / 500) || 1));
     const filled = Math.min(8, Math.round(waterMl / 500));
-    $("waterDroplets").innerHTML = Array.from({length: count}, (_, index) => `<button type="button" class="water-drop ${index < filled ? 'filled' : ''}" data-water-direct="${(index + 1) * 500}" aria-label="${(index + 1) * 0.5} Liter">${icon("drop")}</button>`).join("");
+    $("waterDroplets").innerHTML = Array.from({length: count}, (_, index) => `<button type="button" class="water-drop ${index < filled ? 'filled' : ''}" data-water-direct="${(index + 1) * 500}" aria-label="${(index + 1) * 0.5} Liter">💧</button>`).join("");
     document.querySelectorAll("[data-water-direct]").forEach(button => button.addEventListener("click", () => {
       currentData.water = String(Number(button.dataset.waterDirect || 0));
       renderWaterControl(); saveReview(true);
@@ -2276,7 +2006,7 @@ function renderPrayers() {
       const state = currentData.sunnahPrayers?.[prayer] || "";
       const meta = SUNNAH_PRAYER_STATES.find(option => option.value === state) || SUNNAH_PRAYER_STATES[0];
       // Antippen wechselt unmittelbar zum nächsten Status – wie bei den Routinen.
-      return `<button type="button" class="sunnah-prayer-chip state-${state === "Verrichtet" ? "done" : state === "Nicht vorgesehen" ? "neutral" : "open"}" data-cycle-sunnah="${escapeHTML(prayer)}" aria-label="${escapeHTML(prayer)}: ${escapeHTML(meta.label)}. Antippen für den nächsten Status."><span class="sunnah-mark" aria-hidden="true">${state === "Verrichtet" ? icon("check-small") : state === "Nicht vorgesehen" ? icon("dash") : icon("circle")}</span><strong>${escapeHTML(prayer)}</strong><small>${escapeHTML(meta.short)}</small></button>`;
+      return `<button type="button" class="sunnah-prayer-chip state-${state === "Verrichtet" ? "done" : state === "Nicht vorgesehen" ? "neutral" : "open"}" data-cycle-sunnah="${escapeHTML(prayer)}" aria-label="${escapeHTML(prayer)}: ${escapeHTML(meta.label)}. Antippen für den nächsten Status."><span>${state === "Verrichtet" ? "✓" : state === "Nicht vorgesehen" ? "–" : "○"}</span><strong>${escapeHTML(prayer)}</strong><small>${escapeHTML(meta.short)}</small></button>`;
     }).join("");
     const done = SUNNAH_PRAYERS.filter(prayer => currentData.sunnahPrayers?.[prayer] === "Verrichtet").length;
     if ($("sunnahPrayerSummary")) $("sunnahPrayerSummary").textContent = done ? `${done} verrichtet` : "Noch nichts erfasst";
@@ -2297,7 +2027,7 @@ function openPrayerDialog(prayer, kind = "obligatory") {
     const stateClass = (option.value || "open").toLowerCase().replace(/[^a-z0-9äöüß]+/g, "-").replace(/ä/g, "a").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ß/g, "ss");
     return `
     <button type="button" class="prayer-option state-${stateClass} ${current === option.value ? "active" : ""}" data-prayer-option="${escapeHTML(option.value)}">
-      ${kind === "sunnah" ? statusCircle(option.value === "Verrichtet" ? icon("check") : option.value === "Nicht vorgesehen" ? icon("dash") : "", option.value === "Verrichtet" ? "gradient" : "neutral", "medium") : prayerStateIconHTML(option.value, "medium")}
+      ${kind === "sunnah" ? statusCircle(option.value === "Verrichtet" ? "✓" : option.value === "Nicht vorgesehen" ? "–" : "", option.value === "Verrichtet" ? "gradient" : "neutral", "medium") : prayerStateIconHTML(option.value, "medium")}
       <strong>${escapeHTML(option.label)}</strong>
     </button>`;
   }).join("");
@@ -2361,9 +2091,7 @@ function updateRamadanDisplay() {
   display.textContent = value < 0 ? `${Math.abs(value)} Tage offen` : value === 0 ? "Alle Tage nachgeholt" : `${value} zusätzliche Tage`;
   const button = $("ramadanComplete");
   button.disabled = Boolean(currentData?.fastingCompleted);
-  button.innerHTML = currentData?.fastingCompleted
-    ? `${icon("check-small")}<span>Fastentag geschafft</span>`
-    : "<span>Fastentag geschafft</span>";
+  button.textContent = currentData?.fastingCompleted ? "Fastentag geschafft ✓" : "Fastentag geschafft";
 }
 
 function renderActivities() {
@@ -2374,13 +2102,13 @@ function renderActivities() {
     const role = getRole(activity.role);
     return `<div class="activity-row tracking-activity" data-activity-index="${index}" style="--activity-color:${role.color};--activity-soft:${hexToRgba(role.color,.10)};--activity-glow:${hexToRgba(role.color,.18)}">
       <div class="activity-main">
-        <div class="activity-copy"><strong>${escapeHTML(activity.title)}</strong><small><span class="activity-role-emblem" aria-hidden="true">${roleEmblem(role.name)}</span>${escapeHTML(role.name)}</small></div>
+        <div class="activity-copy"><strong>${escapeHTML(activity.title)}</strong><small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</small></div>
       </div>
       <div class="activity-sort-actions" aria-label="Aktivität sortieren">
-        <button type="button" data-move-activity="-1" data-activity-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Nach oben">${icon("chevron-down", "is-up")}</button>
-        <button type="button" data-move-activity="1" data-activity-index="${index}" ${index === activities.length - 1 ? "disabled" : ""} aria-label="Nach unten">${icon("chevron-down")}</button>
+        <button type="button" data-move-activity="-1" data-activity-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Nach oben">↑</button>
+        <button type="button" data-move-activity="1" data-activity-index="${index}" ${index === activities.length - 1 ? "disabled" : ""} aria-label="Nach unten">↓</button>
       </div>
-      <button type="button" class="delete-button" data-delete-activity="${index}" aria-label="Aktivität löschen">${icon("trash")}</button>
+      <button type="button" class="delete-button" data-delete-activity="${index}" aria-label="Aktivität löschen">×</button>
     </div>`;
   }).join("") : `<p class="activity-empty">Noch keine Aktivität dokumentiert.</p>`;
 
@@ -2390,16 +2118,9 @@ function renderActivities() {
     renderActivities();
   }));
   document.querySelectorAll("[data-delete-activity]").forEach(button => button.addEventListener("click", () => {
-    const index = Number(button.dataset.deleteActivity);
-    const [removed] = currentData.activities.splice(index, 1);
+    currentData.activities.splice(Number(button.dataset.deleteActivity), 1);
     saveReview(true);
     renderActivities();
-    haptic(12);
-    if (removed) offerUndo(`„${removed.title}" gelöscht`, () => {
-      currentData.activities.splice(Math.min(index, currentData.activities.length), 0, removed);
-      saveReview(true);
-      renderActivities();
-    });
   }));
 }
 
@@ -2914,7 +2635,7 @@ function renderRoutineCards() {
 
     return `<button type="button" class="routine-hero ${routine.theme} ${finished ? "is-finished" : started ? "is-started" : ""}" data-open-routine="${key}">
       <span class="routine-thread" aria-hidden="true"></span>
-      ${finished ? `<span class="routine-hero-badge" aria-hidden="true">${icon("check-small")}</span>` : ""}
+      ${finished ? `<span class="routine-hero-badge" aria-hidden="true">✓</span>` : ""}
       <div class="routine-hero-top simple">
         <div>
           <h2>${escapeHTML(routine.title)}</h2>
@@ -2924,7 +2645,7 @@ function renderRoutineCards() {
       </div>
       ${progress.total ? `<span class="routine-hero-track" aria-hidden="true"><i style="width:${percent}%"></i></span>` : ""}
       <span class="routine-hero-play ${finished ? "done" : ""}" data-start-routine="${key}" role="button"
-        aria-label="${escapeHTML(routine.title)} ${started && !finished ? "fortsetzen" : "starten"}" tabindex="0">${finished ? icon("replay") : icon("play")}</span>
+        aria-label="${escapeHTML(routine.title)} ${started && !finished ? "fortsetzen" : "starten"}" tabindex="0">${finished ? "↻" : "▶"}</span>
     </button>`;
   }).join("");
   document.querySelectorAll("[data-open-routine]").forEach(card => card.addEventListener("click", event => {
@@ -3024,7 +2745,7 @@ function renderSessionRoutineEditor() {
         <small>${item.minutes} Min.${stateLabel ? ` · ${stateLabel}` : ''}</small>
       </div>
       <button type="button" class="session-editor-start ${item.id === currentId ? 'is-current' : ''}" data-session-start="${escapeHTML(item.id)}" aria-label="${item.id === currentId ? 'Läuft gerade' : `${escapeHTML(item.title)} starten`}" ${item.id === currentId ? 'disabled' : ''}>
-        <span aria-hidden="true">${item.id === currentId ? icon("dot") : icon("play")}</span>
+        <span aria-hidden="true">${item.id === currentId ? '●' : '▶'}</span>
       </button>
     </div>`;
   }).join('');
@@ -3302,7 +3023,7 @@ function renderRoutineSession() {
   $("sessionItemTitle").textContent = item.title;
   $("sessionItemEmoji").textContent = item.emoji;
   $("sessionTimer").textContent = formatTimer(routineSession.remaining);
-  $("sessionPause").innerHTML = routineSession.running ? icon("pause") : icon("play");
+  $("sessionPause").textContent = routineSession.running ? "Ⅱ" : "▶";
   $("sessionContext").hidden = !item.context;
   $("sessionContext").innerHTML = item.context ? linkifyText(item.context) : "";
   const next = items[routineSession.index + 1];
@@ -3372,7 +3093,7 @@ function updateRoutineSessionClockDisplay() {
   const timer = $("sessionTimer");
   if (timer) timer.textContent = formatTimer(routineSession.remaining);
   const pause = $("sessionPause");
-  if (pause) pause.innerHTML = routineSession.running ? icon("pause") : icon("play");
+  if (pause) pause.textContent = routineSession.running ? "Ⅱ" : "▶";
 }
 
 function startSessionInterval() {
@@ -3637,26 +3358,6 @@ function bindEvents() {
   $("prayerDialogClose").addEventListener("click", () => $("prayerDialog").close());
 
   $("dayRole").addEventListener("change", () => { currentData.role = $("dayRole").value; applyRolePickerStyle(); saveReview(true); });
-
-  // Rollen-Control: Kapsel öffnet das Rollen-Sheet, die Auswahl schreibt
-  // ausschließlich über das vorhandene Auswahlfeld.
-  $("roleCapsule").addEventListener("click", () => { haptic(); openRoleSheet(); });
-  $("roleSheetClose").addEventListener("click", closeRoleSheet);
-  $("roleSheet").addEventListener("cancel", event => { event.preventDefault(); closeRoleSheet(); });
-  $("roleSheet").addEventListener("close", () => {
-    if ($("roleCapsule")) $("roleCapsule").setAttribute("aria-expanded", "false");
-  });
-
-  $("modeInfoButton").addEventListener("click", openModeInfo);
-  $("modeInfoClose").addEventListener("click", () => $("modeInfoDialog").close());
-  $("modeInfoDialog").addEventListener("cancel", event => { event.preventDefault(); $("modeInfoDialog").close(); });
-
-  $("jumpToToday").addEventListener("click", () => {
-    haptic();
-    setDate(todayISO());
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
-  $("undoToastAction").addEventListener("click", runUndo);
   $("saveButton").addEventListener("click", () => saveReview(false));
   ["breakfast", "lunch", "dinner", "snack", "water", "steps", "gratitude1", "gratitude2", "allahName", "responsibilityMain", "responsibilityAdaptation", "responsibilityNextStep", "notes"].forEach(id => {
     if (!$(id)) return;
@@ -3768,7 +3469,6 @@ function bindEvents() {
 }
 
 function init() {
-  hydrateIcons();
   initOptions();
   if ($("appVersionLabel")) $("appVersionLabel").textContent = `ROLEPLAY ${APP_VERSION}`;
   routines = loadRoutines();

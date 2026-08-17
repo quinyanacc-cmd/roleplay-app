@@ -1,116 +1,173 @@
-# ROLEPLAY App 8.0
+# ROLEPLAY App 6.0.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
 kein Framework, keine externen Bibliotheken.
 
-Systemlogik unverändert:
+## Visueller Relaunch (6.0.0-Design)
 
-    Zustand erfassen → Rollenmodus bestimmen → Verantwortung realistisch
-    gestalten → handlungsfähig bleiben → den Tag reflektieren
+Rein gestalterische Überarbeitung: Inhalte, Texte, Daten, Berechnungen,
+Speicherformate, Service Worker und Manifest sind unverändert geblieben.
 
-## Was 8.0 ist
+**Designsystem.** Vier Radienstufen (`--r-sm/md/lg/pill`) statt einer, vier
+Oberflächen (`card`, `raised`, `glass`, `base`), vier Höhenstufen (`--e-0…3`)
+mit Randlicht statt Schlagschatten im Dark Mode, Bewegungs-Tokens
+(`--dur-*`, `--ease-*`) und ein einziger `--focus-ring` für die ganze App.
 
-Ein vollständiger gestalterischer Relaunch auf Basis des neuen Logos, dazu
-vier kleine, tief integrierte Funktionen. Fachliche Logik, Berechnungen,
-Speicherformate, Rollen, Texte und Navigationswege sind unverändert.
+**Futura bleibt** die Grundschrift. Die Typoskala wurde an ihre kleine x-Höhe
+angepasst: offenere Zeilenhöhen, `--ls-display` für Überschriften,
+`--ls-caps` für Versalien-Labels.
 
-### Designsystem
+**Kopfzeile** ist jetzt Glas mit Rollenfarbe als Verlauf und Akzentlinie
+statt Vollton. Die Schriftfarbe wird aus der Rollenfarbe abgeleitet
+(`--header-role-ink-light/-dark`), damit helle Rollen auf Glas lesbar bleiben.
+Die gespeicherten Rollenfarben selbst sind unverändert.
 
-* **Typografie.** Nativer System-Font-Stack (`-apple-system` → SF Pro auf
-  Apple-Geräten) statt Futura. Rückholbar über den einen Token `--font`.
-* **Raster.** Striktes 4/8-Punkt-System (`--sp-1…7`), fünf Radienstufen
-  (`--r-xs/sm/md/lg/xl` plus `--r-pill`), vier Höhenstufen (`--e-0…3`),
-  Mindesttrefferfläche `--touch-min: 44px`.
-* **Marke.** Violett, Blau, Cyan, Pink und Orange stammen aus dem neuen Logo
-  und bilden `--brand-gradient`. Der Verlauf markiert ausschließlich besondere
-  Momente: Rollenkapsel, Herzstück-Karte, aktive Navigation, Speichern,
-  ausgewählter Kalendertag. Alle übrigen Flächen bleiben ruhig.
-* **Material.** Glas ausschließlich für schwebende Ebenen (Kopfzeile,
-  Navigation, Sheets, schwebende Aktionen), mit `@supports`-Fallback auf
-  deckende Flächen.
-* **Semantik unangetastet.** Rollenfarben, Modusfarben, Phasenfarben und
-  Diagrammfarben behalten exakt ihre bisherigen Werte.
+**Navigation** trägt eigene SVG-Icons im Strichstil der Tagesphasen-Symbole;
+der aktive Tab wird durch Pille **und** Farbe markiert. `aria-label`, `title`
+und `data-page` sind unverändert.
 
-### Icon-System
+**Herzstück.** Der Modus-Readout trägt die Modusfarbe als weiches Licht von
+oben, die aktive Station der Tagesbahn ist der hellste Punkt.
 
-Ein einziges SVG-Inventar in `ICON_PATHS` (app.js): 24er-ViewBox,
-Strichstärke 1.7, runde Enden, `currentColor`, gleiche optische Größe.
-`hydrateIcons()` füllt alle `data-icon`-Platzhalter im Markup. Ersetzt wurden
-sämtliche Emoji und Schriftglyphen der Bedienoberfläche (‹ › × ✓ ▶ Ⅱ ↻ ↑ ↓ 💧
-🕌 🕓 ↩️ 🔥) sowie die Chevrons in Auswahlfeldern und Accordions (als Maske,
-damit sie die Textfarbe übernehmen). Emoji bleiben nur dort, wo sie Inhalt
-sind: in den Routineschritten.
+**Barrierearmut.** Auswahl wird nie nur über Farbe angezeigt (Bilanz-Chips
+mit Haken, ausgewählter Kalendertag zusätzlich fett), `prefers-reduced-motion`
+schaltet Bewegung zentral ab, `@supports`-Fallback liefert deckende Flächen,
+wenn `backdrop-filter` fehlt.
 
-Die fünf Tagesphasen-Symbole wurden in derselben Strichsprache neu gezeichnet
-und tragen jetzt `currentColor` statt fester Füllungen.
+## Neu in 6.0.0
 
-### Rollen-Control
+### Rollenmodus ohne Aufgaben
 
-Das frühere Auswahlfeld zeigte die Rolle über ein Emoji, das auf vielen
-Systemen als leeres Kästchen erschien. Neu ist eine **Rollenkapsel** mit
-Emblem, Label, Rollennamen und Wechselindikator, mindestens 44 px hoch, mit
-Rollenfarbe, Auswahl- und Druckzustand. Ein Tippen öffnet ein Rollen-Sheet mit
-sieben Rollenkarten.
+ROLEPLAY ist kein Habit-Tracker. Der Rollenmodus beschreibt ab dieser Version
+ausschließlich **Umfang, Tempo und Form** des Handelns – er verteilt keine
+Aufgaben mehr.
 
-Das native `select#dayRole` bleibt als einzige Datenquelle erhalten (visuell
-verborgen); die Kapsel schreibt ausschließlich über dessen `change`-Ereignis.
-Gespeicherte Rollennamen ändern sich nicht.
+Die Systemlogik lautet:
 
-### Tagesbahn ohne Prozentwerte
+    Zustand → angemessener Rollenmodus → Coach-Impuls →
+    eigenverantwortliches Handeln → spätere ROLEPLAY-Bilanz
 
-In der gespeicherten Tageszeit-Übersicht erscheinen keine Zahlen und keine
-Prozentzeichen mehr. Stattdessen:
+Entfernt wurden dabei die Rollenmatrix (`ROLE_CONFIG.levels`), `dayPriorityText`,
+`recommendationForCheckin`, `PROTECTIVE_LEVEL_TEXT`, `MODE_LEVEL_MAP`,
+`stateCauseSentence` sowie die ausschließlich dafür genutzte Wochenaufgabenlogik.
+Der Modus hebt dabei keine Verantwortung auf: Gebete, Fastentage, Streaks,
+Routinen und Aktivitäten bleiben vollständig erhalten.
 
-* erfasst → farbiger Knoten, Häkchen und zwei feine Intensitätsbalken
-  (oben Energie, unten Laune – dieselbe Farbzuordnung wie im Readout),
-* jetzt dran → größerer, leuchtender Knoten und Wortmarke „Jetzt“,
-* offen → ruhiger Knoten und Wortmarke „Offen“,
-* nicht Teil des Tages → stark zurückgenommen, ausdrücklich kein Versäumnis.
+### Fünf verbindliche Modi
 
-Alle Stationen haben eine gleich hohe Fußzeile, damit beim Speichern nichts
-springt. Die Werte selbst bleiben unverändert gespeichert, fließen weiterhin
-vollständig in die Modusberechnung ein, stehen im `aria-label` („Energie 60 von
-100“) und sichtbar unter **Verlauf & Details**.
+| Modus | Ab Wert | Farbe |
+| --- | --- | --- |
+| Schon-Modus | 0 | Koralle `#E77D4D` |
+| Minimum | 40 | Amber `#E5A22E` |
+| Standard | 55 | Türkis `#27B9A9` |
+| Fokus | 70 | Blau `#3D7BE8` |
+| Entwicklungsmodus | 92 | Violett `#7258E8` |
 
-### Neue Funktionen
+Die Berechnung bleibt unverändert: Laune 0,58, Energie 0,42, harte Untergrenze
+bei einem Einzelwert ≤ 15, Deckelung bei < 25 und < 35 sowie die Ausnahme, dass
+eine sehr gute Laune eine energiebedingte Begrenzung um eine Stufe anheben darf.
+Eine manuelle Auswahl gibt es weiterhin nicht.
 
-| Funktion | Nutzen |
-| --- | --- |
-| **Rollen-Sheet** | Macht die Rolle des Tages sichtbar und wechselbar, ohne das systemeigene Auswahlrad – der Kern des ROLEPLAY-Systems wird als solcher erkennbar. |
-| **Heute-Rückkehr** | Schwebende Schaltfläche, die nur erscheint, wenn ein anderer Tag geöffnet ist – ein Tippen statt mehrfachem Blättern. |
-| **Rückgängig-Schritt** | Nach dem Löschen oder Zurücksetzen eines Check-ins und nach dem Löschen einer Aktivität sechs Sekunden lang wiederherstellbar – Bedienfehler kosten keine Daten mehr. |
-| **Modus-Erklärung** | Ein „i“ neben der Überschrift erklärt Stufen, Gewichtung und Schutzregeln – alle Angaben werden aus den vorhandenen Konstanten erzeugt, die Berechnung bleibt unberührt. |
-| **Fortschrittszeile** | „2 von 5 erfasst · Als Nächstes Mittag“ – nutzt vorhandene Daten und beantwortet die häufigste Frage sofort. |
-| **Leerzustand mit Handlung** | Statt „Noch kein Check-in“ ein Satz plus Schaltfläche direkt in die fällige Phase. |
-| **Haptik** | Kurze Rückmeldung bei Rollenwechsel, Check-in, Speichern und Löschen, sofern das Gerät sie unterstützt und keine Bewegungsreduktion aktiv ist. |
+Alte Modusschlüssel werden beim Laden abgebildet:
+`stabilization|recovery|protection → gentle`, `maintenance → minimum`,
+`balance → standard`, `design → focus`, `peak → development`.
 
-Keine dieser Funktionen erzeugt einen neuen Pflichtschritt, verändert die
-Modusberechnung, überschreibt Daten oder setzt ein Konto voraus.
+### Coach-Impuls
 
-### Logo
+Statt Aufgaben- und Begründungstext erscheint eine kompakte, in der Modusfarbe
+getönte Fläche mit der Überschrift **IMPULS FÜR JETZT**, einem festen Kernsatz je
+Modus und einem zustandsabhängigen Zusatzsatz.
 
-Das neue Logo ersetzt `logo.jpeg` vollständig. Abgeleitet werden
-`logo-32/96/180/192/512.png` sowie `logo-maskable-192/512.png`. Für die
-Maskable-Variante wurde der Verlauf per normalisierter Faltung rekonstruiert
-und die weiße Marke auf 76 Prozent gesetzt – dadurch entsteht eine echte Safe
-Area, ohne Motiv oder Farben zu verändern. In der App erscheint das Logo genau
-einmal: als Markenzeichen in der Kopfzeile.
+Die Zustandskategorie wird in dieser Reihenfolge bestimmt: `bothHigh`, `bothLow`,
+`moodLeads`, `energyLeads`, `balanced`. Gleiche Werte ergeben immer denselben
+Text – es gibt keinen Zufall. Hauptansicht und Check-in-Vorschau nutzen mit
+`coachImpulse()` dieselbe zentrale Textfunktion.
+
+### Fünf Check-ins pro Tag
+
+    Nacht · Morgen · Mittag · Nachmittag · Abend
+
+Der Nachmittag hat ein eigenes SVG im vorhandenen Strichstil und eine eigene
+Farbwelt, die den Türkis-Gold-Ton des Mittags in die wärmeren Abendfarben führt.
+
+Hervorgehoben wird **immer der erste noch nicht ausgefüllte Check-in in der
+festen Reihenfolge** – nicht mehr der zur Uhrzeit passende. Die Uhrzeit wird
+weiterhin als Eintragszeit gespeichert. Alle fünf Stationen bleiben antippbar
+und bearbeitbar.
+
+### Tagesbahn
+
+Fünf gleichmäßige Spalten ohne horizontales Scrollen, kleinere Grundkreise
+(42 px, auf schmalen Geräten 38 px), der aktive Kreis nur moderat größer
+(Faktor 1,1). Energie und Laune stehen untereinander statt nebeneinander; die
+senkrechte Trennlinie ist entfallen. Die Verbindungslinie besteht jetzt aus vier
+eigenständigen Segmenten, die ausschließlich die Zwischenräume füllen, hinter den
+Stationen liegen und mit Abstand vor dem Kreisrand enden.
+
+### Routine-Schritt-Editor
+
+Die Emoji-Vorauswahl ist vollständig entfallen (`QUICK_EMOJIS`, Raster,
+Listener, automatisches ✨). Das Emoji-Feld ist bei neuen Schritten leer und
+verpflichtend; ohne Eingabe wird nicht gespeichert, sondern eine kurze
+Inline-Rückmeldung gezeigt. Die Dauer ist ein natives `select` von 1 bis 180
+Minuten (auf dem iPhone das Auswahlrad) mit korrekten Singular- und
+Pluralformen. Abweichende gespeicherte Dauern – etwa 2,5 Minuten – bleiben als
+zusätzliche Option erhalten und werden nicht verändert.
+
+### ROLEPLAY-Bilanz
+
+Neue Karte zwischen „Dankbarkeit“ und „Tagesnotiz“. Sie arbeitet mit antippbaren
+Karten, Chips und einem Segmented Control – bewusst ohne Schieberegler, weil
+diese eine Rangordnung suggerieren würden, und ohne neue Freitextfelder.
+
+1. **Verantwortungsbilanz** – Erfüllt · Angepasst · Zurückgestellt · Versäumt ·
+   Überdehnt. Je nach Antwort folgt genau eine kurze, kontrollierte
+   Folgeauswahl; bei „Zu einem konkreten Termin“, „Nachholen“ und „Neu planen“
+   erscheint ein natives Datumsfeld. Es entsteht keine Punktzahl, keine
+   Erfolgsquote und keine moralische Bewertung.
+2. **Passung des Rollenmodus** – Zu fordernd · Passend · Zu schonend. Die
+   Auswahl verändert die Modusberechnung nicht; sie dient nur als transparente
+   Rückmeldung. Ohne Check-in bleibt sie deaktiviert.
+
+### Doppeltipp-Zoom
+
+`touch-action: manipulation` auf `html`, `body`, `.app-shell` und `dialog`.
+Scrollen, Regler, Selects, Datumsfelder, Wischgesten und Sortieren funktionieren
+unverändert; Pinch-to-Zoom bleibt erhalten. Kein `maximum-scale`, kein
+`user-scalable=no`, kein globales `preventDefault()`.
 
 ## Datenmodell
 
-Unverändert. Namespace `roleplay-v25`, Backup-Schema 6, `checkinStructure`,
-`roleplayBalance`, Streaks, Routinen, Gebete, CSV-Export – alles wie in 6.0.
+Namespace bleibt `roleplay-v25`, Backup-Schema steigt auf **6**. Ältere Backups
+lassen sich weiterhin importieren.
+
+Neu je Tag:
+
+    roleplayBalance: {
+      outcome, detailKeys[], followUpAction, followUpDate,
+      modeFit, evaluatedModeKey, evaluatedRoleName
+    }
+    checkinStructure: 5 | 4
+
+`checkinStructure` unterscheidet neue Fünfer-Tage von historischen Vierer-Tagen.
+Fehlt der Wert, gilt ein bereits gespeicherter zurückliegender Tag als
+Vierer-Tag: der Nachmittag erscheint dort neutral mit „–“ und wird ausdrücklich
+nicht rückwirkend als Versäumnis gewertet. Wird dort bewusst ein Nachmittag
+eingetragen, wechselt der Tag dauerhaft auf die Fünfer-Struktur. Energie- oder
+Launenwerte werden dabei nie erfunden.
+
+Alle Werte werden beim Laden gegen feste erlaubte Listen geprüft. Vorhandene
+`roleReflections` bleiben erhalten und dienen als Ausgangswert für die
+Verantwortungsbilanz. CSV-Export und Backup enthalten die neuen Felder.
 
 ## Tests
 
-    node test-v8.js
+`node test-regression.js` (42 Prüfungen) vergleicht die redesignte App mit der
+Fassung davor: sichtbare Texte, IDs, `data-*`-Attribute, DOM-Zugriffe,
+Speicherschlüssel und Logikkonstanten müssen identisch sein.
 
-63 Prüfungen: Versionierung, Logo-Referenzen, Speicherschlüssel, Modusleiter,
-Gewichtung, Schutzregeln samt Anhebungsregel, Vollständigkeit aller von app.js
-adressierten IDs, Icon-Inventar, Rollen-Embleme, Rendern von Tagesbahn,
-Readout, Leerzustand, Rollen-Sheet und Modus-Erklärung sowie der ausdrückliche
-Nachweis, dass die Tagesbahn keine sichtbaren Zahlen oder Prozentzeichen mehr
-enthält und die gespeicherten Werte unverändert bleiben.
-
-Die Prüfungen laufen ohne Netzwerk und ohne Abhängigkeiten in einem Mini-DOM.
+`node test-logic.js` (98 Prüfungen) und `node test-dom.js` (74 Prüfungen) decken
+Modusleiter, Schutzregeln, Coach-Texte, Check-in-Reihenfolge, Migration alter
+Tage, Bilanzvalidierung, CSV-Export und den Schritt-Editor ab. Beide laufen ohne
+Netzwerk und ohne Abhängigkeiten.
