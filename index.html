@@ -3,41 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0e14" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="ROLEPLAY – Zustand erfassen, Rollenmodus bestimmen, Verantwortung realistisch gestalten. Lokal auf dem Gerät.">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Roleplay">
-  <link rel="apple-touch-icon" href="logo.jpeg">
+  <meta name="apple-mobile-web-app-title" content="ROLEPLAY">
+  <link rel="apple-touch-icon" href="logo-180.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="logo-96.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="logo-32.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
-  <title>Roleplay</title>
+  <title>ROLEPLAY</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header" id="appHeader">
       <div class="header-title-row" id="headerTitleRow">
         <div class="header-identity">
-          <p class="eyebrow">ROLEPLAY</p>
-          <h1 id="pageTitle">Tagesreflexion</h1>
+          <span class="brand-mark" aria-hidden="true">
+            <img src="logo-96.png" alt="" width="32" height="32" decoding="async">
+          </span>
+          <span class="header-identity-copy">
+            <span class="eyebrow">ROLEPLAY</span>
+          </span>
         </div>
-        <label class="role-picker-wrap" id="rolePickerWrap">
-          <span class="sr-only">Tagesrolle auswählen</span>
-          <select id="dayRole" class="role-picker" aria-label="Tagesrolle auswählen"></select>
-        </label>
+        <div class="role-picker-wrap" id="rolePickerWrap">
+          <button type="button" id="roleCapsule" class="role-capsule" aria-haspopup="dialog" aria-expanded="false">
+            <span class="role-emblem" id="roleCapsuleEmblem" aria-hidden="true"></span>
+            <span class="role-capsule-copy">
+              <span class="role-capsule-eyebrow">Rolle</span>
+              <span class="role-capsule-name" id="roleCapsuleName">Ich-Person</span>
+            </span>
+            <span class="role-capsule-chevron" data-icon="chevron-updown" aria-hidden="true"></span>
+          </button>
+          <label class="sr-only" for="dayRole">Tagesrolle auswählen</label>
+          <select id="dayRole" class="role-picker sr-only" tabindex="-1" aria-hidden="true"></select>
+        </div>
+        <h1 id="pageTitle">Tagesreflexion</h1>
       </div>
 
       <div class="date-nav" id="dateNavigation">
-        <button id="prevDay" class="icon-button" type="button" aria-label="Vorheriger Tag">‹</button>
+        <button id="prevDay" class="icon-button" type="button" data-icon="chevron-left" aria-label="Vorheriger Tag"></button>
         <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
-        <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag">›</button>
+        <button id="nextDay" class="icon-button" type="button" data-icon="chevron-right" aria-label="Nächster Tag"></button>
       </div>
     </header>
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
-        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
-          <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
+        <section class="card hero-card state-overview-card" aria-labelledby="stateOverviewTitle">
+          <div class="hero-head">
+            <div class="hero-head-copy">
+              <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
+              <p id="checkinProgress" class="hero-progress"></p>
+            </div>
+            <button id="modeInfoButton" class="info-button" type="button" data-icon="info"
+                    aria-haspopup="dialog" aria-label="Wie entsteht der Rollenmodus?"></button>
+          </div>
           <div id="checkinSlots" class="checkin-slots" aria-label="Fünf Tages-Check-ins"></div>
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
           <details class="state-history-details">
@@ -69,7 +92,7 @@
         <section class="card">
           <div class="section-title-row">
             <h2>Aktivitäten</h2>
-            <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
+            <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus" data-icon="plus"></span></button>
           </div>
           <div id="activityList" class="stack activity-list"></div>
         </section>
@@ -126,12 +149,12 @@
               <label for="water">Getrunken</label>
               <input id="water" type="hidden" value="0">
               <div class="water-tracker" id="waterTracker">
-                <button id="waterMinus" class="water-step-button" type="button" aria-label="0,5 Liter abziehen">−</button>
+                <button id="waterMinus" class="water-step-button" type="button" data-icon="minus" aria-label="0,5 Liter abziehen"></button>
                 <div class="water-display-wrap">
                   <div class="water-droplets" id="waterDroplets"></div>
                   <strong id="waterTotalDisplay">0,0 Liter</strong>
                 </div>
-                <button id="waterPlus" class="water-step-button gradient-action" type="button" aria-label="0,5 Liter hinzufügen">+</button>
+                <button id="waterPlus" class="water-step-button gradient-action" type="button" data-icon="plus" aria-label="0,5 Liter hinzufügen"></button>
               </div>
             </div>
             <div class="field-group">
@@ -177,9 +200,9 @@
             <span id="weekLabel" class="week-label"></span>
           </summary>
           <div class="week-nav">
-            <button id="weekBack" class="icon-button" type="button" aria-label="Vorherige Woche">‹</button>
+            <button id="weekBack" class="icon-button" type="button" data-icon="chevron-left" aria-label="Vorherige Woche"></button>
             <span id="weekRange" class="week-nav-hint"></span>
-            <button id="weekForward" class="icon-button" type="button" aria-label="Nächste Woche">›</button>
+            <button id="weekForward" class="icon-button" type="button" data-icon="chevron-right" aria-label="Nächste Woche"></button>
           </div>
           <div id="statsSwipe" class="stats-swipe">
             <div id="statsGrid" class="stats-grid"></div>
@@ -187,7 +210,7 @@
         </details>
 
         <section class="card">
-          <h2>Export & Sicherung</h2>
+          <h2>Export &amp; Sicherung</h2>
           <div class="export-buttons">
             <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
             <button id="importBackupButton" class="small-button export-button" type="button">Backup importieren</button>
@@ -203,11 +226,11 @@
       <section id="routinesPage" class="app-page" aria-label="Routinen">
         <div id="routineOverview" class="routine-overview">
           <div id="routineCards" class="routine-cards"></div>
-          <button id="addRoutine" class="bottom-add-routine" type="button"><span class="gradient-plus">+</span><span>Routine hinzufügen</span></button>
+          <button id="addRoutine" class="bottom-add-routine" type="button"><span class="gradient-plus" data-icon="plus"></span><span>Routine hinzufügen</span></button>
         </div>
 
         <div id="routineDetail" class="routine-detail" hidden>
-          <button id="backToRoutineOverview" class="back-button icon-only" type="button" aria-label="Zur Übersicht"></button>
+          <button id="backToRoutineOverview" class="back-button icon-only" type="button" data-icon="chevron-left" aria-label="Zur Übersicht"></button>
           <div class="routine-detail-head">
             <div>
               <p id="routineDetailEyebrow" class="eyebrow"></p>
@@ -215,12 +238,12 @@
               <p id="routineDetailMeta" class="section-hint"></p>
               <button id="editRoutineMeta" class="text-button" type="button">Kopfbild &amp; Titel ändern</button>
             </div>
-            <button id="startRoutineDetail" class="round-play-button" type="button" aria-label="Routine starten">▶</button>
+            <button id="startRoutineDetail" class="round-play-button" type="button" data-icon="play" aria-label="Routine starten"></button>
           </div>
           <div id="routineDetailProgress" class="routine-detail-progress"></div>
 
           <div id="routineItemList" class="routine-item-list"></div>
-          <button id="addRoutineItem" class="secondary-wide-button plus-button wide" type="button"><span>Schritt hinzufügen</span></button>
+          <button id="addRoutineItem" class="secondary-wide-button plus-button wide" type="button"><span class="wide-plus" data-icon="plus" aria-hidden="true"></span><span>Schritt hinzufügen</span></button>
         </div>
       </section>
 
@@ -231,15 +254,29 @@
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
       <button class="nav-button active" data-page="review" type="button" aria-label="Tagesreflexion" title="Tagesreflexion">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.6" y="3.4" width="14.8" height="17.2" rx="3.4"></rect><line x1="8.4" y1="8.6" x2="15.6" y2="8.6"></line><line x1="8.4" y1="12" x2="15.6" y2="12"></line><line x1="8.4" y1="15.4" x2="13" y2="15.4"></line></svg></span>
+        <span class="nav-symbol" data-icon="nav-review" aria-hidden="true"></span>
+        <span class="nav-label">Reflexion</span>
       </button>
       <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15.4a5 5 0 0 1 10 0"></path><line x1="3.4" y1="15.4" x2="20.6" y2="15.4"></line><line x1="12" y1="3.6" x2="12" y2="6.2"></line><line x1="5.4" y1="6.3" x2="7.2" y2="8.1"></line><line x1="18.6" y1="6.3" x2="16.8" y2="8.1"></line><line x1="6.4" y1="19.4" x2="17.6" y2="19.4"></line></svg></span>
+        <span class="nav-symbol" data-icon="nav-routines" aria-hidden="true"></span>
+        <span class="nav-label">Routinen</span>
       </button>
       <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2a5.9 5.9 0 0 0 5.9-5.9c0-4-3-6.6-5.9-9.6-2.9 3-5.9 5.6-5.9 9.6A5.9 5.9 0 0 0 12 21.2Z"></path><path d="M12 21.2a2.6 2.6 0 0 0 2.6-2.6c0-1.7-1.3-2.8-2.6-4.2-1.3 1.4-2.6 2.5-2.6 4.2A2.6 2.6 0 0 0 12 21.2Z"></path></svg></span>
+        <span class="nav-symbol" data-icon="nav-streaks" aria-hidden="true"></span>
+        <span class="nav-label">Streaks</span>
       </button>
     </nav>
+  </div>
+
+  <div id="floatingLayer" class="floating-layer">
+    <button id="jumpToToday" class="today-jump" type="button" hidden>
+      <span class="today-jump-icon" data-icon="today" aria-hidden="true"></span>
+      <span>Heute</span>
+    </button>
+    <div id="undoToast" class="undo-toast" role="status" aria-live="polite" hidden>
+      <span id="undoToastText" class="undo-toast-text"></span>
+      <button id="undoToastAction" class="undo-toast-action" type="button">Rückgängig</button>
+    </div>
   </div>
 
   <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
@@ -281,9 +318,6 @@
           <input id="stateMood" type="range" min="0" max="100" step="5" value="60">
           <div class="state-range-legend"><small>gedrückt</small><small>sehr gut</small></div>
         </div>
-
-
-        
       </section>
 
       <div id="stateFrameworkPreviewText" class="state-framework-preview-text"></div>
@@ -296,11 +330,30 @@
     </form>
   </dialog>
 
+  <dialog id="roleSheet" class="form-dialog role-sheet" aria-labelledby="roleSheetTitle">
+    <h3 id="roleSheetTitle">Rolle des Tages</h3>
+    <p class="sheet-lead">Die Rolle beschreibt, aus welcher Verantwortung heraus dieser Tag gelebt wird.</p>
+    <div id="roleSheetList" class="role-sheet-list" role="radiogroup" aria-labelledby="roleSheetTitle"></div>
+    <div class="dialog-actions">
+      <button id="roleSheetClose" type="button" class="secondary-button">Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="modeInfoDialog" class="form-dialog mode-info-dialog" aria-labelledby="modeInfoTitle">
+    <h3 id="modeInfoTitle">Wie entsteht der Rollenmodus?</h3>
+    <p class="sheet-lead">Der Modus verteilt keine Aufgaben. Er beschreibt Umfang, Tempo und Form des Handelns – abgeleitet aus dem zuletzt erfassten Check-in.</p>
+    <div id="modeInfoLadder" class="mode-info-ladder"></div>
+    <div id="modeInfoRules" class="mode-info-rules"></div>
+    <div class="dialog-actions">
+      <button id="modeInfoClose" type="button" class="secondary-button">Schließen</button>
+    </div>
+  </dialog>
+
   <dialog id="calendarDialog" class="calendar-dialog">
     <div class="calendar-header">
-      <button id="calendarPrevMonth" class="icon-button" type="button" aria-label="Vorheriger Monat"></button>
+      <button id="calendarPrevMonth" class="icon-button" type="button" data-icon="chevron-left" aria-label="Vorheriger Monat"></button>
       <strong id="calendarMonthLabel"></strong>
-      <button id="calendarNextMonth" class="icon-button" type="button" aria-label="Nächster Monat"></button>
+      <button id="calendarNextMonth" class="icon-button" type="button" data-icon="chevron-right" aria-label="Nächster Monat"></button>
     </div>
     <div class="calendar-weekdays" aria-hidden="true">
       <span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span>
@@ -311,6 +364,7 @@
       <button id="calendarClose" class="primary-button compact" type="button">Schließen</button>
     </div>
   </dialog>
+
   <dialog id="prayerDialog" class="form-dialog prayer-dialog">
     <h3 id="prayerDialogTitle">Gebet</h3>
     <div id="prayerStateOptions" class="prayer-state-options"></div>
@@ -390,7 +444,7 @@
 
   <dialog id="routineSessionDialog" class="routine-session-dialog">
     <div class="session-topbar">
-      <button id="closeRoutineSession" class="session-icon-button" type="button" aria-label="Routine schließen">×</button>
+      <button id="closeRoutineSession" class="session-icon-button" type="button" data-icon="close" aria-label="Routine schließen"></button>
       <span id="sessionRoutineName" class="session-routine-name"></span>
     </div>
     <div class="session-content">
@@ -406,14 +460,14 @@
       </div>
       <div id="sessionContext" class="session-context" hidden></div>
       <div class="session-controls">
-        <button id="sessionPause" class="session-secondary-control" type="button" aria-label="Pause">Ⅱ</button>
-        <button id="sessionComplete" class="session-complete-control" type="button" aria-label="Schritt erledigt">✓</button>
-        <button id="sessionSkip" class="session-secondary-control" type="button" aria-label="Schritt überspringen">›|</button>
+        <button id="sessionPause" class="session-secondary-control" type="button" data-icon="pause" aria-label="Pause"></button>
+        <button id="sessionComplete" class="session-complete-control" type="button" data-icon="check" aria-label="Schritt erledigt"></button>
+        <button id="sessionSkip" class="session-secondary-control" type="button" data-icon="skip" aria-label="Schritt überspringen"></button>
       </div>
       <p id="sessionRemaining" class="session-remaining"></p>
       <p id="sessionNext" class="session-next"></p>
       <button id="sessionEditRoutine" class="session-edit-control" type="button" aria-expanded="false" aria-controls="sessionRoutineEditor">
-        <span aria-hidden="true">↕</span>
+        <span class="session-edit-icon" data-icon="sliders" aria-hidden="true"></span>
         <span>Anpassen</span>
       </button>
       <section id="sessionRoutineEditor" class="session-routine-editor" hidden aria-label="Routine anpassen">
@@ -422,7 +476,7 @@
           <div class="session-editor-head">
             <div>
               <strong>Routine anpassen</strong>
-              <small>Am Griff verschieben oder mit ▶ direkt zu einem Schritt wechseln.</small>
+              <small>Am Griff verschieben oder mit dem Startsymbol direkt zu einem Schritt wechseln.</small>
             </div>
           </div>
           <div id="sessionRoutineItemList" class="session-routine-item-list"></div>
@@ -434,7 +488,7 @@
 
 
   <dialog id="streakPrivacyDialog" class="form-dialog privacy-dialog">
-    <div class="privacy-dialog-icon" aria-hidden="true">🔥</div>
+    <div class="privacy-dialog-icon" data-icon="lock" aria-hidden="true"></div>
     <h3>Geschützten Bereich öffnen?</h3>
     <p class="privacy-dialog-copy">Diese Seite enthält persönliche Streak-Daten. Die Abfrage schützt vor versehentlichem Einblick; die lokal gespeicherten Daten selbst werden dadurch nicht verschlüsselt.</p>
     <div class="dialog-actions privacy-actions">

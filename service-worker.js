@@ -1,11 +1,17 @@
-const CACHE = "roleplay-v6-0-0";
+const CACHE = "roleplay-v8-0";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./logo.jpeg",
+  "./logo-32.png",
+  "./logo-96.png",
+  "./logo-180.png",
+  "./logo-192.png",
+  "./logo-512.png",
+  "./logo-maskable-192.png",
+  "./logo-maskable-512.png",
   "./morning-header.jpg",
   "./evening-header.jpg",
   "./header-tag.jpg",
