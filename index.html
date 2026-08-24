@@ -53,16 +53,13 @@
             <summary><span>Sunnah- und freiwillige Gebete</span><small id="sunnahPrayerSummary">Noch nichts erfasst</small></summary>
             <div id="sunnahPrayerList" class="sunnah-prayer-grid"></div>
           </details>
-          <div class="ramadan-box">
-            <div>
-              <span class="subheading">Fastentage</span>
-              <strong id="ramadanDisplay">–29 Tage offen</strong>
-              <small class="carry-hint">Der Stand wird beim nächsten Tag automatisch übernommen.</small>
+          <div class="fasting-box">
+            <div class="fasting-head">
+              <span class="subheading">Fasten</span>
+              <strong id="fastingOpenDisplay">Keine Nachholtage offen</strong>
             </div>
-            <div class="ramadan-controls">
-              <input id="ramadanDays" type="number" inputmode="numeric" value="-29" aria-label="Offene Fastentage">
-              <button id="ramadanComplete" class="small-button" type="button">Fastentag geschafft</button>
-            </div>
+            <div id="fastingTypeGroup" class="segmented fasting-types" role="group" aria-label="Fastenart für diesen Tag"></div>
+            <small id="fastingHint" class="carry-hint">Für diesen Tag genau eine Art wählen oder offen lassen.</small>
           </div>
         </section>
 
@@ -71,6 +68,10 @@
             <h2>Aktivitäten</h2>
             <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
           </div>
+          <button id="smaWorkdayToggle" class="sma-toggle" type="button" aria-pressed="false">
+            <span class="sma-toggle-mark" aria-hidden="true">＋</span>
+            <span class="sma-toggle-copy"><strong>SMA-Arbeitstag</strong><small>mit einem Tippen erfassen</small></span>
+          </button>
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
@@ -171,21 +172,6 @@
 
         <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
 
-        <details class="card stats-card week-course-card" open>
-          <summary class="lean-card-summary week-course-summary">
-            <h2>Wochenrückblick</h2>
-            <span id="weekLabel" class="week-label"></span>
-          </summary>
-          <div class="week-nav">
-            <button id="weekBack" class="icon-button" type="button" aria-label="Vorherige Woche">‹</button>
-            <span id="weekRange" class="week-nav-hint"></span>
-            <button id="weekForward" class="icon-button" type="button" aria-label="Nächste Woche">›</button>
-          </div>
-          <div id="statsSwipe" class="stats-swipe">
-            <div id="statsGrid" class="stats-grid"></div>
-          </div>
-        </details>
-
         <section class="card">
           <h2>Export & Sicherung</h2>
           <div class="export-buttons">
@@ -224,6 +210,56 @@
         </div>
       </section>
 
+      <section id="analysisPage" class="app-page" aria-label="Auswertung">
+        <div class="period-control">
+          <div id="periodSegmented" class="segmented period-segmented" role="group" aria-label="Zeitraum auswählen">
+            <button type="button" class="segment is-selected" data-period-kind="week" aria-pressed="true">Woche</button>
+            <button type="button" class="segment" data-period-kind="month" aria-pressed="false">Monat</button>
+            <button type="button" class="segment" data-period-kind="year" aria-pressed="false">Jahr</button>
+          </div>
+          <div class="period-nav">
+            <button id="periodPrev" class="icon-button" type="button" aria-label="Vorheriger Zeitraum">‹</button>
+            <strong id="periodLabel" class="period-label"></strong>
+            <button id="periodNext" class="icon-button" type="button" aria-label="Nächster Zeitraum">›</button>
+          </div>
+        </div>
+
+        <section class="card" aria-labelledby="analysisReportTitle">
+          <h2 id="analysisReportTitle">Stimme aus dem Off</h2>
+          <div id="analysisReport" class="analysis-report"></div>
+        </section>
+
+        <section class="card" aria-labelledby="analysisCompassTitle">
+          <h2 id="analysisCompassTitle">Rollenkompass</h2>
+          <div id="analysisCompass" class="analysis-compass"></div>
+        </section>
+
+        <section class="card" aria-labelledby="analysisStateTitle">
+          <h2 id="analysisStateTitle">Energie, Laune &amp; Check-ins</h2>
+          <div id="analysisState"></div>
+        </section>
+
+        <section class="card" aria-labelledby="analysisRoutinesTitle">
+          <h2 id="analysisRoutinesTitle">Routinen &amp; Pflichtgebete</h2>
+          <div id="analysisRoutines"></div>
+        </section>
+
+        <section class="card" aria-labelledby="analysisFastingTitle">
+          <h2 id="analysisFastingTitle">Fasten &amp; Streaks</h2>
+          <div id="analysisFasting"></div>
+        </section>
+
+        <section class="card" aria-labelledby="analysisDataTitle">
+          <h2 id="analysisDataTitle">Datenbasis &amp; Export</h2>
+          <div id="analysisData"></div>
+          <div class="export-buttons">
+            <button id="openAiExport" class="small-button export-button" type="button">Mit KI vertiefen</button>
+            <button id="analysisExportCsv" class="small-button export-button" type="button">Excel / CSV exportieren</button>
+          </div>
+          <p class="privacy-note">Die Auswertung entsteht vollständig auf diesem Gerät. Es wird nichts automatisch übertragen.</p>
+        </section>
+      </section>
+
       <section id="streaksPage" class="app-page" aria-label="Streaks">
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
@@ -231,13 +267,22 @@
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
       <button class="nav-button active" data-page="review" type="button" aria-label="Tagesreflexion" title="Tagesreflexion">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.6" y="3.4" width="14.8" height="17.2" rx="3.4"></rect><line x1="8.4" y1="8.6" x2="15.6" y2="8.6"></line><line x1="8.4" y1="12" x2="15.6" y2="12"></line><line x1="8.4" y1="15.4" x2="13" y2="15.4"></line></svg></span>
+        <span class="nav-symbol" aria-hidden="true">📝</span>
       </button>
       <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15.4a5 5 0 0 1 10 0"></path><line x1="3.4" y1="15.4" x2="20.6" y2="15.4"></line><line x1="12" y1="3.6" x2="12" y2="6.2"></line><line x1="5.4" y1="6.3" x2="7.2" y2="8.1"></line><line x1="18.6" y1="6.3" x2="16.8" y2="8.1"></line><line x1="6.4" y1="19.4" x2="17.6" y2="19.4"></line></svg></span>
+        <span class="nav-symbol" aria-hidden="true">🌅</span>
       </button>
       <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2a5.9 5.9 0 0 0 5.9-5.9c0-4-3-6.6-5.9-9.6-2.9 3-5.9 5.6-5.9 9.6A5.9 5.9 0 0 0 12 21.2Z"></path><path d="M12 21.2a2.6 2.6 0 0 0 2.6-2.6c0-1.7-1.3-2.8-2.6-4.2-1.3 1.4-2.6 2.5-2.6 4.2A2.6 2.6 0 0 0 12 21.2Z"></path></svg></span>
+        <span class="nav-symbol" aria-hidden="true">🔥</span>
+      </button>
+      <button class="nav-button" data-page="analysis" type="button" aria-label="Auswertung" title="Auswertung">
+        <span class="nav-symbol nav-symbol-chart" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <rect x="4" y="12.5" width="3.6" height="7.5" rx="1.4"></rect>
+            <rect x="10.2" y="8" width="3.6" height="12" rx="1.4"></rect>
+            <rect x="16.4" y="4" width="3.6" height="16" rx="1.4"></rect>
+          </svg>
+        </span>
       </button>
     </nav>
   </div>
@@ -271,6 +316,7 @@
             <strong id="stateEnergyValue">60 %</strong>
           </div>
           <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
+          <p id="stateEnergySentence" class="range-sentence" aria-live="polite">Meine Kraft reicht für das Nötigste.</p>
           <div class="state-range-legend"><small>niedrig</small><small>hoch</small></div>
         </div>
         <div class="field-group state-mood-field compact-mood-field">
@@ -279,6 +325,7 @@
             <strong id="stateMoodValue">60 %</strong>
           </div>
           <input id="stateMood" type="range" min="0" max="100" step="5" value="60">
+          <p id="stateMoodSentence" class="range-sentence" aria-live="polite">Ich bin neutral.</p>
           <div class="state-range-legend"><small>gedrückt</small><small>sehr gut</small></div>
         </div>
 
@@ -321,12 +368,34 @@
 
   <dialog id="activityDialog" class="form-dialog">
     <form id="activityForm">
-      <h3>Aktivität hinzufügen</h3>
+      <h3 id="activityDialogTitle">Aktivität hinzufügen</h3>
       <label for="activityTitle">Aktivität</label>
       <input id="activityTitle" required placeholder="z. B. Arabisch lernen">
       <label for="activityRole">Rolle</label>
       <select id="activityRole"></select>
+
+      <div class="field-group">
+        <label id="activitySizeLabel">Größe</label>
+        <div id="activitySizeGroup" class="segmented" role="group" aria-labelledby="activitySizeLabel">
+          <button type="button" class="segment" data-value="small" aria-pressed="false">Klein</button>
+          <button type="button" class="segment is-selected" data-value="medium" aria-pressed="true">Mittel</button>
+          <button type="button" class="segment" data-value="large" aria-pressed="false">Groß</button>
+        </div>
+        <small class="section-hint">Klein 1 · Mittel 2 · Groß 3 Beitragspunkte. Nur für die Rollenübersicht, kein Leistungsscore.</small>
+      </div>
+
+      <div class="field-group" id="activityContextWrap" hidden>
+        <label id="activityContextLabel">Kontext</label>
+        <div id="activityContextGroup" class="segmented" role="group" aria-labelledby="activityContextLabel">
+          <button type="button" class="segment" data-value="sma" aria-pressed="false">SMA-Regelarbeit</button>
+          <button type="button" class="segment" data-value="own" aria-pressed="false">Eigene Entwicklung</button>
+          <button type="button" class="segment is-selected" data-value="other" aria-pressed="true">Sonstiger Beitrag</button>
+        </div>
+        <small class="section-hint">SMA-Regelarbeit gehört zur Rolle Unternehmer, wird für den Rollenkompass aber auf einen Wochenbeitrag normalisiert.</small>
+      </div>
+
       <div class="dialog-actions">
+        <button id="deleteActivity" type="button" class="ghost-button danger" hidden>Aktivität löschen</button>
         <button id="cancelActivity" type="button" class="secondary-button">Abbrechen</button>
         <button id="confirmActivity" type="submit" class="primary-button compact">Hinzufügen</button>
       </div>
@@ -443,6 +512,44 @@
     </div>
   </dialog>
 
+  <dialog id="aiExportDialog" class="form-dialog ai-export-dialog">
+    <h3>Mit KI vertiefen</h3>
+    <p class="section-hint">Die App bleibt offline. Es wird kein Schlüssel benötigt und nichts automatisch versendet – du erhältst eine Datei oder einen Text, den du selbst weitergibst.</p>
+
+    <div class="field-group">
+      <label id="aiRangeLabel">Zeitraum</label>
+      <div id="aiRangeGroup" class="segmented" role="group" aria-labelledby="aiRangeLabel">
+        <button type="button" class="segment is-selected" data-value="30" aria-pressed="true">Letzte 30 Tage</button>
+        <button type="button" class="segment" data-value="90" aria-pressed="false">Letzte 90 Tage</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label id="aiFreeTextLabel">Freitext einbeziehen</label>
+      <div class="ai-checkboxes" role="group" aria-labelledby="aiFreeTextLabel">
+        <label class="checkbox-row"><input id="aiIncludeNotes" type="checkbox"><span>Tagesnotizen</span></label>
+        <label class="checkbox-row"><input id="aiIncludeGratitude" type="checkbox"><span>Dankbarkeitstexte</span></label>
+        <label class="checkbox-row"><input id="aiIncludeDreams" type="checkbox"><span>Traumtexte</span></label>
+      </div>
+      <small class="section-hint">Standardmäßig sind alle drei ausgeschaltet. Ohne Auswahl werden ausschließlich strukturierte Daten exportiert.</small>
+    </div>
+
+    <div id="aiExportPreview" class="ai-export-preview" aria-live="polite"></div>
+    <p id="aiExportStatus" class="backup-status"></p>
+
+    <div class="export-buttons">
+      <button id="aiExportTxt" class="small-button export-button" type="button">TXT speichern</button>
+      <button id="aiExportJson" class="small-button export-button" type="button">JSON speichern</button>
+      <button id="aiExportCopy" class="small-button export-button" type="button">Text kopieren</button>
+      <button id="aiExportShare" class="small-button export-button" type="button">Teilen</button>
+    </div>
+
+    <div class="dialog-actions">
+      <button id="aiExportClose" type="button" class="secondary-button">Schließen</button>
+    </div>
+  </dialog>
+
+  <script src="logic.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

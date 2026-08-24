@@ -1,4 +1,3 @@
-const PRAYERS = ["Fajr", "Dhuhr", "ʿAsr", "Maghrib", "ʿIschāʾ"];
 const SUNNAH_PRAYERS = ["2 vor Fajr", "Ḍuḥā", "vor Dhuhr", "nach Dhuhr", "nach Maghrib", "nach ʿIschāʾ", "Witr", "Qiyām"];
 const SUNNAH_PRAYER_STATES = [
   { value: "", label: "Offen", icon: "○", short: "Offen" },
@@ -22,22 +21,7 @@ const PRAYER_COLOR_META = {
   "ʿIschāʾ": { a: "#2F7FE9", b: "#20D6CA" }
 };
 
-const ROLES = [
-  { name: "Ich-Person", emoji: "🫆", color: "#4AA8FF", text: "#174E7A" },
-  { name: "Vitalist", emoji: "🧬", color: "#193C8C", text: "#FFFFFF" },
-  { name: "Absolvent", emoji: "🎓", color: "#F07A32", text: "#6D2E09" },
-  { name: "Unternehmer", emoji: "💰", color: "#F2C94C", text: "#5D4800" },
-  { name: "Muslim", emoji: "🕋", color: "#2EC4B6", text: "#075C55" },
-  { name: "Wirt", emoji: "🏡", color: "#8E2F45", text: "#FFFFFF" },
-  { name: "Familienmensch", emoji: "💌", color: "#72C472", text: "#205B29" }
-];
-
-const STREAKS = [
-  { key: "cannabisFree", label: "Cannabisfrei" },
-  { key: "compulsionFree", label: "Begierde" },
-  { key: "alcoholFree", label: "Alkoholfrei" },
-  { key: "smokeFree", label: "Rauchfrei" }
-];
+/* ROLES, STREAKS und PRAYERS stehen zentral in logic.js. */
 
 const EMOTION_GROUPS = [
   { label: "Sehr positiv", options: [
@@ -444,15 +428,7 @@ function coachImpulse(energy, mood, key) {
 }
 
 const RESPONSIBILITY_KEYS = ["situationState", "responsibilityClarity", "roleScope", "appropriateness", "effectLearning"];
-const ROLE_REFLECTION_ORDER = ["", "fulfilled", "adapted", "deferred", "missed", "overextended"];
-const ROLE_REFLECTION_META = {
-  "": { label: "Nicht reflektiert", short: "Offen", icon: "○", score: null },
-  fulfilled: { label: "Verantwortungsvoll erfüllt", short: "Erfüllt", icon: "✓", score: 2 },
-  adapted: { label: "Verantwortungsvoll angepasst", short: "Angepasst", icon: "≈", score: 2 },
-  deferred: { label: "Verantwortungsvoll zurückgestellt", short: "Zurückgestellt", icon: "↷", score: 2 },
-  missed: { label: "Nicht angemessen beantwortet", short: "Versäumt", icon: "×", score: 0 },
-  overextended: { label: "Rolle überdehnt", short: "Überdehnt", icon: "!", score: 0 }
-};
+/* ROLE_REFLECTION_ORDER und ROLE_REFLECTION_META stehen zentral in logic.js. */
 
 /* ==========================================================================
    ROLEPLAY-BILANZ
@@ -461,7 +437,7 @@ const ROLE_REFLECTION_META = {
    genau einer kurzen, kontrollierten Folgeauswahl.
    ========================================================================== */
 
-const BALANCE_OUTCOMES = ["fulfilled", "adapted", "deferred", "missed", "overextended"];
+/* BALANCE_OUTCOMES steht zentral in logic.js. */
 
 // Mehrfachauswahl, höchstens zwei Angaben.
 const BALANCE_DETAILS = {
@@ -518,7 +494,7 @@ const BALANCE_MODE_FIT = [
 ];
 
 function emptyRoleplayBalance() {
-  return { outcome: "", detailKeys: [], followUpAction: "", followUpDate: "", modeFit: "", evaluatedModeKey: "", evaluatedRoleName: "" };
+  return { outcome: "", detailOutcome: "", detailKeys: [], followUpAction: "", followUpDate: "", modeFit: "", evaluatedModeKey: "", evaluatedRoleName: "" };
 }
 
 const ROUTINE_STATE_ORDER = ["", "done", "missed", "responsiblySkipped"];
@@ -684,7 +660,7 @@ const DEFAULT_ROUTINES = {
 
 // Dauerauswahl im Schritt-Editor: 1 bis 180 Minuten als native iOS-Auswahl.
 const ROUTINE_MINUTE_CHOICES = Array.from({ length: 180 }, (_, index) => index + 1);
-const APP_VERSION = "6.0.0";
+const APP_VERSION = "8.0.0";
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
@@ -703,43 +679,9 @@ let routineSession = null;
 let autoSaveTimer = null;
 let streaksUnlocked = false;
 
-function todayISO() {
-  const d = new Date();
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
-}
-
-function dateToISO(date) {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
-}
-
-function addDays(iso, amount) {
-  const d = new Date(`${iso}T12:00:00`);
-  d.setDate(d.getDate() + amount);
-  return dateToISO(d);
-}
-
-/* --------------------------------------------------------------------------
-   Kalenderwochen
-   Die Woche läuft immer von Montag bis Sonntag – kein gleitendes Fenster.
-   -------------------------------------------------------------------------- */
-function mondayOf(iso) {
-  const d = new Date(`${iso}T12:00:00`);
-  const shift = (d.getDay() + 6) % 7;   // Montag = 0
-  d.setDate(d.getDate() - shift);
-  return dateToISO(d);
-}
-
-// Stabiler Schlüssel einer Kalenderwoche: das Datum ihres Montags.
-function firstOfMonth(iso) {
-  return `${iso.slice(0, 7)}-01`;
-}
+/* Datums-, Wochen- und Textwerkzeuge stehen zentral in logic.js. */
 
 function storageKey(date) { return `${STORAGE_NAMESPACE}-review-${date}`; }
-function safeParse(text, fallback = null) { try { return JSON.parse(text); } catch { return fallback; } }
-function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
-function escapeHTML(value = "") { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
 
 function linkifyText(value = "") {
   const escaped = escapeHTML(value);
@@ -750,11 +692,6 @@ function linkifyText(value = "") {
       return `<a href="${clean}" target="_blank" rel="noopener noreferrer">${clean}</a>${suffix}`;
     })
     .replace(/\n/g, "<br>");
-}
-
-function getRole(name) {
-  const normalized = ["Yannick", "Ich"].includes(name) ? "Ich-Person" : name;
-  return ROLES.find(role => role.name === normalized) || ROLES[0];
 }
 
 function defaultRoleForDate(date) {
@@ -784,8 +721,11 @@ function inheritedStreaks(previousData) {
   }));
 }
 
-function emptyReview(date) {
-  const previous = findPreviousReview(date)?.data;
+/* inherit=false wird beim reinen Lesen gespeicherter Tage benutzt. Dort sind
+   alle Werte vorhanden, und das Zurücksuchen nach dem Vortag entfällt – das
+   hält Massenauswertungen über Monate und Jahre schnell. */
+function emptyReview(date, inherit = true) {
+  const previous = inherit ? findPreviousReview(date)?.data : null;
   return {
     role: defaultRoleForDate(date),
     breakfast: "", lunch: "", dinner: "", snack: "",
@@ -798,11 +738,15 @@ function emptyReview(date) {
     sunnahPrayers: Object.fromEntries(SUNNAH_PRAYERS.map(prayer => [prayer, ""])),
     ramadanDays: previous?.ramadanDays !== undefined ? Number(previous.ramadanDays) : -29,
     fastingCompleted: false,
+    // Neue, positiv beschriftete Fastenerfassung (siehe logic.js).
+    fasting: { type: "" },
+    // Schnellerfassung eines SMA-Arbeitstags, unabhängig von der Tagesrolle.
+    smaWorkday: false,
     sleepQualityScore: "",
     dreamCategory: "",
     dreams: "",
     activities: [],
-    streaks: inheritedStreaks(previous),
+    streaks: inherit ? inheritedStreaks(previous) : Object.fromEntries(STREAKS.map(streak => [streak.key, { days: 0, broken: false, todayStatus: "" }])),
     mood: "",
     gratitude1: "", gratitude2: "", allahName: "",
     stateCheckins: [],
@@ -824,7 +768,15 @@ function normalizeRoleplayBalance(raw, fallbackOutcome = "") {
   balance.outcome = BALANCE_OUTCOMES.includes(raw?.outcome) ? raw.outcome
     : BALANCE_OUTCOMES.includes(fallbackOutcome) ? fallbackOutcome : "";
 
-  const detail = BALANCE_DETAILS[balance.outcome];
+  /* Die frühere verzweigte Oberfläche wird nicht mehr bearbeitet, ihre Daten
+     bleiben aber vollständig erhalten. detailOutcome merkt sich, zu welcher
+     Hauptantwort die historischen Detailangaben gehören – dadurch überlebt
+     die Historie auch dann, wenn die Hauptantwort später geändert wird. */
+  const detailOutcome = BALANCE_OUTCOMES.includes(raw?.detailOutcome) ? raw.detailOutcome
+    : BALANCE_OUTCOMES.includes(raw?.outcome) ? raw.outcome : "";
+  balance.detailOutcome = detailOutcome;
+
+  const detail = BALANCE_DETAILS[detailOutcome];
   if (detail) {
     const allowed = detail.options.map(([key]) => key);
     const seen = new Set();
@@ -833,7 +785,7 @@ function normalizeRoleplayBalance(raw, fallbackOutcome = "") {
       .slice(0, detail.max);
   }
 
-  const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
+  const followUp = BALANCE_FOLLOW_UPS[detailOutcome];
   if (followUp) {
     const allowed = followUp.options.map(([key]) => key);
     balance.followUpAction = allowed.includes(raw?.followUpAction) ? raw.followUpAction : "";
@@ -853,16 +805,18 @@ function legacySleepScore(value) {
   return ({ "Sehr gut": 1, "Gut": 2, "Neutral": 2, "Schlecht": 4, "Sehr schlecht": 5 })[value] ?? "";
 }
 
-function normalizeReview(raw, date, hasStoredValue) {
-  const base = emptyReview(date);
+function normalizeReview(raw, date, hasStoredValue, inherit = true) {
+  const base = emptyReview(date, inherit);
   const merged = { ...base, ...(raw || {}) };
   merged.role = getRole(raw?.role || base.role).name;
   merged.prayers = { ...base.prayers, ...(raw?.prayers || {}) };
   merged.sunnahPrayers = { ...base.sunnahPrayers, ...(raw?.sunnahPrayers || {}) };
-  merged.activities = Array.isArray(raw?.activities) ? raw.activities.map(item => ({
-    title: String(item.title || ""),
-    role: getRole(item.role || "Ich-Person").name
-  })).filter(item => item.title) : [];
+  /* Migration der Aktivitäten: Größe und Unternehmer-Kontext kommen hinzu.
+     Bestehende Einträge behalten Titel und Rolle, bekommen "Mittel" und einen
+     neutralen Kontext. Aus dem Titel wird ausdrücklich nie SMA abgeleitet. */
+  merged.activities = Array.isArray(raw?.activities)
+    ? raw.activities.map(normalizeActivity).filter(item => item.title)
+    : [];
   merged.mealCategories = Object.fromEntries(["breakfast", "lunch", "dinner", "snack"].map(key => {
     const value = raw?.mealCategories?.[key] || "";
     return [key, mealCategoryMeta(value) ? value : ""];
@@ -975,6 +929,13 @@ function normalizeReview(raw, date, hasStoredValue) {
      Hauptantwort weiterverwenden. Vorhandene Felder bleiben unberührt. */
   merged.roleplayBalance = normalizeRoleplayBalance(raw?.roleplayBalance, merged.roleReflections?.[merged.role] || "");
 
+  /* Fasten: neue Art je Tag. Alte abgeschlossene Fastentage ohne bekannte
+     Art werden als "legacy" gekennzeichnet und dadurch nicht willkürlich
+     eingeordnet. ramadanDays und fastingCompleted bleiben unverändert
+     erhalten, damit Backups und Exporte nichts verlieren. */
+  merged.fasting = normalizeFasting(raw);
+  merged.smaWorkday = raw?.smaWorkday === true;
+
   merged.streaks = hasStoredValue ? { ...base.streaks } : base.streaks;
   STREAKS.forEach(streak => {
     const old = raw?.streaks?.[streak.key];
@@ -994,9 +955,27 @@ function loadReview(date) {
   return normalizeReview(raw, date, Boolean(rawText));
 }
 
+/* Liest einen gespeicherten Tag ohne Vortagsvererbung. Nicht gespeicherte
+   Tage ergeben null – so entstehen in Auswertungen keine erfundenen Werte. */
+function readStoredReview(date) {
+  const rawText = localStorage.getItem(storageKey(date));
+  if (!rawText) return null;
+  const raw = safeParse(rawText, {});
+  return normalizeReview(raw, date, true, false);
+}
+
+/* Einheitliche Datenbasis aller Auswertungen: ein Eintrag je Kalendertag,
+   stored kennzeichnet, ob wirklich etwas erfasst wurde. */
+function collectEntries(startISO, endISO) {
+  return datesBetween(startISO, endISO).map(date => {
+    const data = readStoredReview(date);
+    return { date, stored: Boolean(data), data };
+  });
+}
+
 function collectForm() {
   if (!currentData) return;
-  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "gratitude1", "gratitude2", "allahName", "responsibilityMain", "responsibilityAdaptation", "responsibilityNextStep", "notes"].forEach(id => {
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "gratitude1", "gratitude2", "allahName", "responsibilityMain", "responsibilityAdaptation", "responsibilityNextStep", "notes"].forEach(id => {
     if ($(id)) currentData[id] = $(id).value;
   });
   currentData.mealCategories = currentData.mealCategories || { breakfast: "", lunch: "", dinner: "", snack: "" };
@@ -1041,8 +1020,6 @@ function formatShortDate(iso) {
 }
 
 function setDate(date) {
-  weekOffset = 0;
-  balanceModeFitNotice = false;
   selectedDate = date;
   calendarCursor = firstOfMonth(date);
   currentData = loadReview(date);
@@ -1054,7 +1031,7 @@ function setDate(date) {
 }
 
 function fillForm() {
-  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "ramadanDays", "gratitude1", "gratitude2", "allahName", "responsibilityMain", "responsibilityAdaptation", "responsibilityNextStep", "notes"].forEach(id => {
+  ["breakfast", "lunch", "dinner", "snack", "water", "steps", "gratitude1", "gratitude2", "allahName", "responsibilityMain", "responsibilityAdaptation", "responsibilityNextStep", "notes"].forEach(id => {
     if ($(id)) $(id).value = currentData[id] ?? "";
   });
   ["breakfast", "lunch", "dinner", "snack"].forEach(key => {
@@ -1068,7 +1045,8 @@ function fillForm() {
   $("dayRole").value = getRole(currentData.role).name;
   applyRolePickerStyle();
   renderWaterControl();
-  updateRamadanDisplay();
+  renderFasting();
+  renderSmaQuickCapture();
   updateRoutineStateButtons();
   renderPrayers();
   renderActivities();
@@ -1679,6 +1657,7 @@ function updateStateCheckinPreview() {
   const mode = modeForCheckin(draft);
   $("stateEnergyValue").textContent = `${draft.energy ?? 0} %`;
   $("stateMoodValue").textContent = `${draft.mood ?? 0} %`;
+  updateRangeSentences();
   const preview = $("stateFrameworkPreviewText");
   if (!preview) return;
   if (!mode) { preview.innerHTML = ""; return; }
@@ -1719,25 +1698,10 @@ function saveStateCheckin(event) {
   renderRoleplayBalance();
 }
 
-/* Hinweis nach einer kontrollierten Rücksetzung der Moduspassung.
-   Gilt nur für die laufende Ansicht, wird nicht gespeichert. */
-let balanceModeFitNotice = false;
-
-/* Ändert sich der maßgebliche Modus nachträglich, wird ausschließlich die
-   Passungsbewertung zurückgesetzt. Die Verantwortungsbilanz bleibt erhalten. */
-function syncRoleplayBalanceMode() {
-  if (!currentData) return;
-  const balance = currentData.roleplayBalance;
-  const mode = currentDayMode();
-  if (!balance || !mode) return;
-  if (balance.modeFit && balance.evaluatedModeKey && balance.evaluatedModeKey !== mode.key) {
-    balance.modeFit = "";
-    balance.evaluatedModeKey = mode.key;
-    balance.evaluatedRoleName = dayRoleConfig(selectedDate).roleName;
-    balanceModeFitNotice = true;
-    saveReview(true);
-  }
-}
+/* Die frühere Bewertung der Moduspassung ist aus der täglichen Oberfläche
+   entfallen. Gespeicherte historische Werte bleiben unangetastet, deshalb
+   wird hier auch nichts mehr zurückgesetzt. */
+function syncRoleplayBalanceMode() { /* bewusst ohne Wirkung – siehe Kommentar */ }
 
 function balanceChipHTML(action, value, label, selected, disabled = false) {
   return `<button type="button" class="balance-chip${selected ? " is-selected" : ""}${disabled ? " is-disabled" : ""}"
@@ -1745,122 +1709,56 @@ function balanceChipHTML(action, value, label, selected, disabled = false) {
     aria-pressed="${selected ? "true" : "false"}"${disabled ? " aria-disabled=\"true\"" : ""}>${escapeHTML(label)}</button>`;
 }
 
+/* ==========================================================================
+   ROLEPLAY-BILANZ – radikal vereinfacht
+
+   Genau eine Frage, eine Auswahl mit einem einzigen Antippen, sofortiges
+   Speichern. Keine Detailfragen, keine Folgehandlungen, keine Datumsfelder,
+   keine Moduspassung, kein neues Freitextfeld.
+
+   Historische Detailangaben bleiben im Datensatz, in Backups und im
+   CSV-Export erhalten; sie werden hier nur nicht mehr bearbeitet.
+   ========================================================================== */
+
 function renderRoleplayBalance() {
   const container = $("roleplayBalance");
   if (!container || !currentData) return;
   const balance = currentData.roleplayBalance = normalizeRoleplayBalance(currentData.roleplayBalance);
-  const mode = currentDayMode();
 
   const outcomeChips = BALANCE_OUTCOMES
     .map(key => balanceChipHTML("outcome", key, ROLE_REFLECTION_META[key].short, balance.outcome === key))
     .join("");
 
-  let followUpBlock = "";
-  const detail = BALANCE_DETAILS[balance.outcome];
-  if (detail) {
-    const full = balance.detailKeys.length >= detail.max;
-    followUpBlock = `<div class="balance-block">
-      <p class="balance-question" id="balanceDetailQuestion">${escapeHTML(detail.question)}</p>
-      <div class="balance-options" role="group" aria-labelledby="balanceDetailQuestion">
-        ${detail.options.map(([key, label]) => {
-          const selected = balance.detailKeys.includes(key);
-          return balanceChipHTML("detail", key, label, selected, !selected && full);
-        }).join("")}
-      </div>
-      <small class="balance-hint">Höchstens zwei Angaben.</small>
-    </div>`;
-  }
-
-  const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
-  if (followUp) {
-    const showDate = balance.followUpAction && followUp.dateFor.includes(balance.followUpAction);
-    followUpBlock = `<div class="balance-block">
-      <p class="balance-question" id="balanceFollowUpQuestion">${escapeHTML(followUp.question)}</p>
-      <div class="balance-options" role="group" aria-labelledby="balanceFollowUpQuestion">
-        ${followUp.options.map(([key, label]) => balanceChipHTML("followUp", key, label, balance.followUpAction === key)).join("")}
-      </div>
-      ${showDate ? `<div class="balance-date field-group">
-        <label for="balanceFollowUpDate">Datum</label>
-        <input id="balanceFollowUpDate" type="date" value="${escapeHTML(balance.followUpDate)}">
-      </div>` : ""}
-    </div>`;
-  }
-
-  const fitLabel = mode ? `${mode.label} bewerten` : "Nach dem ersten Check-in verfügbar.";
-  const fitOptions = BALANCE_MODE_FIT.map(([key, label]) =>
-    `<button type="button" class="balance-segment${balance.modeFit === key ? " is-selected" : ""}"
-      data-balance-action="modeFit" data-balance-value="${key}"
-      aria-pressed="${balance.modeFit === key ? "true" : "false"}"${mode ? "" : " disabled"}>${escapeHTML(label)}</button>`).join("");
+  const archived = balance.detailOutcome && balance.detailOutcome !== balance.outcome && balance.detailKeys.length;
 
   container.innerHTML = `
     <div class="balance-block">
-      <p class="balance-question" id="balanceOutcomeQuestion">Wie habe ich meine Verantwortung heute beantwortet?</p>
+      <p class="balance-question" id="balanceOutcomeQuestion">Wie hast du deine wichtigste Verantwortung heute beantwortet?</p>
       <div class="balance-options" role="group" aria-labelledby="balanceOutcomeQuestion">${outcomeChips}</div>
-    </div>
-    ${followUpBlock}
-    <div class="balance-block">
-      <p class="balance-question" id="balanceModeFitQuestion">War der empfohlene Rollenmodus rückblickend passend?</p>
-      <small class="balance-hint${mode ? " is-mode" : ""}"${mode ? ` style="color:${mode.color}"` : ""}>${escapeHTML(fitLabel)}</small>
-      <div class="balance-segmented${mode ? "" : " is-disabled"}" role="group" aria-labelledby="balanceModeFitQuestion">${fitOptions}</div>
-      ${balanceModeFitNotice && mode ? `<small class="balance-hint">Der maßgebliche Modus hat sich geändert – bitte erneut einschätzen.</small>` : ""}
+      <small class="balance-hint">Eine Auswahl genügt. Sie wird sofort gespeichert und beschreibend ausgewertet – ohne Erfolgsquote.</small>
+      ${archived ? `<small class="balance-hint">Ältere Detailangaben zu „${escapeHTML(ROLE_REFLECTION_META[balance.detailOutcome].short)}“ bleiben in Backup und Export erhalten.</small>` : ""}
     </div>`;
 }
 
-/* Ein einziger delegierter Listener für die gesamte Bilanz. Die Karte wird
-   bei jeder Änderung neu gezeichnet; es entstehen keine verwaisten Handler. */
+/* Ein einziger delegierter Listener. Die Karte wird bei jeder Änderung neu
+   gezeichnet; es entstehen keine verwaisten Handler. */
 function bindRoleplayBalance() {
   const container = $("roleplayBalance");
   if (!container) return;
 
   container.addEventListener("click", event => {
-    const button = event.target.closest("button[data-balance-action]");
-    if (!button || button.disabled || button.classList.contains("is-disabled") || !currentData) return;
+    const button = event.target.closest("button[data-balance-action='outcome']");
+    if (!button || button.disabled || !currentData) return;
     const balance = currentData.roleplayBalance = normalizeRoleplayBalance(currentData.roleplayBalance);
     const value = button.dataset.balanceValue;
-
-    if (button.dataset.balanceAction === "outcome") {
-      // Wechselt die Hauptantwort, werden unpassende Detailangaben verworfen.
-      balance.outcome = balance.outcome === value ? "" : value;
-      balance.detailKeys = [];
-      balance.followUpAction = "";
-      balance.followUpDate = "";
-    } else if (button.dataset.balanceAction === "detail") {
-      const detail = BALANCE_DETAILS[balance.outcome];
-      if (!detail) return;
-      if (balance.detailKeys.includes(value)) balance.detailKeys = balance.detailKeys.filter(key => key !== value);
-      else if (balance.detailKeys.length < detail.max) balance.detailKeys = [...balance.detailKeys, value];
-    } else if (button.dataset.balanceAction === "followUp") {
-      const followUp = BALANCE_FOLLOW_UPS[balance.outcome];
-      if (!followUp) return;
-      balance.followUpAction = balance.followUpAction === value ? "" : value;
-      if (!balance.followUpAction || !followUp.dateFor.includes(balance.followUpAction)) balance.followUpDate = "";
-    } else if (button.dataset.balanceAction === "modeFit") {
-      const mode = currentDayMode();
-      if (!mode) return;
-      balance.modeFit = balance.modeFit === value ? "" : value;
-      balance.evaluatedModeKey = balance.modeFit ? mode.key : "";
-      balance.evaluatedRoleName = balance.modeFit ? dayRoleConfig(selectedDate).roleName : "";
-      balanceModeFitNotice = false;
-    } else return;
-
+    balance.outcome = balance.outcome === value ? "" : value;
     saveReview(true);
     renderRoleplayBalance();
-  });
-
-  container.addEventListener("change", event => {
-    if (event.target.id !== "balanceFollowUpDate" || !currentData) return;
-    const balance = currentData.roleplayBalance;
-    balance.followUpDate = /^\d{4}-\d{2}-\d{2}$/.test(event.target.value) ? event.target.value : "";
-    saveReview(true);
   });
 }
 
 function balanceOptionLabel(source, key) {
   return source?.options.find(([value]) => value === key)?.[1] || "";
-}
-
-function prayerWasPerformed(value) {
-  return Boolean(value) && value !== "Nicht gebetet";
 }
 
 function renderResponsibilityReflection() {
@@ -1879,29 +1777,13 @@ function applyRolePickerStyle() {
   applyHeaderTheme(role);
 }
 
-/* Mischt eine Farbe in Richtung einer Zielfarbe. Rein visuell – die
-   gespeicherten Rollenfarben selbst bleiben unverändert. */
-function mixHex(hex, target, amount) {
-  const a = hexToRgbTriple(hex);
-  const b = hexToRgbTriple(target);
-  const mixed = a.map((value, index) => Math.round(value + (b[index] - value) * amount));
-  return `rgb(${mixed.join(",")})`;
-}
-
-/* Die Kopfzeile ist Glas: die Rollenfarbe trägt nur noch Verlauf, Akzentlinie
-   und Schrifttönung. Weil helle Rollenfarben auf Glas sonst verschwinden
-   würden, wird die Schriftfarbe aus der Rollenfarbe abgeleitet statt aus dem
-   früheren Vollton-Kontrastwert. */
 function applyHeaderTheme(role = getRole($("dayRole")?.value || currentData?.role || ROLES[0].name)) {
   const header = $("appHeader");
   if (!header) return;
   header.style.setProperty("--header-role", role.color);
   header.style.setProperty("--header-role-soft", hexToRgba(role.color, .88));
   header.style.setProperty("--header-role-fade", hexToRgba(role.color, .16));
-  header.style.setProperty("--header-role-veil", hexToRgba(role.color, .17));
-  header.style.setProperty("--header-role-line", hexToRgba(role.color, .34));
-  header.style.setProperty("--header-role-ink-light", mixHex(role.color, "#0d1017", .58));
-  header.style.setProperty("--header-role-ink-dark", mixHex(role.color, "#ffffff", .62));
+  header.style.setProperty("--header-role-text", role.text);
 }
 
 function statusCircle(icon, variant = "neutral", size = "medium") {
@@ -2043,19 +1925,11 @@ function openPrayerDialog(prayer, kind = "obligatory") {
   $("prayerDialog").showModal();
 }
 
-function propagateRamadanForward(fromDate) {
-  let runningValue = Number(currentData.ramadanDays || 0);
-  for (let offset = 1; offset <= 3650; offset += 1) {
-    const date = addDays(fromDate, offset);
-    const rawText = localStorage.getItem(storageKey(date));
-    if (!rawText) continue;
-    const raw = safeParse(rawText);
-    if (!raw) continue;
-    if (raw.fastingCompleted) runningValue += 1;
-    raw.ramadanDays = runningValue;
-    localStorage.setItem(storageKey(date), JSON.stringify(raw));
-  }
-}
+/* Die frühere Fortschreibung von ramadanDays über alle Folgetage ist
+   entfallen. Der offene Nachholstand wird jetzt aus einem Grundstand und den
+   tatsächlich erfassten Nachholtagen abgeleitet (siehe Abschnitt „Fasten“).
+   Dadurch ist er idempotent: mehrfaches Speichern, Neuladen oder Bearbeiten
+   verändert ihn nicht mehrfach. Die alten Werte bleiben gespeichert. */
 
 function propagateStreaksForward(fromDate) {
   let running = Object.fromEntries(STREAKS.map(streak => {
@@ -2084,26 +1958,19 @@ function propagateStreaksForward(fromDate) {
   }
 }
 
-function updateRamadanDisplay() {
-  const value = Number($("ramadanDays").value || 0);
-  const display = $("ramadanDisplay");
-  display.className = value < 0 ? "ramadan-negative" : value === 0 ? "ramadan-zero" : "ramadan-positive";
-  display.textContent = value < 0 ? `${Math.abs(value)} Tage offen` : value === 0 ? "Alle Tage nachgeholt" : `${value} zusätzliche Tage`;
-  const button = $("ramadanComplete");
-  button.disabled = Boolean(currentData?.fastingCompleted);
-  button.textContent = currentData?.fastingCompleted ? "Fastentag geschafft ✓" : "Fastentag geschafft";
-}
-
 function renderActivities() {
   const list = $("activityList");
   if (!list) return;
   const activities = currentData.activities || [];
   list.innerHTML = activities.length ? activities.map((activity, index) => {
     const role = getRole(activity.role);
+    const size = activitySizeMeta(activity.size);
+    const context = ACTIVITY_CONTEXTS.find(item => item.key === activity.context);
+    const contextLabel = activity.role === ENTREPRENEUR_ROLE && activity.context !== "none" ? ` · ${context?.label || ""}` : "";
     return `<div class="activity-row tracking-activity" data-activity-index="${index}" style="--activity-color:${role.color};--activity-soft:${hexToRgba(role.color,.10)};--activity-glow:${hexToRgba(role.color,.18)}">
-      <div class="activity-main">
-        <div class="activity-copy"><strong>${escapeHTML(activity.title)}</strong><small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</small></div>
-      </div>
+      <button type="button" class="activity-main" data-edit-activity="${index}" aria-label="Aktivität ${escapeHTML(activity.title)} bearbeiten">
+        <div class="activity-copy"><strong>${escapeHTML(activity.title)}</strong><small>${escapeHTML(role.emoji)} ${escapeHTML(role.name)} · ${escapeHTML(size.label)}${escapeHTML(contextLabel)}</small></div>
+      </button>
       <div class="activity-sort-actions" aria-label="Aktivität sortieren">
         <button type="button" data-move-activity="-1" data-activity-index="${index}" ${index === 0 ? "disabled" : ""} aria-label="Nach oben">↑</button>
         <button type="button" data-move-activity="1" data-activity-index="${index}" ${index === activities.length - 1 ? "disabled" : ""} aria-label="Nach unten">↓</button>
@@ -2112,6 +1979,9 @@ function renderActivities() {
     </div>`;
   }).join("") : `<p class="activity-empty">Noch keine Aktivität dokumentiert.</p>`;
 
+  document.querySelectorAll("[data-edit-activity]").forEach(button => button.addEventListener("click", () => {
+    openActivityDialog(Number(button.dataset.editActivity));
+  }));
   document.querySelectorAll("[data-move-activity]").forEach(button => button.addEventListener("click", () => {
     moveArrayItem(currentData.activities, Number(button.dataset.activityIndex), Number(button.dataset.moveActivity));
     saveReview(true);
@@ -2147,6 +2017,7 @@ function renderStreaks() {
         <input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${streak.key}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage">
         <span class="streak-unit">Tage</span>
       </div>
+      ${streakDurationHTML(Number(state.days || 0))}
       <div class="streak-daily-actions" role="group" aria-label="Unterbrechung erfassen">
         <button type="button" class="danger ${state.todayStatus === "lapse" ? "active" : ""}" data-streak-daily="lapse" data-streak-key="${streak.key}">Unterbrechung</button>
       </div>
@@ -2174,51 +2045,9 @@ function renderStreaks() {
    Sieben Tage bis einschließlich des gewählten Datums. Die Auswertung bleibt
    beschreibend: keine Erfolgsquote, kein Gesamtscore, keine Bewertung.
    -------------------------------------------------------------------------- */
-/* Immer eine vollständige Kalenderwoche, Montag bis Sonntag.
-   weekOffset zählt Wochen zurück; 0 ist die Woche des gewählten Tages.
-   Zukünftige Wochen sind nicht erreichbar (siehe shiftWeek). */
-let weekOffset = 0;
-
-function weekDates(reference = selectedDate, offset = weekOffset) {
-  const monday = addDays(mondayOf(reference), offset * 7);
-  return Array.from({ length: 7 }, (_, index) => addDays(monday, index));
-}
-
-// Laune eines Tages: Mittel der erfassten Tages-Check-ins.
-function dailyAverageMood(data) {
-  const values = (data?.stateCheckins || [])
-    .filter(entry => entry.mood !== null && entry.mood !== undefined)
-    .map(entry => clamp(Number(entry.mood), 0, 100));
-  if (!values.length) return null;
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-}
-
 // Morgen- und Abendroutine eines Tages, in genau dieser Reihenfolge.
 function dailyRoutineStates(data) {
   return [data?.morningRoutineState || "", data?.eveningRoutineState || ""];
-}
-
-function shiftWeek(delta) {
-  const next = weekOffset + delta;
-  // Nicht über die aktuelle Kalenderwoche hinaus.
-  if (next > 0) return false;
-  const limit = -520;
-  if (next < limit) return false;
-  weekOffset = next;
-  renderStats();
-  return true;
-}
-
-// Energie eines Tages: Mittel der erfassten Tages-Check-ins (die Nacht trägt
-// keinen Energiewert und bleibt deshalb außen vor).
-function dailyAverageEnergy(data) {
-  // Seit alle vier Check-ins Energie erfassen, zählt auch die Nacht mit –
-  // sonst fehlte an Tagen mit reinem Nacht-Check-in der Energiewert.
-  const values = (data?.stateCheckins || [])
-    .filter(entry => entry.energy !== null && entry.energy !== undefined)
-    .map(entry => clamp(Number(entry.energy), 0, 100));
-  if (!values.length) return null;
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }
 
 // Belastung als eigenständige Kurve: hoher Wert bedeutet hohe Belastung.
@@ -2232,8 +2061,7 @@ function dailyAverageLoad(data) {
 }
 
 function dailyPrayerProgress(data) {
-  const count = PRAYERS.filter(prayer => prayerWasPerformed(data?.prayers?.[prayer])).length;
-  return { count, total: PRAYERS.length };
+  return { count: dailyPrayerCount(data), total: PRAYERS.length };
 }
 
 function buildWeeklyTrendChart(labels, series, options = {}) {
@@ -2294,15 +2122,19 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
   const todayBand = todayIndex < 0 ? "" :
     `<rect class="trend-today-band" x="${(xFor(todayIndex) - bandWidth / 2).toFixed(1)}" y="${padTop}" width="${bandWidth.toFixed(1)}" height="${plotHeight}" rx="10"></rect>`;
 
-  const xLabels = labels.map((label, index) =>
-    `<text x="${xFor(index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="${index === todayIndex ? "today" : ""}">${escapeHTML(label)}</text>`).join("");
+  /* Bei langen Zeiträumen wird nur jede n-te Beschriftung gezeichnet, damit
+     die Achse auf schmalen Geräten lesbar bleibt. */
+  const labelEvery = Math.max(1, Number(options.labelEvery) || 1);
+  const xLabels = labels.map((label, index) => (index % labelEvery !== 0 && index !== labels.length - 1 && index !== todayIndex)
+    ? ""
+    : `<text x="${xFor(index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="${index === todayIndex ? "today" : ""}">${escapeHTML(label)}</text>`).join("");
 
   const legend = series.map(item =>
     `<span class="${item.className}"><i aria-hidden="true"></i>${escapeHTML(item.label)}</span>`).join("");
 
   return `<div class="trend-panel">
     <div class="trend-legend">${legend}</div>
-    <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Wochenverlauf von Energie, Belastung und Pflichtgebeten">
+    <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHTML(options.ariaLabel || "Verlauf von Energie, Laune und Pflichtgebeten")}">
       ${todayBand}
       <g class="trend-grid">${grid}</g>
       ${paths}
@@ -2339,40 +2171,12 @@ function buildPrayerWeekPanel(labels, counts) {
   </div>`;
 }
 
+/* Der Wochenrückblick ist seit 8.0.0 Teil der eigenständigen
+   Auswertungsseite. Damit bleibt die Tagesreflexion ruhig und kompakt.
+   Diese Funktion hält lediglich die vorhandenen Aufrufstellen zusammen und
+   zeichnet die Auswertung neu, wenn sie sichtbar ist. */
 function renderStats() {
-  if (!currentData) return;
-  const dates = weekDates();
-  const reviews = dates.map(date => ({ date, data: loadReview(date), stored: Boolean(localStorage.getItem(storageKey(date))) }));
-  const labels = dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(new Date(`${date}T12:00:00`)).replace(".", ""));
-  const energy = reviews.map(item => item.stored ? dailyAverageEnergy(item.data) : null);
-  const mood = reviews.map(item => item.stored ? dailyAverageMood(item.data) : null);
-  const prayerCounts = reviews.map(item => item.stored ? dailyPrayerProgress(item.data).count : null);
-  // 0/5 = 0 %, 1/5 = 20 % … 5/5 = 100 % – gleiche Skala wie Energie und Laune.
-  const prayerPercent = prayerCounts.map(count => count === null ? null : Math.round(count / PRAYERS.length * 100));
-  const routineStates = reviews.map(item => item.stored ? dailyRoutineStates(item.data) : ["", ""]);
-  const today = todayISO();
-
-  const label = $("weekLabel");
-  // Kurz halten: neben der Überschrift steht auf schmalen Geräten wenig Platz.
-  if (label) label.textContent = weekOffset === 0 && dates.includes(today)
-    ? "Diese Woche"
-    : `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
-
-  const range = $("weekRange");
-  if (range) range.textContent = `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
-  const back = $("weekBack");
-  const forward = $("weekForward");
-  if (back) back.disabled = false;
-  if (forward) forward.disabled = weekOffset >= 0;
-
-  $("statsGrid").innerHTML = `
-    ${buildWeeklyTrendChart(labels, [
-      { label: "Energie", className: "energy", values: energy },
-      { label: "Laune", className: "mood", values: mood },
-      { label: "Pflichtgebete", className: "prayers", values: prayerPercent }
-    ], { todayIndex: dates.indexOf(today) })}
-    ${buildPrayerWeekPanel(labels, prayerCounts)}
-    ${buildRoutineWeekPanel(labels, routineStates)}`;
+  renderAnalysis();
 }
 
 /* Zweite Wochenübersicht direkt unter den Gebeten: zwei Punkte pro Tag.
@@ -2404,7 +2208,7 @@ function getAllReviews() {
     if (!key?.startsWith(`${STORAGE_NAMESPACE}-review-`)) continue;
     const date = key.replace(`${STORAGE_NAMESPACE}-review-`, "");
     const raw = safeParse(localStorage.getItem(key));
-    if (raw) reviews.push({ date, data: normalizeReview(raw, date, true) });
+    if (raw) reviews.push({ date, data: normalizeReview(raw, date, true, false) });
   }
   return reviews.sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -2430,10 +2234,12 @@ function exportBackup() {
   const payload = {
     app: "Roleplay",
     version: APP_VERSION,
-    schemaVersion: 6,
+    schemaVersion: 8,
     exportedAt: new Date().toISOString(),
     reviews: getAllReviews(),
-    routines
+    routines,
+    // Neu ab 8.0.0: geplante SMA-Tage, Fastenziele, Nachholstand, Wochenfokus.
+    settings
   };
   downloadTextFile(`roleplay-backup-${todayISO()}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
   localStorage.setItem(BACKUP_TIMESTAMP_KEY, new Date().toISOString());
@@ -2452,8 +2258,19 @@ function importBackup(file) {
       routines = normalizeRoutines(payload.routines);
       saveRoutines();
     }
+    /* Ältere Backups kennen den Einstellungsblock nicht. Dann wird der
+       Nachholstand einmalig neu aus den vorhandenen Tagesdaten abgeleitet,
+       statt einen falschen Zähler zu übernehmen. */
+    if (payload.settings) {
+      settings = normalizeSettings(payload.settings);
+    } else {
+      settings = { ...settings, fastingMigrated: false };
+    }
+    saveSettings();
+    migrateFastingOnce();
     localStorage.setItem("roleplay-last-import-at", new Date().toISOString());
     setDate(selectedDate);
+    renderAnalysis();
     $("backupStatus").textContent = `${validReviews.length} Tagesreviews erfolgreich importiert.`;
     alert("Backup wurde erfolgreich importiert.");
   };
@@ -2469,21 +2286,27 @@ function exportCsv() {
   const headers = [
     "Datum", "Tagesrolle", "Frühstück_Kategorie", "Frühstück", "Mittag_Kategorie", "Mittagessen", "Abend_Kategorie", "Abendessen", "Snack_Kategorie", "Snack", "Wasser_ml", "Schritte",
     "Morgenroutine", "Abendroutine", ...PRAYERS, ...SUNNAH_PRAYERS.map(prayer => `Sunnah_${prayer}`),
-    "Ramadan_Tage", "Fastentag", "Schlafqualität", "Traumkategorie", "Traumnotiz",
+    "Ramadan_Tage", "Fastentag", "Fastenart", "SMA_Arbeitstag", "Schlafqualität", "Traumkategorie", "Traumnotiz",
     "Checkins_Anzahl", "Letzter_Checkin", "Empfohlener_Rollenmodus", "Gewählter_Rollenmodus", "Abweichungsbegründung", "Energie", "Laune", "Gefühl", "Belastung", "Kontextnotiz",
     "Dankbarkeit", "Bewusste_Wahrnehmung", "Name_Allahs",
     "Verantwortungsbilanz", "Bilanz_Detailauswahl", "Bilanz_Folgehandlung", "Bilanz_Folgedatum", "Moduspassung", "Bewerteter_Modus",
     "Wichtigste_Verantwortung", "Anpassung_oder_Vermeidung", "Nächster_verantwortlicher_Schritt",
-    ...STREAKS.flatMap(streak => [`${streak.label}_Tage`, `${streak.label}_Heute`]), "Aktivitäten", "Notizen"
+    ...STREAKS.flatMap(streak => [`${streak.label}_Tage`, `${streak.label}_Heute`]), "Aktivitäten", "Aktivitäten_Beitragspunkte", "Wochenfokus_Haupt", "Wochenfokus_Neben", "Notizen"
   ];
   const lines = [headers.map(csvEscape).join(";")];
   getAllReviews().forEach(({ date, data }) => {
-    const activities = (data.activities || []).map(activity => `${activity.title} | ${activity.role}`).join(" / ");
+    // Größe und Kontext gehören mit in den Export, damit ein Reimport nichts verliert.
+    const activities = (data.activities || [])
+      .map(activity => `${activity.title} | ${activity.role} | ${activitySizeMeta(activity.size).label} | ${activity.context}`).join(" / ");
+    const activityPoints = (data.activities || [])
+      .filter(activity => !isSmaActivity(activity))
+      .reduce((sum, activity) => sum + activitySizePoints(activity.size), 0);
+    const focus = weekFocusFor(settings, date);
     const latest = latestStateCheckin(data);
     const mode = modeForCheckin(latest, data);
     const balance = data.roleplayBalance || emptyRoleplayBalance();
     const balanceDetails = (balance.detailKeys || [])
-      .map(key => balanceOptionLabel(BALANCE_DETAILS[balance.outcome], key)).filter(Boolean).join(" · ");
+      .map(key => balanceOptionLabel(BALANCE_DETAILS[balance.detailOutcome || balance.outcome], key)).filter(Boolean).join(" · ");
     const row = [
       date, data.role,
       mealCategoryLabel(data.mealCategories?.breakfast || ""), data.breakfast,
@@ -2493,22 +2316,26 @@ function exportCsv() {
       data.water, data.steps,
       TASK_STATE_META[data.morningRoutineState]?.label || "Offen", TASK_STATE_META[data.eveningRoutineState]?.label || "Offen",
       ...PRAYERS.map(prayer => data.prayers?.[prayer] || ""), ...SUNNAH_PRAYERS.map(prayer => data.sunnahPrayers?.[prayer] || ""),
-      data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein", data.sleepQualityScore, dreamCategoryLabel(data.dreamCategory || ""), data.dreams,
+      data.ramadanDays, data.fastingCompleted ? "Ja" : "Nein",
+      FASTING_TYPES.find(type => type.key === (data.fasting?.type || ""))?.label || "Nicht erfasst",
+      data.smaWorkday ? "Ja" : "Nein",
+      data.sleepQualityScore, dreamCategoryLabel(data.dreamCategory || ""), data.dreams,
       data.stateCheckins?.length || 0, latest ? checkinSlot(latest.slot).label : "", mode?.label || "", mode?.label || "", latest?.frameworkOverrideReason || "", latest?.energy ?? "", latest?.mood ?? "", latest?.emotion || "", LOAD_OPTIONS[latest?.load]?.label || "", latest?.note || "",
       data.gratitude1, data.gratitude2, data.allahName,
       balance.outcome ? ROLE_REFLECTION_META[balance.outcome].short : "",
       balanceDetails,
-      balanceOptionLabel(BALANCE_FOLLOW_UPS[balance.outcome], balance.followUpAction),
+      balanceOptionLabel(BALANCE_FOLLOW_UPS[balance.detailOutcome || balance.outcome], balance.followUpAction),
       balance.followUpDate || "",
       BALANCE_MODE_FIT.find(([key]) => key === balance.modeFit)?.[1] || "",
       modeMeta(balance.evaluatedModeKey)?.label || "",
       data.responsibilityMain, data.responsibilityAdaptation, data.responsibilityNextStep,
-      ...STREAKS.flatMap(streak => [Number(data.streaks?.[streak.key]?.days || 0), data.streaks?.[streak.key]?.todayStatus || ""]), activities, data.notes
+      ...STREAKS.flatMap(streak => [Number(data.streaks?.[streak.key]?.days || 0), data.streaks?.[streak.key]?.todayStatus || ""]),
+      activities, activityPoints, focus.primary, focus.secondary, data.notes
     ];
     lines.push(row.map(csvEscape).join(";"));
   });
   downloadTextFile(`roleplay-export-${todayISO()}.csv`, `﻿${lines.join("\r\n")}`, "text/csv;charset=utf-8");
-  $("backupStatus").textContent = "CSV-Export mit Check-ins, Gebeten, Bilanz und Reflexion wurde erstellt.";
+  $("backupStatus").textContent = "CSV-Export mit Check-ins, Gebeten, Fasten, Aktivitätsgrößen, Wochenfokus und Bilanz wurde erstellt.";
 }
 
 function hexToRgba(hex, alpha) {
@@ -3204,15 +3031,19 @@ function switchPage(page, options = {}) {
     requestStreakAccess();
     return;
   }
-  const titles = { review: "Tagesreflexion", routines: "Routinen", streaks: "Streaks" };
-  $("reviewPage").classList.toggle("active", page === "review");
-  $("routinesPage").classList.toggle("active", page === "routines");
-  $("streaksPage").classList.toggle("active", page === "streaks");
+  const titles = { review: "Tagesreflexion", routines: "Routinen", analysis: "Auswertung", streaks: "Streaks" };
+  ["review", "routines", "analysis", "streaks"].forEach(key => {
+    const section = $(`${key}Page`);
+    if (section) section.classList.toggle("active", page === key);
+  });
   $("pageTitle").textContent = titles[page] || "Roleplay";
-  $("rolePickerWrap").hidden = false;
-  $("dateNavigation").hidden = false;
+  /* Auf der Auswertungsseite ist die Tagesrolle ohne Bedeutung; sie hat dort
+     eine eigene Periodennavigation statt der Tagesleiste. */
+  $("rolePickerWrap").hidden = page === "analysis";
+  $("dateNavigation").hidden = page === "analysis";
   document.querySelectorAll(".nav-button").forEach(button => button.classList.toggle("active", button.dataset.page === page));
   if (page === "routines") renderRoutineCards();
+  if (page === "analysis") renderAnalysis();
   if (page === "streaks") renderStreaks();
   if (page !== "streaks") streaksUnlocked = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -3387,9 +3218,6 @@ function bindEvents() {
     resetStateCheckin(slot);
     $("stateCheckinDialog").close();
   });
-  if ($("weekBack")) $("weekBack").addEventListener("click", () => shiftWeek(-1));
-  if ($("weekForward")) $("weekForward").addEventListener("click", () => shiftWeek(1));
-  bindWeekSwipe();
   if ($("waterMinus")) $("waterMinus").addEventListener("click", () => changeWater(-500));
   if ($("waterPlus")) $("waterPlus").addEventListener("click", () => changeWater(500));
   document.querySelectorAll("[data-routine-cycle]").forEach(button => button.addEventListener("click", () => cycleRoutineState(button.dataset.routineCycle)));
@@ -3398,15 +3226,12 @@ function bindEvents() {
     openRoutineDetail(button.dataset.reviewOpenRoutine);
   }));
 
-  $("addActivity").addEventListener("click", () => { $("activityTitle").value = ""; $("activityDialog").showModal(); setTimeout(() => $("activityTitle").focus(), 50); });
+  $("addActivity").addEventListener("click", () => openActivityDialog(null));
   $("cancelActivity").addEventListener("click", () => $("activityDialog").close());
-  $("activityForm").addEventListener("submit", event => {
-    event.preventDefault();
-    const title = $("activityTitle").value.trim();
-    if (!title) return;
-    currentData.activities.push({ title, role: $("activityRole").value });
-    $("activityDialog").close(); saveReview(true); renderActivities();
-  });
+  $("activityRole").addEventListener("change", updateActivityContextVisibility);
+  $("activityForm").addEventListener("submit", saveActivityFromForm);
+  bindSegmentedGroup("activitySizeGroup");
+  bindSegmentedGroup("activityContextGroup");
 
   $("exportBackup").addEventListener("click", exportBackup);
   $("exportCsv").addEventListener("click", exportCsv);
@@ -3458,6 +3283,7 @@ function bindEvents() {
     if (event.target === $("sessionRoutineEditor")) toggleSessionRoutineEditor(false);
   });
 
+  bindVersionEightEvents();
   bindHeaderCollapse();
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && routineSession) { syncRoutineSessionClock(); renderRoutineSession(); }
@@ -3472,10 +3298,14 @@ function init() {
   initOptions();
   if ($("appVersionLabel")) $("appVersionLabel").textContent = `ROLEPLAY ${APP_VERSION}`;
   routines = loadRoutines();
+  settings = loadSettings();
+  migrateFastingOnce();
   bindEvents();
+  bindDialogCentering();
   const lastBackupAt = localStorage.getItem(BACKUP_TIMESTAMP_KEY);
   if (lastBackupAt) $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lastBackupAt))}`;
   setDate(todayISO());
+  analysisAnchor = todayISO();
   switchPage("review");
   restoreRoutineSession();
   registerServiceWorker();
@@ -3514,32 +3344,827 @@ function cycleSunnahPrayer(prayer) {
   renderPrayers();
 }
 
-/* Horizontales Blättern durch Kalenderwochen.
-   Eine Wischbewegung entspricht genau einer Woche; über die aktuelle
-   Kalenderwoche hinaus wird nicht navigiert (siehe shiftWeek). */
-function bindWeekSwipe() {
-  const area = $("statsSwipe");
-  if (!area || area.dataset.swipeBound === "true") return;
-  area.dataset.swipeBound = "true";
-  let startX = 0, startY = 0, active = false;
 
-  area.addEventListener("pointerdown", event => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    startX = event.clientX; startY = event.clientY; active = true;
+/* ==========================================================================
+   LOKALE EINSTELLUNGEN
+
+   Kleiner, zentral validierter Block neben den Tagesdaten. Er enthält die
+   geplanten SMA-Arbeitstage, die Fastenziele, den Grundstand der offenen
+   Nachholtage, den Wochenfokus je ISO-Kalenderwoche und die Vorauswahl des
+   KI-Exports. Der Namespace bleibt unverändert roleplay-v25.
+   ========================================================================== */
+
+const SETTINGS_STORAGE_KEY = `${STORAGE_NAMESPACE}-settings`;
+let settings = defaultSettings();
+
+function loadSettings() {
+  return normalizeSettings(safeParse(localStorage.getItem(SETTINGS_STORAGE_KEY), null));
+}
+
+function saveSettings() {
+  settings = normalizeSettings(settings);
+  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+}
+
+/* ==========================================================================
+   FASTEN
+
+   Drei klar unterschiedene Arten plus „nicht erfasst“. Der offene
+   Nachholstand wird NICHT fortgeschrieben, sondern abgeleitet:
+
+       offen = Grundstand − Anzahl erfasster Nachholtage
+
+   Dadurch ist die Rechnung idempotent: mehrfaches Speichern, Neuladen oder
+   Bearbeiten verändert den Zähler nicht mehrfach, und das Zurücknehmen eines
+   Eintrags stellt den Stand zuverlässig wieder her.
+   ========================================================================== */
+
+function forEachStoredRaw(callback) {
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith(`${STORAGE_NAMESPACE}-review-`)) continue;
+    const raw = safeParse(localStorage.getItem(key));
+    if (raw) callback(raw, key.replace(`${STORAGE_NAMESPACE}-review-`, ""));
+  }
+}
+
+function scanFastingTotals() {
+  const totals = { catchUp: 0, voluntary: 0, ramadan: 0, legacy: 0 };
+  forEachStoredRaw(raw => {
+    const type = normalizeFasting(raw).type;
+    if (type && totals[type] !== undefined) totals[type] += 1;
+  });
+  return totals;
+}
+
+function openCatchUpDays() {
+  return Math.max(0, settings.fastingCatchUpBaseline - scanFastingTotals().catchUp);
+}
+
+/* Einmalige Migration der alten negativen Ramadan-Zählung.
+   −29 bedeutete: 29 offene Nachholtage. Der zuletzt gespeicherte Wert
+   enthielt bereits alle früheren Abschlüsse, deshalb wird genau er zum
+   Grundstand. Alte fastingCompleted-Tage werden als „legacy“ geführt und
+   verringern den Zähler ausdrücklich NICHT – eine doppelte Verringerung ist
+   dadurch ausgeschlossen. */
+function migrateFastingOnce() {
+  if (settings.fastingMigrated) return;
+  let latestDate = "";
+  let latestValue = null;
+  forEachStoredRaw((raw, date) => {
+    if (raw.ramadanDays === undefined || raw.ramadanDays === null) return;
+    if (date > latestDate) { latestDate = date; latestValue = Number(raw.ramadanDays); }
+  });
+  const open = latestValue === null || !Number.isFinite(latestValue) ? 0 : Math.max(0, -latestValue);
+  settings.fastingCatchUpBaseline = open + scanFastingTotals().catchUp;
+  settings.fastingMigrated = true;
+  saveSettings();
+}
+
+function setFastingType(type) {
+  if (!currentData) return;
+  const next = FASTING_SELECTABLE.includes(type) ? type : "";
+  const current = currentData.fasting?.type || "";
+  currentData.fasting = { type: current === next ? "" : next };
+  saveReview(true);
+  renderFasting();
+  renderAnalysis();
+}
+
+function renderFasting() {
+  const group = $("fastingTypeGroup");
+  if (!group || !currentData) return;
+  const current = currentData.fasting?.type || "";
+  // "legacy" ist nicht auswählbar, wird aber sichtbar gemacht, statt zu verschwinden.
+  const options = FASTING_SELECTABLE.map(key => {
+    const meta = FASTING_TYPES.find(type => type.key === key);
+    const selected = current === key;
+    return `<button type="button" class="segment${selected ? " is-selected" : ""}" data-fasting-type="${escapeHTML(key)}"
+      aria-pressed="${selected ? "true" : "false"}">${escapeHTML(meta.short)}</button>`;
+  }).join("");
+  group.innerHTML = options;
+  group.querySelectorAll("[data-fasting-type]").forEach(button =>
+    button.addEventListener("click", () => setFastingType(button.dataset.fastingType)));
+
+  const open = openCatchUpDays();
+  const display = $("fastingOpenDisplay");
+  if (display) display.textContent = open === 0 ? "Keine Nachholtage offen" : `Noch ${open} ${open === 1 ? "Nachholtag" : "Nachholtage"} offen`;
+
+  const hint = $("fastingHint");
+  if (hint) {
+    hint.textContent = current === "legacy"
+      ? "Älterer Fasteneintrag ohne bekannte Art. Du kannst ihn hier bewusst zuordnen."
+      : current === "catchUp"
+        ? "Dieser Tag verringert den offenen Nachholstand genau einmal."
+        : "Für diesen Tag genau eine Art wählen oder offen lassen.";
+  }
+}
+
+/* ==========================================================================
+   SMA-ARBEITSTAG
+
+   Eine einzige Berührung, unabhängig davon, welche Tagesrolle im Kopf
+   ausgewählt ist. Die Arbeit bei SMA bleibt vollständig Teil der Rolle
+   Unternehmer; es entsteht keine zusätzliche Rolle.
+   ========================================================================== */
+
+function renderSmaQuickCapture() {
+  const button = $("smaWorkdayToggle");
+  if (!button || !currentData) return;
+  const active = isSmaWorkday(currentData);
+  const implicit = !currentData.smaWorkday && active;
+  button.classList.toggle("is-active", active);
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.innerHTML = `<span class="sma-toggle-mark" aria-hidden="true">${active ? "✓" : "＋"}</span>
+    <span class="sma-toggle-copy"><strong>SMA-Arbeitstag</strong><small>${implicit ? "durch SMA-Aktivität erfasst" : active ? "erfasst" : "mit einem Tippen erfassen"}</small></span>`;
+  button.disabled = implicit;
+}
+
+function toggleSmaWorkday() {
+  if (!currentData) return;
+  currentData.smaWorkday = !currentData.smaWorkday;
+  saveReview(true);
+  renderSmaQuickCapture();
+  renderAnalysis();
+}
+
+/* ==========================================================================
+   AKTIVITÄTSDIALOG
+
+   Titel, Rolle, Größe und – nur bei der Rolle Unternehmer – der Kontext.
+   Kein zusätzliches Freitextfeld. Mittel ist vorausgewählt, damit kein
+   zusätzlicher Pflichtschritt entsteht.
+   ========================================================================== */
+
+let editingActivityIndex = null;
+
+// Gemeinsame Auswahlmechanik für alle Segmented Controls im Dialog.
+function bindSegmentedGroup(id) {
+  const group = $(id);
+  if (!group || group.dataset.bound === "true") return;
+  group.dataset.bound = "true";
+  group.addEventListener("click", event => {
+    const button = event.target.closest("button[data-value]");
+    if (!button) return;
+    group.querySelectorAll("button[data-value]").forEach(item => {
+      const selected = item === button;
+      item.classList.toggle("is-selected", selected);
+      item.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  });
+}
+
+function segmentedValue(id, fallback = "") {
+  return $(id)?.querySelector("button.is-selected")?.dataset.value || fallback;
+}
+
+function setSegmentedValue(id, value) {
+  const group = $(id);
+  if (!group) return;
+  const buttons = [...group.querySelectorAll("button[data-value]")];
+  const match = buttons.find(button => button.dataset.value === value) || buttons[0];
+  buttons.forEach(button => {
+    const selected = button === match;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
+  });
+}
+
+function updateActivityContextVisibility() {
+  const wrap = $("activityContextWrap");
+  if (!wrap) return;
+  wrap.hidden = $("activityRole")?.value !== ENTREPRENEUR_ROLE;
+}
+
+function openActivityDialog(index = null) {
+  editingActivityIndex = Number.isInteger(index) ? index : null;
+  const activity = editingActivityIndex === null ? null : currentData?.activities?.[editingActivityIndex];
+  $("activityTitle").value = activity?.title || "";
+  $("activityRole").value = activity ? getRole(activity.role).name : getRole(currentData?.role).name;
+  setSegmentedValue("activitySizeGroup", activity ? normalizeActivitySize(activity.size) : DEFAULT_ACTIVITY_SIZE);
+  setSegmentedValue("activityContextGroup", activity ? normalizeActivityContext(activity.context, activity.role) : DEFAULT_ACTIVITY_CONTEXT);
+  updateActivityContextVisibility();
+  const heading = $("activityDialogTitle");
+  if (heading) heading.textContent = activity ? "Aktivität bearbeiten" : "Aktivität hinzufügen";
+  if ($("confirmActivity")) $("confirmActivity").textContent = activity ? "Sichern" : "Hinzufügen";
+  if ($("deleteActivity")) $("deleteActivity").hidden = !activity;
+  $("activityDialog").showModal();
+  if (!activity) setTimeout(() => $("activityTitle").focus(), 50);
+}
+
+function saveActivityFromForm(event) {
+  event.preventDefault();
+  const title = $("activityTitle").value.trim();
+  if (!title || !currentData) return;
+  const role = getRole($("activityRole").value).name;
+  const activity = normalizeActivity({
+    title,
+    role,
+    size: segmentedValue("activitySizeGroup", DEFAULT_ACTIVITY_SIZE),
+    context: segmentedValue("activityContextGroup", DEFAULT_ACTIVITY_CONTEXT)
+  });
+  if (editingActivityIndex === null) currentData.activities.push(activity);
+  else currentData.activities[editingActivityIndex] = activity;
+  editingActivityIndex = null;
+  $("activityDialog").close();
+  saveReview(true);
+  renderActivities();
+  renderSmaQuickCapture();
+  renderAnalysis();
+}
+
+function deleteCurrentActivity() {
+  if (editingActivityIndex === null || !currentData) return;
+  currentData.activities.splice(editingActivityIndex, 1);
+  editingActivityIndex = null;
+  $("activityDialog").close();
+  saveReview(true);
+  renderActivities();
+  renderSmaQuickCapture();
+  renderAnalysis();
+}
+
+/* ==========================================================================
+   STREAK-DAUER
+
+   Die Tage bleiben die einzige editierbare Einheit. Wochen, Monate und Jahre
+   sind ausschließlich berechnete Anzeigen.
+   ========================================================================== */
+
+function streakDurationHTML(days) {
+  const duration = streakDuration(days, selectedDate);
+  if (!duration.days) return `<p class="streak-duration">${escapeHTML(duration.text)}</p>`;
+  return `<p class="streak-duration">${escapeHTML(duration.text)}
+    <small>Zählbeginn: ${escapeHTML(formatLongDate(duration.startDate))}</small></p>`;
+}
+
+/* ==========================================================================
+   EMPFINDUNGSSÄTZE UNTER DEN REGLERN
+
+   Reine Orientierung, kein zusätzliches Eingabefeld. Die Berechnung des
+   Rollenmodus bleibt davon unberührt.
+   ========================================================================== */
+
+function updateRangeSentences() {
+  const energy = Number($("stateEnergy")?.value ?? 60);
+  const mood = Number($("stateMood")?.value ?? 60);
+  if ($("stateEnergySentence")) $("stateEnergySentence").textContent = energySentence(energy);
+  if ($("stateMoodSentence")) $("stateMoodSentence").textContent = moodSentence(mood);
+}
+
+/* ==========================================================================
+   AUSWERTUNGSSEITE
+   ========================================================================== */
+
+let analysisKind = "week";
+let analysisAnchor = todayISO();
+
+function analysisRange() { return periodRange(analysisKind, analysisAnchor); }
+
+function analysisEntries() {
+  const range = analysisRange();
+  return collectEntries(range.start, range.end);
+}
+
+function setAnalysisKind(kind) {
+  if (!PERIOD_KINDS.includes(kind)) return;
+  analysisKind = kind;
+  analysisAnchor = todayISO();
+  renderAnalysis();
+}
+
+function shiftAnalysisPeriod(delta) {
+  const next = shiftPeriod(analysisKind, analysisAnchor, delta);
+  // Nicht über den laufenden Zeitraum hinaus.
+  if (delta > 0 && periodRange(analysisKind, next).start > todayISO()) return;
+  analysisAnchor = next;
+  renderAnalysis();
+}
+
+function coverageLine(label, count, of) {
+  return `<li><span>${escapeHTML(label)}</span><b>${count} von ${of}</b></li>`;
+}
+
+function reportBlock(title, items) {
+  if (!items.length) return "";
+  return `<div class="report-block">
+    <span class="report-block-title">${escapeHTML(title)}</span>
+    <ul>${items.map(item => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+  </div>`;
+}
+
+function renderAnalysisReport(stats, entries) {
+  const container = $("analysisReport");
+  if (!container) return;
+  const report = buildReport(stats, entries);
+
+  if (report.insufficient) {
+    container.innerHTML = `<div class="report-block">
+      <ul>${report.situation.map(item => `<li>${escapeHTML(item)}</li>`).join("")}</ul>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = [
+    reportBlock("Lage – dokumentiert", report.situation),
+    reportBlock("Entwicklungen", report.developments),
+    reportBlock("Rollenkompass", report.compass),
+    reportBlock("Mögliche Zusammenhänge – kein Ursachennachweis", report.connections),
+    `<div class="report-next-step">
+      <span class="report-block-title">Ein nächster verantwortlicher Schritt</span>
+      <strong>${escapeHTML(report.nextStep)}</strong>
+    </div>`
+  ].filter(Boolean).join("");
+}
+
+function renderAnalysisCompass(stats) {
+  const container = $("analysisCompass");
+  if (!container) return;
+  const maximum = Math.max(1, ...stats.roles.map(role => role.total));
+  const bars = stats.roles.map(role => {
+    const meta = getRole(role.name);
+    const consciousWidth = Math.round(role.conscious / maximum * 100);
+    const smaWidth = Math.round(role.smaContribution / maximum * 100);
+    const detail = role.name === ENTREPRENEUR_ROLE && role.smaContribution > 0
+      ? `${role.conscious} Beitragspunkte · SMA-Grundbeitrag ${role.smaContribution.toFixed(2).replace(".", ",")}`
+      : `${role.conscious} Beitragspunkte aus ${role.activityCount} ${role.activityCount === 1 ? "Aktivität" : "Aktivitäten"}`;
+    return `<div class="compass-row" style="--role-color:${meta.color}">
+      <div class="compass-label"><strong>${escapeHTML(meta.emoji)} ${escapeHTML(role.name)}</strong><small>${escapeHTML(detail)}</small></div>
+      <div class="compass-bar" role="img" aria-label="${escapeHTML(role.name)}: ${escapeHTML(detail)}">
+        <i class="compass-fill conscious" style="width:${consciousWidth}%"></i>
+        <i class="compass-fill sma" style="width:${smaWidth}%"></i>
+      </div>
+    </div>`;
+  }).join("");
+
+  const focusWeek = analysisKind === "week" ? stats.weeks[0] : null;
+  const suggestion = suggestFocusRoles(stats.weeks, 2);
+  const focusBlock = focusWeek ? `
+    <div class="focus-block">
+      <span class="panel-caption">Wochenfokus · ${escapeHTML(focusWeek.key)}</span>
+      <p class="section-hint">Alle sieben Rollen behalten ihre Grundpräsenz. Der Fokus ist ein bewusster Schwerpunkt, keine Rangliste.</p>
+      <div class="focus-row">
+        <small>Hauptfokus</small>
+        <div class="role-chip-row" data-focus-slot="primary">${roleChipsHTML(focusWeek.focus.primary)}</div>
+      </div>
+      <div class="focus-row">
+        <small>Zweitfokus (optional)</small>
+        <div class="role-chip-row" data-focus-slot="secondary">${roleChipsHTML(focusWeek.focus.secondary)}</div>
+      </div>
+      ${suggestion.length ? `<p class="focus-suggestion">Vorschlag: ${escapeHTML(suggestion.map(item => item.name).join(" · "))}
+        <small>Ein Vorschlag wird niemals ungefragt gespeichert.</small></p>` : ""}
+    </div>` : `
+    <div class="focus-block">
+      <span class="panel-caption">Wochenfokus im Zeitraum</span>
+      ${stats.weeks.filter(week => week.focus.primary || week.focus.secondary).length
+        ? `<ul class="focus-history">${stats.weeks.filter(week => week.focus.primary || week.focus.secondary)
+            .map(week => `<li><b>${escapeHTML(week.key)}</b> ${escapeHTML([week.focus.primary, week.focus.secondary].filter(Boolean).join(" · "))}</li>`).join("")}</ul>`
+        : `<p class="section-hint">In diesem Zeitraum ist kein Wochenfokus gesetzt.</p>`}
+    </div>`;
+
+  const invisible = invisibleRoles(stats.weeks, 2);
+  const invisibleBlock = invisible.length
+    ? `<p class="compass-note">Seit mindestens ${invisible[0].weeks} abgeschlossenen Wochen ohne dokumentierten bewussten Beitrag: ${escapeHTML(invisible.map(item => item.name).join(", "))}.</p>`
+    : `<p class="compass-note">Keine Rolle ist über mehrere abgeschlossene Wochen vollständig unsichtbar geblieben.</p>`;
+
+  container.innerHTML = `
+    <div class="compass-legend"><span class="conscious"><i></i>bewusster Beitrag</span><span class="sma"><i></i>SMA-Grundbeitrag (normalisiert)</span></div>
+    ${bars}
+    ${invisibleBlock}
+    <div class="sma-load-block">
+      <span class="panel-caption">Reale SMA-Belastung</span>
+      <p class="section-hint">${stats.sma.workdays} ${stats.sma.workdays === 1 ? "Arbeitstag" : "Arbeitstage"} · ${stats.sma.activities} dokumentierte SMA-${stats.sma.activities === 1 ? "Aktivität" : "Aktivitäten"} · normalisierter Grundbeitrag ${stats.sma.contributionSum.toFixed(2).replace(".", ",")}</p>
+      <div class="field-group inline-field">
+        <label for="smaPlannedDays">Geplante SMA-Tage pro Woche</label>
+        <input id="smaPlannedDays" type="number" inputmode="numeric" min="0" max="7" step="1" value="${settings.smaPlannedDaysPerWeek}">
+      </div>
+      <small class="section-hint">Bei Urlaub, Krankheit oder bewusst geänderten Arbeitswochen hier korrigieren. Mehrere SMA-Aktivitäten an einem Tag zählen als ein Arbeitstag.</small>
+    </div>
+    ${focusBlock}`;
+
+  container.querySelectorAll("[data-focus-slot]").forEach(row => {
+    row.addEventListener("click", event => {
+      const button = event.target.closest("button[data-role-name]");
+      if (!button || !focusWeek) return;
+      setWeekFocus(focusWeek.key, row.dataset.focusSlot, button.dataset.roleName);
+    });
   });
 
-  area.addEventListener("pointerup", event => {
-    if (!active) return;
-    active = false;
-    const dx = event.clientX - startX;
-    const dy = event.clientY - startY;
-    // Nur eindeutig horizontale Bewegungen zählen, damit Scrollen nicht stört.
-    if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
-    const moved = shiftWeek(dx > 0 ? -1 : 1);
-    if (moved) area.animate(
-      [{ opacity: .45, transform: `translateX(${dx > 0 ? 14 : -14}px)` }, { opacity: 1, transform: "none" }],
-      { duration: 190, easing: "ease-out" });
+  const plannedInput = $("smaPlannedDays");
+  if (plannedInput) plannedInput.addEventListener("change", () => {
+    settings.smaPlannedDaysPerWeek = clamp(Math.round(Number(plannedInput.value) || 0), 0, 7);
+    saveSettings();
+    renderAnalysis();
+  });
+}
+
+function roleChipsHTML(selected) {
+  return ROLES.map(role => {
+    const active = role.name === selected;
+    return `<button type="button" class="role-chip${active ? " is-selected" : ""}" data-role-name="${escapeHTML(role.name)}"
+      style="--role-color:${role.color};--role-soft:${hexToRgba(role.color, .16)};--role-text:${role.text}"
+      aria-pressed="${active ? "true" : "false"}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</button>`;
+  }).join("");
+}
+
+/* Der Wochenfokus wird getrennt nach ISO-Kalenderwoche gespeichert.
+   Historische Wochen behalten ihre damalige Auswahl. */
+function setWeekFocus(weekKey, slot, roleName) {
+  const current = normalizeWeekFocusEntry(settings.weekFocus[weekKey]);
+  const next = { ...current };
+  next[slot] = current[slot] === roleName ? "" : roleName;
+  // Haupt- und Zweitfokus dürfen nicht dieselbe Rolle sein.
+  if (slot === "primary" && next.secondary === next.primary) next.secondary = "";
+  if (slot === "secondary" && next.secondary === next.primary) next.secondary = "";
+  settings.weekFocus[weekKey] = next;
+  saveSettings();
+  renderAnalysis();
+}
+
+/* Zeitraumgerechte Reihen: Woche und Monat tageweise, Jahr monatsweise.
+   Nicht erfasste Tage bleiben null und werden nie zu einer erfundenen Null. */
+function analysisSeries(stats) {
+  if (analysisKind === "year") {
+    const labels = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+    const buckets = Array.from({ length: 12 }, () => ({ energy: [], mood: [], prayers: [] }));
+    stats.dates.forEach((date, index) => {
+      const month = Number(date.slice(5, 7)) - 1;
+      if (stats.energySeries[index] !== null) buckets[month].energy.push(stats.energySeries[index]);
+      if (stats.moodSeries[index] !== null) buckets[month].mood.push(stats.moodSeries[index]);
+      if (stats.prayerSeries[index] !== null) buckets[month].prayers.push(stats.prayerSeries[index]);
+    });
+    return {
+      labels,
+      energy: buckets.map(bucket => average(bucket.energy)),
+      mood: buckets.map(bucket => average(bucket.mood)),
+      prayers: buckets.map(bucket => { const value = average(bucket.prayers); return value === null ? null : Math.round(value / PRAYERS.length * 100); }),
+      labelEvery: 1
+    };
+  }
+  const labels = stats.dates.map(date => analysisKind === "week"
+    ? new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(dateFromISO(date)).replace(".", "")
+    : String(Number(date.slice(8, 10))));
+  return {
+    labels,
+    energy: stats.energySeries,
+    mood: stats.moodSeries,
+    prayers: stats.prayerSeries.map(count => count === null ? null : Math.round(count / PRAYERS.length * 100)),
+    labelEvery: analysisKind === "week" ? 1 : 5
+  };
+}
+
+function renderAnalysisState(stats) {
+  const container = $("analysisState");
+  if (!container) return;
+  const series = analysisSeries(stats);
+  const todayIndex = analysisKind === "year"
+    ? (stats.range.start.slice(0, 4) === todayISO().slice(0, 4) ? Number(todayISO().slice(5, 7)) - 1 : -1)
+    : stats.dates.indexOf(todayISO());
+
+  const enoughData = stats.coverage.energyDays >= 2;
+  container.innerHTML = `
+    <div class="analysis-figures">
+      <div class="figure"><small>Ø Energie</small><strong>${stats.energyAverage === null ? "–" : `${stats.energyAverage} %`}</strong></div>
+      <div class="figure"><small>Ø Laune</small><strong>${stats.moodAverage === null ? "–" : `${stats.moodAverage} %`}</strong></div>
+      <div class="figure"><small>Check-ins</small><strong>${stats.coverage.checkins}</strong></div>
+    </div>
+    ${enoughData
+      ? buildWeeklyTrendChart(series.labels, [
+          { label: "Energie", className: "energy", values: series.energy },
+          { label: "Laune", className: "mood", values: series.mood },
+          { label: "Pflichtgebete", className: "prayers", values: series.prayers }
+        ], { todayIndex, labelEvery: series.labelEvery })
+      : `<p class="section-hint">Für eine belastbare Entwicklung fehlen noch genügend Einträge.</p>`}
+    <p class="section-hint">Energie erfasst an ${stats.coverage.energyDays} von ${stats.coverage.elapsedDays} Tagen · Laune an ${stats.coverage.moodDays} von ${stats.coverage.elapsedDays} Tagen.</p>`;
+}
+
+function renderAnalysisRoutines(stats) {
+  const container = $("analysisRoutines");
+  if (!container) return;
+  const entries = analysisEntries().filter(entry => entry.stored && entry.date <= todayISO());
+  const weekView = analysisKind === "week";
+  const labels = weekView
+    ? stats.dates.map(date => new Intl.DateTimeFormat("de-DE", { weekday: "short" }).format(dateFromISO(date)).replace(".", ""))
+    : [];
+  const prayerCounts = weekView ? stats.prayerSeries : [];
+  const routineStates = weekView
+    ? stats.dates.map(date => {
+        const entry = entries.find(item => item.date === date);
+        return entry ? dailyRoutineStates(entry.data) : ["", ""];
+      })
+    : [];
+
+  const prayerShare = stats.prayers.possible
+    ? Math.round(stats.prayers.performed / stats.prayers.possible * 100) : null;
+  const routineShare = stats.routines.possible
+    ? Math.round(stats.routines.settled / stats.routines.possible * 100) : null;
+
+  container.innerHTML = `
+    <div class="analysis-figures">
+      <div class="figure"><small>Pflichtgebete</small><strong>${stats.prayers.performed} / ${stats.prayers.possible || "–"}</strong></div>
+      <div class="figure"><small>Anteil</small><strong>${prayerShare === null ? "–" : `${prayerShare} %`}</strong></div>
+      <div class="figure"><small>Routinen abgeschlossen</small><strong>${stats.routines.settled} / ${stats.routines.possible || "–"}</strong></div>
+    </div>
+    ${weekView ? buildPrayerWeekPanel(labels, prayerCounts) : ""}
+    ${weekView ? buildRoutineWeekPanel(labels, routineStates) : ""}
+    <p class="section-hint">Verantwortungsvoll abgeschlossen heißt: durchgeführt oder bewusst und gewissenhaft nicht durchgeführt.${routineShare === null ? "" : ` Anteil im Zeitraum: ${routineShare} %.`}</p>`;
+}
+
+function renderAnalysisFasting(stats) {
+  const container = $("analysisFasting");
+  if (!container) return;
+  const open = openCatchUpDays();
+  const goal = settings.fastingCatchUpWeeklyGoal;
+  const voluntaryGoal = settings.fastingVoluntaryWeeklyGoal;
+  const weeksCount = Math.max(1, stats.weeks.length);
+
+  const streaks = stats.streaks.map(streak => {
+    const duration = streakDuration(streak.days, stats.lastStoredDate || todayISO());
+    return `<div class="analysis-streak">
+      <div><strong>${escapeHTML(streak.label)}</strong><small>${escapeHTML(duration.text)}</small></div>
+      <b>${streak.days} Tage</b>
+    </div>`;
+  }).join("");
+
+  container.innerHTML = `
+    <div class="fasting-open-panel">
+      <strong>${open === 0 ? "Keine Nachholtage offen" : `Noch ${open} ${open === 1 ? "Nachholtag" : "Nachholtage"} offen`}</strong>
+      <small>Abgeleitet aus dem Grundstand minus ${stats.fasting.catchUp === 0 ? "erfassten" : ""} Nachholtagen – der Wert kann sich nicht doppelt verringern.</small>
+    </div>
+    <div class="analysis-figures">
+      <div class="figure"><small>Nachholtage</small><strong>${stats.fasting.catchUp}</strong></div>
+      <div class="figure"><small>Freiwillig</small><strong>${stats.fasting.voluntary}</strong></div>
+      <div class="figure"><small>Ramadan</small><strong>${stats.fasting.ramadan}</strong></div>
+    </div>
+    ${stats.fasting.legacy ? `<p class="section-hint">${stats.fasting.legacy} ältere ${stats.fasting.legacy === 1 ? "Fastentag" : "Fastentage"} ohne bekannte Art. Sie werden bewusst nicht nachträglich eingeordnet.</p>` : ""}
+    <div class="fasting-settings">
+      <div class="field-group inline-field">
+        <label for="fastingOpenInput">Offene Nachholtage korrigieren</label>
+        <input id="fastingOpenInput" type="number" inputmode="numeric" min="0" step="1" value="${open}">
+      </div>
+      <div class="field-group inline-field">
+        <label for="catchUpGoal">Wochenziel Nachholfasten</label>
+        <input id="catchUpGoal" type="number" inputmode="numeric" min="0" max="7" step="1" value="${goal}">
+      </div>
+      <div class="field-group inline-field">
+        <label for="voluntaryGoal">Wochenziel freiwillig (0 = ohne Ziel)</label>
+        <input id="voluntaryGoal" type="number" inputmode="numeric" min="0" max="7" step="1" value="${voluntaryGoal}">
+      </div>
+    </div>
+    <p class="section-hint">${goal > 0
+      ? `Nachholfasten im Zeitraum: ${stats.fasting.catchUp} bei ${goal * weeksCount} angestrebten Tagen.`
+      : "Für das Nachholfasten ist kein Wochenziel gesetzt."}
+      ${voluntaryGoal > 0
+        ? ` Freiwilliges Fasten: ${stats.fasting.voluntary} bei ${voluntaryGoal * weeksCount} angestrebten Tagen.`
+        : " Freiwilliges Fasten wird ohne Wochenziel nur gezählt, nicht bewertet."}</p>
+    <p class="section-hint">Ein fehlender Ramadan-Eintrag wird nicht automatisch als neuer Nachholtag gewertet.</p>
+    <div class="analysis-streaks">
+      <span class="panel-caption">Streaks am ${escapeHTML(stats.lastStoredDate ? formatShortDate(stats.lastStoredDate) : formatShortDate(todayISO()))}</span>
+      ${streaks}
+    </div>`;
+
+  const openInput = $("fastingOpenInput");
+  if (openInput) openInput.addEventListener("change", () => {
+    // Der Grundstand wird so gesetzt, dass der sichtbare offene Wert stimmt.
+    const desired = Math.max(0, Math.round(Number(openInput.value) || 0));
+    settings.fastingCatchUpBaseline = desired + scanFastingTotals().catchUp;
+    saveSettings();
+    renderFasting();
+    renderAnalysis();
+  });
+  const catchGoalInput = $("catchUpGoal");
+  if (catchGoalInput) catchGoalInput.addEventListener("change", () => {
+    settings.fastingCatchUpWeeklyGoal = clamp(Math.round(Number(catchGoalInput.value) || 0), 0, 7);
+    saveSettings(); renderAnalysis();
+  });
+  const volGoalInput = $("voluntaryGoal");
+  if (volGoalInput) volGoalInput.addEventListener("change", () => {
+    settings.fastingVoluntaryWeeklyGoal = clamp(Math.round(Number(volGoalInput.value) || 0), 0, 7);
+    saveSettings(); renderAnalysis();
+  });
+}
+
+function renderAnalysisData(stats) {
+  const container = $("analysisData");
+  if (!container) return;
+  const balanceRows = BALANCE_OUTCOMES
+    .filter(key => stats.balance[key] > 0)
+    .map(key => `<li><span>${escapeHTML(ROLE_REFLECTION_META[key].short)}</span><b>${stats.balance[key]}</b></li>`).join("");
+
+  container.innerHTML = `
+    <ul class="coverage-list">
+      ${coverageLine("Tage mit Eintrag", stats.coverage.storedDays, stats.coverage.elapsedDays)}
+      ${coverageLine("Energie erfasst", stats.coverage.energyDays, stats.coverage.elapsedDays)}
+      ${coverageLine("Laune erfasst", stats.coverage.moodDays, stats.coverage.elapsedDays)}
+      ${coverageLine("Pflichtgebete dokumentiert", stats.coverage.prayerDays, stats.coverage.elapsedDays)}
+      ${coverageLine("Aktivitäten dokumentiert", stats.coverage.activityDays, stats.coverage.elapsedDays)}
+      ${coverageLine("Bilanz beantwortet", stats.coverage.balanceDays, stats.coverage.elapsedDays)}
+    </ul>
+    ${balanceRows ? `<div class="balance-summary"><span class="panel-caption">ROLEPLAY-Bilanz im Zeitraum</span>
+      <ul class="coverage-list">${balanceRows}</ul>
+      <small class="section-hint">Rein beschreibend. Daraus entsteht keine Erfolgsquote und kein Score.</small></div>` : ""}`;
+}
+
+function renderAnalysis() {
+  if (!$("analysisPage")) return;
+  // Nur zeichnen, wenn die Seite auch sichtbar ist – das spart Arbeit.
+  if (!$("analysisPage").classList.contains("active")) return;
+
+  document.querySelectorAll("[data-period-kind]").forEach(button => {
+    const selected = button.dataset.periodKind === analysisKind;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", selected ? "true" : "false");
   });
 
-  area.addEventListener("pointercancel", () => { active = false; });
+  const range = analysisRange();
+  if ($("periodLabel")) $("periodLabel").textContent = periodLabel(analysisKind, analysisAnchor);
+  if ($("periodNext")) $("periodNext").disabled = periodRange(analysisKind, shiftPeriod(analysisKind, analysisAnchor, 1)).start > todayISO();
+
+  const entries = collectEntries(range.start, range.end);
+  const stats = buildPeriodStats(range, entries, { today: todayISO(), settings });
+
+  renderAnalysisReport(stats, entries);
+  renderAnalysisCompass(stats);
+  renderAnalysisState(stats);
+  renderAnalysisRoutines(stats);
+  renderAnalysisFasting(stats);
+  renderAnalysisData(stats);
+}
+
+/* ==========================================================================
+   OPTIONALE KI-TIEFENANALYSE
+
+   Ausdrücklich ohne API und ohne Schlüssel. Die App bleibt vollständig
+   offline; es wird ausschließlich eine Datei bzw. ein Text erzeugt, den der
+   Nutzer selbst weitergibt. Nichts wird automatisch versendet.
+   ========================================================================== */
+
+function currentAiOptions() {
+  return {
+    rangeDays: Number(segmentedValue("aiRangeGroup", "30")) === 90 ? 90 : 30,
+    includeNotes: $("aiIncludeNotes")?.checked === true,
+    includeGratitude: $("aiIncludeGratitude")?.checked === true,
+    includeDreams: $("aiIncludeDreams")?.checked === true,
+    settings
+  };
+}
+
+function buildCurrentAiPayload() {
+  const options = currentAiOptions();
+  const end = todayISO();
+  const start = addDays(end, -(options.rangeDays - 1));
+  return buildAiExport(collectEntries(start, end), options);
+}
+
+function updateAiExportPreview() {
+  const preview = $("aiExportPreview");
+  if (!preview) return;
+  const options = currentAiOptions();
+  const fields = aiExportFieldSummary(options);
+  const payload = buildCurrentAiPayload();
+  preview.innerHTML = `
+    <p class="ai-preview-line"><b>Zeitraum:</b> letzte ${options.rangeDays} Tage · ${payload.days.length} Tage mit Eintrag</p>
+    <p class="ai-preview-line"><b>Enthalten:</b> ${escapeHTML(fields.included.join(", "))}</p>
+    ${fields.excluded.length ? `<p class="ai-preview-line"><b>Nicht enthalten:</b> ${escapeHTML(fields.excluded.join(", "))}</p>` : ""}
+    <p class="ai-preview-note">Es wird nichts automatisch versendet. Du entscheidest, was du weitergibst.</p>`;
+}
+
+function openAiExportDialog() {
+  setSegmentedValue("aiRangeGroup", String(settings.aiExport.rangeDays));
+  if ($("aiIncludeNotes")) $("aiIncludeNotes").checked = settings.aiExport.includeNotes;
+  if ($("aiIncludeGratitude")) $("aiIncludeGratitude").checked = settings.aiExport.includeGratitude;
+  if ($("aiIncludeDreams")) $("aiIncludeDreams").checked = settings.aiExport.includeDreams;
+  updateAiExportPreview();
+  $("aiExportDialog").showModal();
+}
+
+function persistAiPreferences() {
+  const options = currentAiOptions();
+  settings.aiExport = {
+    rangeDays: options.rangeDays,
+    includeNotes: options.includeNotes,
+    includeGratitude: options.includeGratitude,
+    includeDreams: options.includeDreams
+  };
+  saveSettings();
+}
+
+function aiExportFilename(extension) {
+  return `roleplay-ki-analyse-${todayISO()}.${extension}`;
+}
+
+function exportAiAsText() {
+  persistAiPreferences();
+  downloadTextFile(aiExportFilename("txt"), aiExportToText(buildCurrentAiPayload()), "text/plain;charset=utf-8");
+}
+
+function exportAiAsJson() {
+  persistAiPreferences();
+  downloadTextFile(aiExportFilename("json"), JSON.stringify(buildCurrentAiPayload(), null, 2), "application/json;charset=utf-8");
+}
+
+function copyAiExport() {
+  persistAiPreferences();
+  const text = aiExportToText(buildCurrentAiPayload());
+  const done = () => { const status = $("aiExportStatus"); if (status) status.textContent = "Text wurde in die Zwischenablage kopiert."; };
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
+}
+
+function fallbackCopy(text, done) {
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "readonly");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  try { document.execCommand("copy"); done(); }
+  catch { const status = $("aiExportStatus"); if (status) status.textContent = "Kopieren war nicht möglich. Bitte die TXT-Datei verwenden."; }
+  area.remove();
+}
+
+function shareAiExport() {
+  persistAiPreferences();
+  const text = aiExportToText(buildCurrentAiPayload());
+  if (!navigator.share) {
+    const status = $("aiExportStatus");
+    if (status) status.textContent = "Dieses Gerät unterstützt kein Teilen. Bitte TXT, JSON oder Kopieren verwenden.";
+    return;
+  }
+  navigator.share({ title: "ROLEPLAY – Datenauszug", text }).catch(() => {});
+}
+
+/* ==========================================================================
+   ZUVERLÄSSIG ZENTRIERTE DIALOGE
+
+   Auf dem iPhone wanderten Dialoge bisher an den oberen Rand. Die Zentrierung
+   liegt jetzt vollständig im Stylesheet (position: fixed, inset: 0, margin:
+   auto). Hier wird nur noch der sichtbare Viewport nachgeführt, damit ein
+   Dialog auch bei geöffneter Bildschirmtastatur mittig bleibt.
+   ========================================================================== */
+
+function applyVisualViewportMetrics() {
+  const viewport = window.visualViewport;
+  const root = document.documentElement;
+  if (!viewport) {
+    root.style.setProperty("--modal-viewport-h", `${window.innerHeight}px`);
+    root.style.setProperty("--modal-viewport-shift", "0px");
+    return;
+  }
+  root.style.setProperty("--modal-viewport-h", `${Math.round(viewport.height)}px`);
+  // Verschiebung der sichtbaren Fläche gegenüber dem Layout-Viewport.
+  const shift = Math.round(viewport.offsetTop + (viewport.pageTop || 0) - window.scrollY);
+  root.style.setProperty("--modal-viewport-shift", `${Number.isFinite(shift) ? shift : 0}px`);
+}
+
+function bindDialogCentering() {
+  applyVisualViewportMetrics();
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", applyVisualViewportMetrics);
+    window.visualViewport.addEventListener("scroll", applyVisualViewportMetrics);
+  }
+  window.addEventListener("resize", applyVisualViewportMetrics);
+  window.addEventListener("orientationchange", () => setTimeout(applyVisualViewportMetrics, 120));
+  // Beim Öffnen eines Dialogs sofort nachmessen.
+  document.querySelectorAll("dialog").forEach(dialog => {
+    const original = dialog.showModal.bind(dialog);
+    dialog.showModal = function patchedShowModal(...args) {
+      const result = original(...args);
+      applyVisualViewportMetrics();
+      return result;
+    };
+  });
+}
+
+/* ==========================================================================
+   VERDRAHTUNG DER NEUEN OBERFLÄCHE
+   ========================================================================== */
+
+function bindVersionEightEvents() {
+  if ($("smaWorkdayToggle")) $("smaWorkdayToggle").addEventListener("click", toggleSmaWorkday);
+  if ($("deleteActivity")) $("deleteActivity").addEventListener("click", deleteCurrentActivity);
+
+  document.querySelectorAll("[data-period-kind]").forEach(button =>
+    button.addEventListener("click", () => setAnalysisKind(button.dataset.periodKind)));
+  if ($("periodPrev")) $("periodPrev").addEventListener("click", () => shiftAnalysisPeriod(-1));
+  if ($("periodNext")) $("periodNext").addEventListener("click", () => shiftAnalysisPeriod(1));
+
+  if ($("openAiExport")) $("openAiExport").addEventListener("click", openAiExportDialog);
+  if ($("analysisExportCsv")) $("analysisExportCsv").addEventListener("click", exportCsv);
+  bindSegmentedGroup("aiRangeGroup");
+  if ($("aiRangeGroup")) $("aiRangeGroup").addEventListener("click", updateAiExportPreview);
+  ["aiIncludeNotes", "aiIncludeGratitude", "aiIncludeDreams"].forEach(id => {
+    if ($(id)) $(id).addEventListener("change", updateAiExportPreview);
+  });
+  if ($("aiExportTxt")) $("aiExportTxt").addEventListener("click", exportAiAsText);
+  if ($("aiExportJson")) $("aiExportJson").addEventListener("click", exportAiAsJson);
+  if ($("aiExportCopy")) $("aiExportCopy").addEventListener("click", copyAiExport);
+  if ($("aiExportShare")) $("aiExportShare").addEventListener("click", shareAiExport);
+  if ($("aiExportClose")) $("aiExportClose").addEventListener("click", () => $("aiExportDialog").close());
+  if ($("aiExportDialog")) $("aiExportDialog").addEventListener("cancel", event => { event.preventDefault(); $("aiExportDialog").close(); });
+
+  ["stateEnergy", "stateMood"].forEach(id => {
+    if ($(id)) $(id).addEventListener("input", updateRangeSentences);
+  });
 }
