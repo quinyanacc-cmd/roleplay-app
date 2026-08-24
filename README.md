@@ -1,238 +1,138 @@
-# ROLEPLAY App 8.0.0
+# ROLEPLAY App 6.0.0
 
-Lokale iPhone-PWA für Tagesreflexion, Rollen, Routinen und Auswertung.
+Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
-kein Backend, kein Framework, keine externen Bibliotheken, keine Chartbibliothek.
+kein Framework, keine externen Bibliotheken.
 
-Dateien: `index.html`, `logic.js`, `app.js`, `style.css`, `service-worker.js`,
-`manifest.webmanifest`, Bilder, `test-logic.js`, `test-dom.js`.
+## Neu in 6.0.0
 
-## Aufbau ab 8.0.0
+### Rollenmodus ohne Aufgaben
 
-`logic.js` ist neu und enthält die **reine Kernlogik** ohne DOM-, Storage- oder
-Netzzugriff: Rollen, Modusberechnung, Aktivitäts- und Fastenmodell, Wochenfokus,
-Rollenkompass, SMA-Normalisierung, Streak-Umrechnung, Reporttexte und die
-Aufbereitung der Auswertung. Im Browser wird die Datei als klassisches Skript
-**vor** `app.js` geladen (gemeinsamer globaler Gültigkeitsbereich), in Node über
-`module.exports` getestet. `app.js` bleibt für Oberfläche, Speicherung und
-Ereignisse zuständig.
+ROLEPLAY ist kein Habit-Tracker. Der Rollenmodus beschreibt ab dieser Version
+ausschließlich **Umfang, Tempo und Form** des Handelns – er verteilt keine
+Aufgaben mehr.
 
-## Neu in 8.0.0
+Die Systemlogik lautet:
 
-### 1. Vierter Reiter „Auswertung“
+    Zustand → angemessener Rollenmodus → Coach-Impuls →
+    eigenverantwortliches Handeln → spätere ROLEPLAY-Bilanz
 
-Neue Hauptseite mit Diagramm-Symbol. Der bisherige Wochenrückblick aus der
-Tagesreflexion ist vollständig dorthin umgezogen; der Tagesrollen-Picker
-erscheint dort nicht mehr.
+Entfernt wurden dabei die Rollenmatrix (`ROLE_CONFIG.levels`), `dayPriorityText`,
+`recommendationForCheckin`, `PROTECTIVE_LEVEL_TEXT`, `MODE_LEVEL_MAP`,
+`stateCauseSentence` sowie die ausschließlich dafür genutzte Wochenaufgabenlogik.
+Der Modus hebt dabei keine Verantwortung auf: Gebete, Fastentage, Streaks,
+Routinen und Aktivitäten bleiben vollständig erhalten.
 
-Oben ein iOS-Segmented-Control **Woche / Monat / Jahr** plus Periodennavigation
-vor und zurück. Bereiche in dieser Reihenfolge:
+### Fünf verbindliche Modi
 
-1. **Report** – lokal erzeugte „Stimme aus dem Off“
-2. **Rollenkompass** – Präsenz je Rolle im Zeitraum
-3. **Energie, Laune und Check-in-Verlauf**
-4. **Routinen und Pflichtgebete**
-5. **Fasten und Streaks**
-6. **Datenbasis und Export**
+| Modus | Ab Wert | Farbe |
+| --- | --- | --- |
+| Schon-Modus | 0 | Koralle `#E77D4D` |
+| Minimum | 40 | Amber `#E5A22E` |
+| Standard | 55 | Türkis `#27B9A9` |
+| Fokus | 70 | Blau `#3D7BE8` |
+| Entwicklungsmodus | 92 | Violett `#7258E8` |
 
-Alle Diagramme sind handgeschriebenes SVG/HTML/CSS mit `aria-label` und
-Textalternative. Leere oder in der Zukunft liegende Tage erzeugen **keine
-Nullwerte**, sondern Lücken; die Datenabdeckung wird ausgewiesen.
+Die Berechnung bleibt unverändert: Laune 0,58, Energie 0,42, harte Untergrenze
+bei einem Einzelwert ≤ 15, Deckelung bei < 25 und < 35 sowie die Ausnahme, dass
+eine sehr gute Laune eine energiebedingte Begrenzung um eine Stufe anheben darf.
+Eine manuelle Auswahl gibt es weiterhin nicht.
 
-### 2. SMA-Arbeit innerhalb der Rolle Unternehmer
+Alte Modusschlüssel werden beim Laden abgebildet:
+`stabilization|recovery|protection → gentle`, `maintenance → minimum`,
+`balance → standard`, `design → focus`, `peak → development`.
 
-Es gibt weiterhin keine Rolle „Arbeitnehmer“. SMA-Arbeit ist Kontext einer
-Unternehmer-Aktivität, nicht eine eigene Rolle.
+### Coach-Impuls
 
-- **Ein-Tipp-Schalter „SMA-Arbeitstag“** auf der Tagesseite, unabhängig von der
-  gewählten Tagesrolle.
-- Unternehmer-Aktivitäten erhalten einen Kontext aus fester Liste:
-  **SMA-Regelarbeit / Eigene Entwicklung / Sonstiger Beitrag**. Kein Freitext.
-- Mehrere SMA-Aktivitäten am selben Tag zählen als **ein** Arbeitstag; die
-  Detailansicht zeigt sie einzeln.
-- Normalisierung: `SMA-Wochenbeitrag = erfasste Tage / geplante Tage`, hart
-  gedeckelt bei 1,0. Standard sind 5 geplante Tage, in der Auswertung auf 0–7
-  änderbar. Bei 0 geplanten Tagen wird nichts geteilt, sondern „ohne Planwert“
-  ausgewiesen. Eigene Projekte werden durch SMA-Tage nicht kleiner gerechnet.
+Statt Aufgaben- und Begründungstext erscheint eine kompakte, in der Modusfarbe
+getönte Fläche mit der Überschrift **IMPULS FÜR JETZT**, einem festen Kernsatz je
+Modus und einem zustandsabhängigen Zusatzsatz.
 
-### 3. Aktivitätsgröße
+Die Zustandskategorie wird in dieser Reihenfolge bestimmt: `bothHigh`, `bothLow`,
+`moodLeads`, `energyLeads`, `balanced`. Gleiche Werte ergeben immer denselben
+Text – es gibt keinen Zufall. Hauptansicht und Check-in-Vorschau nutzen mit
+`coachImpulse()` dieselbe zentrale Textfunktion.
 
-Klein = 1, Mittel = 2, Groß = 3 Beitragspunkte, **Mittel vorausgewählt**. Die
-Punkte fließen ausschließlich in die Rollenübersicht. Es entsteht daraus
-ausdrücklich **kein Leistungsscore und keine Erfolgsquote**.
+### Fünf Check-ins pro Tag
 
-### 4. Rollenpriorität statt Rangliste
+    Nacht · Morgen · Mittag · Nachmittag · Abend
 
-Die Priorität ergibt sich aus **Grundpräsenz** (wie oft eine Rolle real
-vorkommt) und **Wochenfokus**. Der Fokus wird über farbige Rollen-Chips gesetzt:
-ein Hauptfokus, optional ein Zweitfokus, gespeichert je ISO-Kalenderwoche
-(`2026-W34`). Frühere Wochen bleiben unverändert erhalten.
+Der Nachmittag hat ein eigenes SVG im vorhandenen Strichstil und eine eigene
+Farbwelt, die den Türkis-Gold-Ton des Mittags in die wärmeren Abendfarben führt.
 
-Die App darf einen Fokus **vorschlagen**, speichert ihn aber **nie ungefragt**.
-Die laufende Woche wird nie als Versäumnis gewertet.
+Hervorgehoben wird **immer der erste noch nicht ausgefüllte Check-in in der
+festen Reihenfolge** – nicht mehr der zur Uhrzeit passende. Die Uhrzeit wird
+weiterhin als Eintragszeit gespeichert. Alle fünf Stationen bleiben antippbar
+und bearbeitbar.
 
-### 5. Lokaler Report
+### Tagesbahn
 
-Für Woche, Monat und Jahr, vollständig lokal erzeugt, in fester Gliederung:
-Lage, höchstens drei Entwicklungen, Rollenkompass, mögliche Zusammenhänge,
-**genau ein** nächster Schritt, Datenbasis.
+Fünf gleichmäßige Spalten ohne horizontales Scrollen, kleinere Grundkreise
+(42 px, auf schmalen Geräten 38 px), der aktive Kreis nur moderat größer
+(Faktor 1,1). Energie und Laune stehen untereinander statt nebeneinander; die
+senkrechte Trennlinie ist entfallen. Die Verbindungslinie besteht jetzt aus vier
+eigenständigen Segmenten, die ausschließlich die Zwischenräume füllen, hinter den
+Stationen liegen und mit Abstand vor dem Kreisrand enden.
 
-Tatsache, Muster, Interpretation und Vorschlag werden sprachlich getrennt.
-Ausgeschlossen sind Wörter wie „Versagen“ oder „undiszipliniert“, Diagnosen,
-Kausalbehauptungen und moralische Urteile; Zusammenhänge erscheinen nur als
-Möglichkeit. Reicht die Datenbasis nicht, erscheint wörtlich:
+### Routine-Schritt-Editor
 
-> Für eine belastbare Entwicklung fehlen noch genügend Einträge.
+Die Emoji-Vorauswahl ist vollständig entfallen (`QUICK_EMOJIS`, Raster,
+Listener, automatisches ✨). Das Emoji-Feld ist bei neuen Schritten leer und
+verpflichtend; ohne Eingabe wird nicht gespeichert, sondern eine kurze
+Inline-Rückmeldung gezeigt. Die Dauer ist ein natives `select` von 1 bis 180
+Minuten (auf dem iPhone das Auswahlrad) mit korrekten Singular- und
+Pluralformen. Abweichende gespeicherte Dauern – etwa 2,5 Minuten – bleiben als
+zusätzliche Option erhalten und werden nicht verändert.
 
-Es gibt keine Gesamtpunktzahl.
+### ROLEPLAY-Bilanz
 
-### 6. Optionale KI-Tiefenanalyse ohne API
+Neue Karte zwischen „Dankbarkeit“ und „Tagesnotiz“. Sie arbeitet mit antippbaren
+Karten, Chips und einem Segmented Control – bewusst ohne Schieberegler, weil
+diese eine Rangordnung suggerieren würden, und ohne neue Freitextfelder.
 
-Kein Schlüssel, keine Verbindung, kein automatischer Versand. Der Button „Mit KI
-vertiefen“ erzeugt ein Datenpaket über 30 oder 90 Tage. Freitexte (Tagesnotiz,
-Dankbarkeit, Träume) sind **standardmäßig ausgeschaltet** und einzeln zuschaltbar.
-Vor jedem Export erscheint eine Vorschau. Ausgabe als TXT, JSON, über Kopieren
-oder über die Web-Share-Funktion. Ein fester Analyseauftrag mit acht Regeln wird
-automatisch angehängt.
+1. **Verantwortungsbilanz** – Erfüllt · Angepasst · Zurückgestellt · Versäumt ·
+   Überdehnt. Je nach Antwort folgt genau eine kurze, kontrollierte
+   Folgeauswahl; bei „Zu einem konkreten Termin“, „Nachholen“ und „Neu planen“
+   erscheint ein natives Datumsfeld. Es entsteht keine Punktzahl, keine
+   Erfolgsquote und keine moralische Bewertung.
+2. **Passung des Rollenmodus** – Zu fordernd · Passend · Zu schonend. Die
+   Auswahl verändert die Modusberechnung nicht; sie dient nur als transparente
+   Rückmeldung. Ohne Check-in bleibt sie deaktiviert.
 
-### 7. ROLEPLAY-Bilanz radikal vereinfacht
+### Doppeltipp-Zoom
 
-Genau eine Frage: **„Wie hast du deine wichtigste Verantwortung heute
-beantwortet?“** – Erfüllt, Angepasst, Zurückgestellt, Versäumt, Überdehnt.
-Ein Tipp, sofort gespeichert. Keine Folgefragen, keine Detailauswahl, kein
-Datumsfeld, keine Moduspassung. Bereits gespeicherte alte Angaben bleiben in
-Backup und Export vollständig erhalten.
+`touch-action: manipulation` auf `html`, `body`, `.app-shell` und `dialog`.
+Scrollen, Regler, Selects, Datumsfelder, Wischgesten und Sortieren funktionieren
+unverändert; Pinch-to-Zoom bleibt erhalten. Kein `maximum-scale`, kein
+`user-scalable=no`, kein globales `preventDefault()`.
 
-### 8. Streaks
+## Datenmodell
 
-Funktional unverändert: vier Streaks, Tage direkt editierbar, Unterbrechung,
-Sichtschutz, Fortschreibung. Neu ist nur die **Umrechnung**: zusätzlich zu den
-Tagen werden Wochen sowie eine kalendarische Angabe in Jahren, Monaten und Tagen
-und ein daraus abgeleitetes Startdatum angezeigt. Die kalendarische Rechnung
-folgt echten Monatslängen. Editierbar bleiben ausschließlich die Tage.
+Namespace bleibt `roleplay-v25`, Backup-Schema steigt auf **6**. Ältere Backups
+lassen sich weiterhin importieren.
 
-### 9. Fasten neu gedacht
+Neu je Tag:
 
-Drei Arten und ein Leerwert, **genau eine Angabe je Tag**:
+    roleplayBalance: {
+      outcome, detailKeys[], followUpAction, followUpDate,
+      modeFit, evaluatedModeKey, evaluatedRoleName
+    }
+    checkinStructure: 5 | 4
 
-| Wert | Bedeutung |
-| --- | --- |
-| `""` | nicht erfasst |
-| `catchUp` | Nachholtag (Ramadan) |
-| `voluntary` | freiwilliges Fasten |
-| `ramadan` | Fasten im Ramadan |
-| `legacy` | nur Altdaten, Art unbekannt |
+`checkinStructure` unterscheidet neue Fünfer-Tage von historischen Vierer-Tagen.
+Fehlt der Wert, gilt ein bereits gespeicherter zurückliegender Tag als
+Vierer-Tag: der Nachmittag erscheint dort neutral mit „–“ und wird ausdrücklich
+nicht rückwirkend als Versäumnis gewertet. Wird dort bewusst ein Nachmittag
+eingetragen, wechselt der Tag dauerhaft auf die Fünfer-Struktur. Energie- oder
+Launenwerte werden dabei nie erfunden.
 
-Der Nachholstand wird **positiv** formuliert: „Noch X Nachholtage offen“.
-
-Die Berechnung ist **idempotent**: Der sichtbare Stand wird jedes Mal neu aus
-`Grundstand − erfasste Nachholtage` abgeleitet und nie fortgeschrieben. Ein
-zurückgenommener Nachholtag stellt den vorherigen Stand deshalb exakt wieder her,
-und ein doppelter Aufruf verringert nichts doppelt.
-
-Wochenziel Nachholfasten: Standard 1. Freiwilliges Fasten hat kein Ziel und wird
-nur gezählt, nicht bewertet.
-
-### 10. Empfindungssätze
-
-Unter dem Energie- und dem Laune-Regler steht je ein kurzer Satz aus fünf festen
-Bändern, aktualisiert über `aria-live="polite"`. Keine Eingabefelder. Die
-Modusberechnung bleibt unverändert.
-
-### 11. Dialogzentrierung
-
-Alle Dialoge sitzen zuverlässig in der Bildschirmmitte, auch in iOS Safari und
-als Home-Screen-PWA:
-
-    position: fixed; inset: 0; margin: auto;
-    max-height: min(calc(var(--modal-viewport-h) − Safe Areas), 88dvh);
-    transform: translateY(var(--modal-viewport-shift));
-
-`--modal-viewport-h` und `--modal-viewport-shift` werden aus `visualViewport`
-gepflegt, sodass eine eingeblendete Tastatur den Dialog verschiebt statt ihn
-abzuschneiden. Für ältere Browser gibt es einen `@supports`-Fallback ohne `dvh`.
-Lange Inhalte scrollen innerhalb des Dialogs, der Hintergrund bleibt fixiert.
-Hochformat, Querformat, Dark Mode, Backdrop, Fokus, Escape und Formularabsenden
-funktionieren unverändert.
-
-## Datenmodell und Migration
-
-Namespace bleibt **`roleplay-v25`**. Backup-Schema steigt auf **8**. Ältere
-Backups (Schema 5, 6, 7) lassen sich weiterhin importieren.
-
-### Neue Felder je Tag
-
-    activities: [{ title, role, size, context }]
-    smaWorkday: boolean
-    fasting: { type: "" | "catchUp" | "voluntary" | "ramadan" | "legacy" }
-
-### Neuer Einstellungsblock
-
-Gespeichert unter `roleplay-v25-settings`, im Backup als `settings`:
-
-    smaPlannedDaysPerWeek: 5
-    fastingCatchUpBaseline: 0
-    fastingCatchUpWeeklyGoal: 1
-    fastingVoluntaryWeeklyGoal: 0
-    fastingMigrated: false
-    weekFocus: { "2026-W34": { primary, secondary } }
-    aiExport: { rangeDays, includeNotes, includeGratitude, includeDreams }
-
-### Migrationsregeln
-
-**Aktivitäten.** Bestehende Einträge behalten Titel und Rolle und bekommen
-`size: "medium"` sowie `context: "none"`. Der Kontext wird **niemals** aus dem
-Titel abgeleitet – ein alter Eintrag „SMA Meeting“ wird also nicht automatisch
-als SMA-Regelarbeit gewertet. SMA-Tage entstehen ausschließlich durch den
-Tagesschalter oder durch eine bewusst gesetzte Unternehmer-Aktivität.
-
-**Fasten.** Ein alter Tag mit `fastingCompleted: true` und ohne neue Angabe wird
-als `fasting.type = "legacy"` geführt, also als abgeschlossener Fastentag ohne
-sicher bekannte Art. Er wird nicht als Nachholtag gezählt und verringert den
-offenen Stand deshalb nicht. Das alte Feld `fastingCompleted` bleibt erhalten.
-Ein negativer Altwert in `ramadanDays` wird einmalig als Grundstand offener
-Nachholtage übernommen (`fastingCatchUpBaseline = |ramadanDays|`); der Vorgang
-wird über `fastingMigrated` gemerkt und läuft deshalb genau einmal. `ramadanDays`
-selbst bleibt unverändert im Datensatz stehen.
-
-**Bilanz.** Die alte Detailauswahl wird nach `detailOutcome` gespiegelt und in
-Backup und CSV weiterhin ausgegeben, obwohl die Oberfläche sie nicht mehr abfragt.
-`roleplayBalance.outcome` bleibt der führende Wert.
-
-**Check-ins.** `checkinStructure` (5 oder 4) gilt unverändert weiter: fehlt der
-Wert bei einem zurückliegenden Tag, gilt er als Vierer-Tag, der Nachmittag
-erscheint neutral mit „–“ und wird nicht rückwirkend als Versäumnis gewertet.
-Energie- und Launenwerte werden nie erfunden.
-
-**Roundtrip.** Export → Import → Export erzeugt denselben Datenbestand; alle
-neuen Felder sind in Backup und CSV enthalten und werden beim Laden zentral gegen
-feste erlaubte Listen validiert.
+Alle Werte werden beim Laden gegen feste erlaubte Listen geprüft. Vorhandene
+`roleReflections` bleiben erhalten und dienen als Ausgangswert für die
+Verantwortungsbilanz. CSV-Export und Backup enthalten die neuen Felder.
 
 ## Tests
 
-    node test-logic.js
-    node test-dom.js
-
-`test-logic.js` (203 Prüfungen) deckt die reine Logik ab: Modusleiter und
-Schutzregeln, Coach-Texte, Check-in-Reihenfolge, Aktivitätsgrößen und -kontexte,
-SMA-Normalisierung samt Deckelung und Division durch null, Fasten-Idempotenz und
-Rücknahme, Legacy-Migration, Wochenfokus je ISO-Woche, Rollenkompass,
-Streak-Umrechnung über echte Monatslängen, Reportregeln inklusive verbotener
-Formulierungen und Mindestdatenbasis sowie Empfindungssätze.
-
-`test-dom.js` (188 Prüfungen) prüft die Auslieferung statisch: `node --check`
-für alle JavaScript-Dateien, Version 8.0.0 in allen Dateien, Service-Worker-Cache
-und Dateiliste, vier Reiter, Vorhandensein und Verdrahtung aller Bedienelemente,
-`aria`-Auszeichnung, Dialogzentrierungsregeln im CSS, Abwesenheit externer
-Skripte und Bibliotheken sowie die Trennung von `logic.js` (kein DOM, kein
-`window`, kein `localStorage`, kein Netzwerk).
-
-Beide Suiten laufen ohne Netzwerk und ohne Abhängigkeiten.
-
-### Nicht automatisiert
-
-Die Tests sind statische Struktur- und Kompilierprüfungen plus reine
-Logikprüfungen. Es gibt keine Laufzeit-DOM-Emulation und keinen echten Browser.
-Manuell zu prüfen bleiben daher: Darstellung auf schmalen iPhone-Displays,
-Dialogverhalten bei eingeblendeter Tastatur, Home-Screen-PWA, Dark Mode,
-Querformat und das Verhalten des Service Workers beim Versionswechsel.
+`node test-logic.js` (98 Prüfungen) und `node test-dom.js` (74 Prüfungen) decken
+Modusleiter, Schutzregeln, Coach-Texte, Check-in-Reihenfolge, Migration alter
+Tage, Bilanzvalidierung, CSV-Export und den Schritt-Editor ab. Beide laufen ohne
+Netzwerk und ohne Abhängigkeiten.
