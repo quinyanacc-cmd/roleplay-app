@@ -38,7 +38,7 @@
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
         <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
           <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
-          <div id="checkinSlots" class="checkin-slots" aria-label="Vier Tages-Check-ins"></div>
+          <div id="checkinSlots" class="checkin-slots" aria-label="Fünf Tages-Check-ins"></div>
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
           <details class="state-history-details">
             <summary><strong>Verlauf &amp; Details</strong></summary>
@@ -159,6 +159,11 @@
           </div>
         </section>
 
+        <section class="card balance-card" aria-labelledby="roleplayBalanceTitle">
+          <h2 id="roleplayBalanceTitle">ROLEPLAY-Bilanz</h2>
+          <div id="roleplayBalance" class="roleplay-balance"></div>
+        </section>
+
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
           <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
@@ -192,7 +197,7 @@
           <p id="backupStatus" class="backup-status">Noch kein Backup in dieser Sitzung erstellt.</p>
         </section>
 
-        <p class="privacy-note">Alle Einträge werden ausschließlich lokal in diesem Browser gespeichert.</p>
+        <p class="privacy-note">Alle Einträge werden ausschließlich lokal in diesem Browser gespeichert.<br><span id="appVersionLabel"></span></p>
       </section>
 
       <section id="routinesPage" class="app-page" aria-label="Routinen">
@@ -226,13 +231,13 @@
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
       <button class="nav-button active" data-page="review" type="button" aria-label="Tagesreflexion" title="Tagesreflexion">
-        <span class="nav-symbol" aria-hidden="true">📝</span>
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.6" y="3.4" width="14.8" height="17.2" rx="3.4"></rect><line x1="8.4" y1="8.6" x2="15.6" y2="8.6"></line><line x1="8.4" y1="12" x2="15.6" y2="12"></line><line x1="8.4" y1="15.4" x2="13" y2="15.4"></line></svg></span>
       </button>
       <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
-        <span class="nav-symbol" aria-hidden="true">🌅</span>
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15.4a5 5 0 0 1 10 0"></path><line x1="3.4" y1="15.4" x2="20.6" y2="15.4"></line><line x1="12" y1="3.6" x2="12" y2="6.2"></line><line x1="5.4" y1="6.3" x2="7.2" y2="8.1"></line><line x1="18.6" y1="6.3" x2="16.8" y2="8.1"></line><line x1="6.4" y1="19.4" x2="17.6" y2="19.4"></line></svg></span>
       </button>
       <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
-        <span class="nav-symbol" aria-hidden="true">🔥</span>
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2a5.9 5.9 0 0 0 5.9-5.9c0-4-3-6.6-5.9-9.6-2.9 3-5.9 5.6-5.9 9.6A5.9 5.9 0 0 0 12 21.2Z"></path><path d="M12 21.2a2.6 2.6 0 0 0 2.6-2.6c0-1.7-1.3-2.8-2.6-4.2-1.3 1.4-2.6 2.5-2.6 4.2A2.6 2.6 0 0 0 12 21.2Z"></path></svg></span>
       </button>
     </nav>
   </div>
@@ -354,23 +359,29 @@
     </form>
   </dialog>
 
-  <dialog id="routineItemDialog" class="form-dialog">
+  <dialog id="routineItemDialog" class="form-dialog step-dialog">
     <form id="routineItemForm">
       <h3 id="routineItemDialogTitle">Schritt hinzufügen</h3>
-      <div class="emoji-title-grid">
-        <label for="routineItemEmoji">Emoji</label>
-        <label for="routineItemTitle">Bezeichnung</label>
-        <input id="routineItemEmoji" maxlength="8" placeholder="🕯️" aria-label="Emoji">
-        <input id="routineItemTitle" required placeholder="z. B. Kerze">
+      <div class="step-dialog-body">
+        <div class="emoji-title-grid">
+          <label for="routineItemEmoji">Emoji</label>
+          <label for="routineItemTitle">Bezeichnung</label>
+          <input id="routineItemEmoji" maxlength="8" autocomplete="off" placeholder="🙂" required
+                 aria-describedby="routineItemEmojiError">
+          <input id="routineItemTitle" required placeholder="z. B. Kerze">
+        </div>
+        <p id="routineItemEmojiError" class="inline-error" role="alert" hidden>Bitte ein Emoji eintragen.</p>
+        <div class="field-group">
+          <label for="routineItemMinutes">Dauer</label>
+          <select id="routineItemMinutes"></select>
+        </div>
+        <div class="field-group">
+          <label for="routineItemContext">Kontext / Erinnerung</label>
+          <textarea id="routineItemContext" rows="3" placeholder="Optionaler Hinweis, Dua, Gedanke oder konkrete Anweisung …"></textarea>
+        </div>
       </div>
-      <div class="emoji-quick-picks" id="emojiQuickPicks"></div>
-      <label for="routineItemMinutes">Dauer in Minuten</label>
-      <input id="routineItemMinutes" type="number" min="1" max="180" value="5" inputmode="numeric">
-      <label for="routineItemContext">Kontext / Erinnerung</label>
-      <textarea id="routineItemContext" rows="4" placeholder="Optionaler Hinweis, Dua, Gedanke oder konkrete Anweisung …"></textarea>
-      <div class="dialog-actions split-actions">
-        <button id="deleteRoutineItem" type="button" class="danger-button" hidden>Löschen</button>
-        <span class="dialog-spacer"></span>
+      <div class="dialog-actions step-dialog-actions">
+        <button id="deleteRoutineItem" type="button" class="ghost-button danger" hidden>Löschen</button>
         <button id="cancelRoutineItem" type="button" class="secondary-button">Abbrechen</button>
         <button type="submit" class="primary-button compact">Speichern</button>
       </div>
