@@ -1,138 +1,74 @@
-# ROLEPLAY App 6.0.0
+# ROLEPLAY App 5.9.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
-Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
-kein Framework, keine externen Bibliotheken.
+Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung.
 
-## Neu in 6.0.0
+## Neu in 5.9.0
 
-### Rollenmodus ohne Aufgaben
+### Reihenfolge der Tagesreflexion
 
-ROLEPLAY ist kein Habit-Tracker. Der Rollenmodus beschreibt ab dieser Version
-ausschließlich **Umfang, Tempo und Form** des Handelns – er verteilt keine
-Aufgaben mehr.
+    Zustand & Rollenmodus · Islam · Aktivitäten · Routinen ·
+    Vitalität · Dankbarkeit · Tagesnotiz
 
-Die Systemlogik lautet:
+Darunter folgen wie bisher Wochenrückblick sowie Export & Sicherung.
 
-    Zustand → angemessener Rollenmodus → Coach-Impuls →
-    eigenverantwortliches Handeln → spätere ROLEPLAY-Bilanz
+### Prozentwerte in der Tagesbahn
 
-Entfernt wurden dabei die Rollenmatrix (`ROLE_CONFIG.levels`), `dayPriorityText`,
-`recommendationForCheckin`, `PROTECTIVE_LEVEL_TEXT`, `MODE_LEVEL_MAP`,
-`stateCauseSentence` sowie die ausschließlich dafür genutzte Wochenaufgabenlogik.
-Der Modus hebt dabei keine Verantwortung auf: Gebete, Fastentage, Streaks,
-Routinen und Aktivitäten bleiben vollständig erhalten.
+Auf 12 px verkleinert, damit sie in den Stationen mehr Luft haben. Der
+Extremfall „100 %“ auf allen vier Stationen bleibt weiterhin einzeilig und
+überlappungsfrei – geprüft bei 375, 390, 393 und 430 px.
 
-### Fünf verbindliche Modi
+### Routinen: Kopfbilder
 
-| Modus | Ab Wert | Farbe |
-| --- | --- | --- |
-| Schon-Modus | 0 | Koralle `#E77D4D` |
-| Minimum | 40 | Amber `#E5A22E` |
-| Standard | 55 | Türkis `#27B9A9` |
-| Fokus | 70 | Blau `#3D7BE8` |
-| Entwicklungsmodus | 92 | Violett `#7258E8` |
+Jede Routine lässt sich mit einem von fünf Kopfbildern versehen:
 
-Die Berechnung bleibt unverändert: Laune 0,58, Energie 0,42, harte Untergrenze
-bei einem Einzelwert ≤ 15, Deckelung bei < 25 und < 35 sowie die Ausnahme, dass
-eine sehr gute Laune eine energiebedingte Begrenzung um eine Stufe anheben darf.
-Eine manuelle Auswahl gibt es weiterhin nicht.
+- Sonnenaufgang
+- Nachthimmel
+- Bergsee am Tag *(neu)*
+- Dämmerung *(neu)*
+- Zuhause *(neu)*
+- Ohne Bild
 
-Alte Modusschlüssel werden beim Laden abgebildet:
-`stabilization|recovery|protection → gentle`, `maintenance → minimum`,
-`balance → standard`, `design → focus`, `peak → development`.
+Der Bearbeiten-Dialog zeigt eine Vorschau des gewählten Motivs. Das Kopfbild
+erscheint auf der Routinenkarte, in der Wochenübersicht und als Atmosphäre in
+der laufenden Routine.
 
-### Coach-Impuls
+Die Bilder wurden für die PWA aufbereitet: von 8,8 MB auf zusammen 124 KB
+(900 px breit, JPEG). Der Service-Worker-Cache wurde entsprechend angepasst.
 
-Statt Aufgaben- und Begründungstext erscheint eine kompakte, in der Modusfarbe
-getönte Fläche mit der Überschrift **IMPULS FÜR JETZT**, einem festen Kernsatz je
-Modus und einem zustandsabhängigen Zusatzsatz.
+### Routinen: bearbeiten und löschen
 
-Die Zustandskategorie wird in dieser Reihenfolge bestimmt: `bothHigh`, `bothLow`,
-`moodLeads`, `energyLeads`, `balanced`. Gleiche Werte ergeben immer denselben
-Text – es gibt keinen Zufall. Hauptansicht und Check-in-Vorschau nutzen mit
-`coachImpulse()` dieselbe zentrale Textfunktion.
+Über „Kopfbild & Titel ändern“ in der Routinenansicht lassen sich Titel,
+Beschreibung und Kopfbild nachträglich anpassen – die Schritte bleiben dabei
+unangetastet. Im selben Dialog steht „Routine löschen“.
 
-### Fünf Check-ins pro Tag
+Gelöscht wird mit Rückfrage. Die jeweils letzte verbliebene Routine lässt sich
+nicht löschen, damit die Seite nicht leer zurückbleibt.
 
-    Nacht · Morgen · Mittag · Nachmittag · Abend
+**Behoben:** `normalizeRoutines` mischte die Standardroutinen bei jedem Start
+neu dazu – eine gelöschte Morgen- oder Abendroutine kehrte deshalb nach dem
+Neuladen zurück. Liegt ein Speicherstand vor, ist er jetzt maßgeblich; die
+Vorlagen dienen nur noch als Grundgerüst für fehlende Felder.
 
-Der Nachmittag hat ein eigenes SVG im vorhandenen Strichstil und eine eigene
-Farbwelt, die den Türkis-Gold-Ton des Mittags in die wärmeren Abendfarben führt.
+### Laufende Routine: neues Design
 
-Hervorgehoben wird **immer der erste noch nicht ausgefüllte Check-in in der
-festen Reihenfolge** – nicht mehr der zur Uhrzeit passende. Die Uhrzeit wird
-weiterhin als Eintragszeit gespeichert. Alle fünf Stationen bleiben antippbar
-und bearbeitbar.
-
-### Tagesbahn
-
-Fünf gleichmäßige Spalten ohne horizontales Scrollen, kleinere Grundkreise
-(42 px, auf schmalen Geräten 38 px), der aktive Kreis nur moderat größer
-(Faktor 1,1). Energie und Laune stehen untereinander statt nebeneinander; die
-senkrechte Trennlinie ist entfallen. Die Verbindungslinie besteht jetzt aus vier
-eigenständigen Segmenten, die ausschließlich die Zwischenräume füllen, hinter den
-Stationen liegen und mit Abstand vor dem Kreisrand enden.
-
-### Routine-Schritt-Editor
-
-Die Emoji-Vorauswahl ist vollständig entfallen (`QUICK_EMOJIS`, Raster,
-Listener, automatisches ✨). Das Emoji-Feld ist bei neuen Schritten leer und
-verpflichtend; ohne Eingabe wird nicht gespeichert, sondern eine kurze
-Inline-Rückmeldung gezeigt. Die Dauer ist ein natives `select` von 1 bis 180
-Minuten (auf dem iPhone das Auswahlrad) mit korrekten Singular- und
-Pluralformen. Abweichende gespeicherte Dauern – etwa 2,5 Minuten – bleiben als
-zusätzliche Option erhalten und werden nicht verändert.
-
-### ROLEPLAY-Bilanz
-
-Neue Karte zwischen „Dankbarkeit“ und „Tagesnotiz“. Sie arbeitet mit antippbaren
-Karten, Chips und einem Segmented Control – bewusst ohne Schieberegler, weil
-diese eine Rangordnung suggerieren würden, und ohne neue Freitextfelder.
-
-1. **Verantwortungsbilanz** – Erfüllt · Angepasst · Zurückgestellt · Versäumt ·
-   Überdehnt. Je nach Antwort folgt genau eine kurze, kontrollierte
-   Folgeauswahl; bei „Zu einem konkreten Termin“, „Nachholen“ und „Neu planen“
-   erscheint ein natives Datumsfeld. Es entsteht keine Punktzahl, keine
-   Erfolgsquote und keine moralische Bewertung.
-2. **Passung des Rollenmodus** – Zu fordernd · Passend · Zu schonend. Die
-   Auswahl verändert die Modusberechnung nicht; sie dient nur als transparente
-   Rückmeldung. Ohne Check-in bleibt sie deaktiviert.
-
-### Doppeltipp-Zoom
-
-`touch-action: manipulation` auf `html`, `body`, `.app-shell` und `dialog`.
-Scrollen, Regler, Selects, Datumsfelder, Wischgesten und Sortieren funktionieren
-unverändert; Pinch-to-Zoom bleibt erhalten. Kein `maximum-scale`, kein
-`user-scalable=no`, kein globales `preventDefault()`.
+Die Session übernimmt das Kopfbild ihrer Routine als weich ausblendende
+Atmosphäre im oberen Bereich. Der Timer sitzt in einem Fortschrittsring, der
+den Anteil der bereits erledigten Schritte zeigt. Emoji und Kreis haben
+weichere Schatten bekommen.
 
 ## Datenmodell
 
-Namespace bleibt `roleplay-v25`, Backup-Schema steigt auf **6**. Ältere Backups
-lassen sich weiterhin importieren.
-
-Neu je Tag:
-
-    roleplayBalance: {
-      outcome, detailKeys[], followUpAction, followUpDate,
-      modeFit, evaluatedModeKey, evaluatedRoleName
-    }
-    checkinStructure: 5 | 4
-
-`checkinStructure` unterscheidet neue Fünfer-Tage von historischen Vierer-Tagen.
-Fehlt der Wert, gilt ein bereits gespeicherter zurückliegender Tag als
-Vierer-Tag: der Nachmittag erscheint dort neutral mit „–“ und wird ausdrücklich
-nicht rückwirkend als Versäumnis gewertet. Wird dort bewusst ein Nachmittag
-eingetragen, wechselt der Tag dauerhaft auf die Fünfer-Struktur. Energie- oder
-Launenwerte werden dabei nie erfunden.
-
-Alle Werte werden beim Laden gegen feste erlaubte Listen geprüft. Vorhandene
-`roleReflections` bleiben erhalten und dienen als Ausgangswert für die
-Verantwortungsbilanz. CSV-Export und Backup enthalten die neuen Felder.
+Erweitert um ein bestehendes, bereits vorhandenes Feld: `routines[key].theme`
+nimmt nun auch die Werte `tag`, `daemmerung` und `zuhause` an. Alte Werte
+(`morning`, `evening`, `focus`) funktionieren unverändert weiter. Namespace
+bleibt `roleplay-v25`.
 
 ## Tests
 
-`node test-logic.js` (98 Prüfungen) und `node test-dom.js` (74 Prüfungen) decken
-Modusleiter, Schutzregeln, Coach-Texte, Check-in-Reihenfolge, Migration alter
-Tage, Bilanzvalidierung, CSV-Export und den Schritt-Editor ab. Beide laufen ohne
-Netzwerk und ohne Abhängigkeiten.
+- **348** Funktionstests über 390×844, 393×852 und 430×932 in Light und Dark
+- **15** Routinen-Tests: Reihenfolge der Tagesreflexion, Bearbeiten-Dialog,
+  Kopfbildauswahl und -vorschau, Speichern ohne Verlust der Schritte, Löschen
+  mit Bestand nach Neuladen, Start der Session mit Kopfbild und Fortschrittsring
+- **15** Tests mit Altdatensätzen aus 3.x und 5.x
+- **0** Layoutmängel, keine doppelten Funktionen, keine Konsolenfehler
