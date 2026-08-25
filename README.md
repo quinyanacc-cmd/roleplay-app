@@ -1,8 +1,72 @@
-# ROLEPLAY App 6.0.0
+# ROLEPLAY App 6.1.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
 kein Framework, keine externen Bibliotheken.
+
+## Version 6.1.0 – funktionale Ergänzungen
+
+Rein funktionale Erweiterung auf Basis von 6.0.0. Designsprache, Typografie,
+Farben, Abstände, Karten, Kopfzeile, Navigation und bestehende Komponenten
+sind unverändert; neue Bedienelemente benutzen ausschließlich die vorhandenen
+Primitive.
+
+**ROLEPLAY-Bilanz entfernt.** Karte, Logik, Speicherfeld (`roleplayBalance`)
+und die zugehörigen CSV-Spalten sind vollständig entfallen. Die Reihenfolge
+aller übrigen Bereiche der Hauptseite ist unverändert.
+
+**Gottesfurcht (Taqwa).** Dritter Regler in jedem Check-in, gespeichert als
+`taqwa`. Unter allen drei Reglern steht eine kurze dynamische Bedeutung.
+Neue Einträge rechnen mit Laune 36 %, Energie 32 %, Taqwa 32 %
+(`STATE_WEIGHTS_TAQWA`); Check-ins ohne Taqwa behalten unverändert die
+bisherige V6-Rechnung mit Laune 58 % und Energie 42 % (`STATE_WEIGHTS`).
+Die Schutzgrenzen lesen weiterhin ausschließlich Energie und Laune – hohe
+Gottesfurcht kann Erschöpfung nicht überstimmen.
+
+**Rollenfokus.** Der letzte Eintrag im vorhandenen Rollenwähler öffnet den
+Fokusdialog: nur heute, 3 Tage, 7 Tage, bis zu einem Datum oder bis manuell
+beendet. Der Fokus ersetzt die Wochenrotation für neue Tage, wird unter
+`roleplay-v25-role-focus` gespeichert, im Backup mitgeführt und ist jederzeit
+beendbar. Bei aktivem Fokus weisen die Impulse keine andere Rolle als offen aus.
+
+**7-Tage-Rückblick.** Unverändert an seiner Position über „Export & Sicherung".
+Neuer Umschalter in der Karte: Kalenderwoche (Montag bis Sonntag, laufende
+Woche vollständig, zukünftige Tage sichtbar und leer) und gleitende sieben
+Tage (Verschiebung um genau einen Tag). Der Graph zeigt zusätzlich die
+Taqwa-Kurve; Energie, Laune und Pflichtgebete bleiben erhalten.
+
+**Auswertung.** Dritter Navigationstab zwischen Routinen und Streaks mit
+Monatsrückblick (Monatsauswahl, Eintragstage, Check-ins, Energie, Laune,
+Gottesfurcht, Pflichtgebete, Routinen, Fastentage, Trends gegenüber dem
+Vormonat, „Rückblick & Impulse", Monatsreport-Export) und Rollenverteilung
+(Woche/Monat, alle sieben Rollen, gewichtete Punkte, Info-Dialog mit allen
+Gewichtungen, antippbare Detailaufschlüsselung je Rolle).
+
+**Gewichtete Aktivitäten.** Der Aktivitätsdialog hat ein Vorlagen-Dropdown:
+SMA-Arbeitstag (Unternehmer, 0,5 je Kalendertag), Gym (Vitalist, 2,0),
+Arabisch lernen (Muslim, 1,5), Buchprojekt (Unternehmer, 1,2) und eigene
+Aktivität (frei wählbar, fest 1). Keine manuelle Punkteingabe. Ein Kalendertag
+mit mehreren SMA-Einträgen ergibt weiterhin insgesamt 0,5 Punkte; in der
+Detailansicht erscheint dafür genau eine Zeile, damit Einzelwerte und Summe
+exakt übereinstimmen. Bestehende `isSma`-Markierungen werden übernommen,
+historische Titel nur bei exakter Übereinstimmung zugeordnet.
+
+**Streaks.** Die exakte Tageszahl bleibt führend; darunter steht ab 30 Tagen
+eine kompakte Umrechnung in Monate bzw. Jahre. Die Streak-Logik selbst und
+der Zähler für offene Fastentage sind unverändert.
+
+**Migration.** Namespace `roleplay-v25` unverändert, Schema 7, App-Version
+6.1.0, Service-Worker-Cache `roleplay-v6-1-0`. Ältere Backups werden weiterhin
+importiert; fehlende neue Felder werden beim Laden ergänzt, ohne historische
+Werte zu erfinden. Vor jedem Import wird automatisch eine Sicherung des
+aktuellen Bestands heruntergeladen.
+
+## Tests
+
+`node tests/run-tests.mjs` prüft die Berechnungen und die Migration ohne
+Browser: Gewichtungen mit und ohne Taqwa, Schutzgrenzen, Aktivitätspunkte
+inklusive SMA-Tagesbegrenzung, Zeiträume beider Rückblicksmodi, Rollenfokus,
+Streak-Umrechnung und die Normalisierung alter Backups.
 
 ## Visueller Relaunch (6.0.0-Design)
 

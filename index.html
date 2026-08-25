@@ -159,11 +159,6 @@
           </div>
         </section>
 
-        <section class="card balance-card" aria-labelledby="roleplayBalanceTitle">
-          <h2 id="roleplayBalanceTitle">ROLEPLAY-Bilanz</h2>
-          <div id="roleplayBalance" class="roleplay-balance"></div>
-        </section>
-
         <section class="card notes-card">
           <h2>Tagesnotiz</h2>
           <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
@@ -176,10 +171,14 @@
             <h2>Wochenrückblick</h2>
             <span id="weekLabel" class="week-label"></span>
           </summary>
+          <div class="rp-segmented week-mode-switch" id="weekModeSwitch" role="group" aria-label="Zeitraum des Rückblicks">
+            <button type="button" class="rp-segment is-selected" data-week-mode="calendar" aria-pressed="true">Kalenderwoche</button>
+            <button type="button" class="rp-segment" data-week-mode="sliding" aria-pressed="false">Gleitende 7 Tage</button>
+          </div>
           <div class="week-nav">
-            <button id="weekBack" class="icon-button" type="button" aria-label="Vorherige Woche">‹</button>
+            <button id="weekBack" class="icon-button" type="button" aria-label="Zurück">‹</button>
             <span id="weekRange" class="week-nav-hint"></span>
-            <button id="weekForward" class="icon-button" type="button" aria-label="Nächste Woche">›</button>
+            <button id="weekForward" class="icon-button" type="button" aria-label="Vor">›</button>
           </div>
           <div id="statsSwipe" class="stats-swipe">
             <div id="statsGrid" class="stats-grid"></div>
@@ -224,6 +223,38 @@
         </div>
       </section>
 
+      <section id="analysisPage" class="app-page" aria-label="Auswertung">
+        <section class="card" aria-labelledby="monthReviewTitle">
+          <div class="section-title-row">
+            <h2 id="monthReviewTitle">Monatsrückblick</h2>
+          </div>
+          <div class="week-nav">
+            <button id="monthBack" class="icon-button" type="button" aria-label="Vorheriger Monat">‹</button>
+            <span id="monthLabel" class="week-nav-hint"></span>
+            <button id="monthForward" class="icon-button" type="button" aria-label="Nächster Monat">›</button>
+          </div>
+          <div id="monthSummary" class="month-summary"></div>
+          <div id="monthImpulses" class="month-impulses"></div>
+          <div class="export-buttons">
+            <button id="exportMonthReport" class="small-button export-button" type="button">Monatsreport exportieren</button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="roleSplitTitle">
+          <div class="section-title-row">
+            <h2 id="roleSplitTitle">Rollenverteilung</h2>
+            <button id="roleSplitInfo" class="icon-button info-button" type="button" aria-haspopup="dialog" aria-label="Erklärung zur Rollenverteilung">i</button>
+          </div>
+          <div class="rp-segmented role-split-switch" id="roleSplitRange" role="group" aria-label="Zeitraum der Rollenverteilung">
+            <button type="button" class="rp-segment is-selected" data-role-range="week" aria-pressed="true">Woche</button>
+            <button type="button" class="rp-segment" data-role-range="month" aria-pressed="false">Monat</button>
+          </div>
+          <p id="roleSplitSummary" class="section-hint role-split-summary"></p>
+          <div id="roleSplitList" class="role-split-list"></div>
+          <div id="roleSplitImpulses" class="month-impulses"></div>
+        </section>
+      </section>
+
       <section id="streaksPage" class="app-page" aria-label="Streaks">
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
@@ -235,6 +266,9 @@
       </button>
       <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
         <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15.4a5 5 0 0 1 10 0"></path><line x1="3.4" y1="15.4" x2="20.6" y2="15.4"></line><line x1="12" y1="3.6" x2="12" y2="6.2"></line><line x1="5.4" y1="6.3" x2="7.2" y2="8.1"></line><line x1="18.6" y1="6.3" x2="16.8" y2="8.1"></line><line x1="6.4" y1="19.4" x2="17.6" y2="19.4"></line></svg></span>
+      </button>
+      <button class="nav-button" data-page="analysis" type="button" aria-label="Auswertung" title="Auswertung">
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="4.2" y1="19.4" x2="19.8" y2="19.4"></line><line x1="8" y1="19.4" x2="8" y2="12.6"></line><line x1="12" y1="19.4" x2="12" y2="7.4"></line><line x1="16" y1="19.4" x2="16" y2="15"></line></svg></span>
       </button>
       <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
         <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2a5.9 5.9 0 0 0 5.9-5.9c0-4-3-6.6-5.9-9.6-2.9 3-5.9 5.6-5.9 9.6A5.9 5.9 0 0 0 12 21.2Z"></path><path d="M12 21.2a2.6 2.6 0 0 0 2.6-2.6c0-1.7-1.3-2.8-2.6-4.2-1.3 1.4-2.6 2.5-2.6 4.2A2.6 2.6 0 0 0 12 21.2Z"></path></svg></span>
@@ -272,6 +306,7 @@
           </div>
           <input id="stateEnergy" type="range" min="0" max="100" step="5" value="60">
           <div class="state-range-legend"><small>niedrig</small><small>hoch</small></div>
+          <small class="state-range-meaning" id="stateEnergyMeaning"></small>
         </div>
         <div class="field-group state-mood-field compact-mood-field">
           <div class="label-value-row">
@@ -280,6 +315,16 @@
           </div>
           <input id="stateMood" type="range" min="0" max="100" step="5" value="60">
           <div class="state-range-legend"><small>gedrückt</small><small>sehr gut</small></div>
+          <small class="state-range-meaning" id="stateMoodMeaning"></small>
+        </div>
+        <div class="field-group state-taqwa-field compact-taqwa-field">
+          <div class="label-value-row">
+            <label for="stateTaqwa">Gottesfurcht</label>
+            <strong id="stateTaqwaValue">60 %</strong>
+          </div>
+          <input id="stateTaqwa" type="range" min="0" max="100" step="5" value="60">
+          <div class="state-range-legend"><small>fern</small><small>nah</small></div>
+          <small class="state-range-meaning" id="stateTaqwaMeaning"></small>
         </div>
 
 
@@ -322,10 +367,13 @@
   <dialog id="activityDialog" class="form-dialog">
     <form id="activityForm">
       <h3>Aktivität hinzufügen</h3>
+      <label for="activityTemplate">Aktivitätsvorlage</label>
+      <select id="activityTemplate"></select>
       <label for="activityTitle">Aktivität</label>
       <input id="activityTitle" required placeholder="z. B. Arabisch lernen">
       <label for="activityRole">Rolle</label>
       <select id="activityRole"></select>
+      <p id="activityWeightHint" class="activity-weight-hint"></p>
       <div class="dialog-actions">
         <button id="cancelActivity" type="button" class="secondary-button">Abbrechen</button>
         <button id="confirmActivity" type="submit" class="primary-button compact">Hinzufügen</button>
@@ -432,6 +480,49 @@
     </div>
   </dialog>
 
+
+  <dialog id="roleFocusDialog" class="form-dialog">
+    <form id="roleFocusForm">
+      <h3>Rollenfokus</h3>
+      <p class="section-hint">Eine Rolle ersetzt vorübergehend die Wochenrotation.</p>
+      <label for="roleFocusRole">Rolle</label>
+      <select id="roleFocusRole"></select>
+      <label for="roleFocusDuration">Zeitraum</label>
+      <select id="roleFocusDuration">
+        <option value="today">Nur heute</option>
+        <option value="3">3 Tage</option>
+        <option value="7">7 Tage</option>
+        <option value="until">Bis zu einem Datum</option>
+        <option value="manual">Bis manuell beendet</option>
+      </select>
+      <div class="field-group" id="roleFocusDateField" hidden>
+        <label for="roleFocusDate">Enddatum</label>
+        <input id="roleFocusDate" type="date">
+      </div>
+      <p id="roleFocusStatus" class="section-hint role-focus-status"></p>
+      <div class="dialog-actions">
+        <button id="endRoleFocus" type="button" class="ghost-button danger" hidden>Fokus beenden</button>
+        <button id="cancelRoleFocus" type="button" class="secondary-button">Abbrechen</button>
+        <button type="submit" class="primary-button compact">Aktivieren</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="roleSplitInfoDialog" class="form-dialog">
+    <h3>Rollenverteilung</h3>
+    <div id="roleSplitInfoBody" class="info-dialog-body"></div>
+    <div class="dialog-actions">
+      <button id="closeRoleSplitInfo" type="button" class="primary-button compact">Schließen</button>
+    </div>
+  </dialog>
+
+  <dialog id="roleDetailDialog" class="form-dialog">
+    <h3 id="roleDetailTitle">Rolle</h3>
+    <div id="roleDetailBody" class="role-detail-body"></div>
+    <div class="dialog-actions">
+      <button id="closeRoleDetail" type="button" class="primary-button compact">Schließen</button>
+    </div>
+  </dialog>
 
   <dialog id="streakPrivacyDialog" class="form-dialog privacy-dialog">
     <div class="privacy-dialog-icon" aria-hidden="true">🔥</div>
