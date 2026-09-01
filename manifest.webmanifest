@@ -1,7 +1,7 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "ROLEPLAY 6.1 – Tagesreflexion mit fünf Check-ins, Gottesfurcht, Rollenfokus und Auswertung – lokal auf dem Gerät",
+  "description": "ROLEPLAY 6.2 – Tagesreflexion mit fünf Check-ins in Tagesreihenfolge, Gottesfurcht, Rollenfokus und Rollenpräsenz – lokal auf dem Gerät",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f2f4f8",

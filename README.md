@@ -1,8 +1,112 @@
-# ROLEPLAY App 6.1.0
+# ROLEPLAY App 6.2.0
 
 Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
 Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
 kein Framework, keine externen Bibliotheken.
+
+## Version 6.2.0 – Änderungsprotokoll
+
+Fortführung von 6.1.0 ohne Neuentwicklung, ohne Frameworkwechsel und ohne
+externe Bibliotheken. Namespace, Speicherformat, IDs und Nutzerdaten sind
+unverändert; die Designsprache wurde verfeinert, nicht ersetzt.
+
+**1. Dialoge zentral positioniert.** `.form-dialog` und `.calendar-dialog`
+teilen sich genau eine Positionsregel: `position: fixed`, `inset: 0`,
+`margin: auto`. Das frühere `position: relative` ist entfallen. Die Höhe folgt
+`var(--dialog-vh)` → `100dvh` → `100vh` (Fallbackkette) abzüglich Safe Areas
+und eines gleichmäßigen Außenabstands (`--dialog-gutter`). Lange Inhalte
+scrollen innerhalb des Dialogs (`overscroll-behavior: contain`), die Seite
+dahinter steht still (`body.dialog-open`, Scrollposition wird beim Schließen
+exakt wiederhergestellt). Bei eingeblendeter Tastatur hält
+`syncDialogViewport()` den Dialog über `visualViewport` im sichtbaren Bereich.
+Betroffen sind `stateCheckinDialog`, `calendarDialog`, `prayerDialog`,
+`activityDialog`, `routineDialog`, `routineItemDialog`, `roleFocusDialog`,
+`roleSplitInfoDialog`, `roleDetailDialog` und `streakPrivacyDialog`.
+Ausgenommen bleiben bewusst `routineSessionDialog` (Vollbild) und
+`sessionRoutineEditor` (Bottom-Sheet). Fokus, Escape und alle vorhandenen
+Schließen-Buttons sind unverändert.
+
+**2. Keine Prozentangaben in der Hauptansicht.** Die Tagesbahn zeigt nur noch
+Tagesphase, Symbol und Status; `.stop-values` ist entfallen. Im Readout
+bleiben Tagesrolle, Rollenmodus und Coach-Impuls, `.readout-metrics` ist
+entfallen. Es erscheinen keine Platzhalter wie „– %". Die Zahlen bleiben
+vollständig erhalten: in den `aria-label` der Tagesbahn, im Check-in-Dialog,
+im aufgeklappten Verlauf, in Monatsrückblick, Monatsreport und CSV-Export.
+Die zugehörigen CSS-Regeln wurden ersatzlos entfernt.
+
+**3. 63 feste Bedeutungstexte.** `SLIDER_MEANINGS` enthält je Regler genau
+einen Text für jeden Fünferschritt (0, 5 … 100), also 21 Texte je Regler.
+`sliderMeaning(kind, value)` liefert deterministisch; `sliderMeaningStep()`
+rundet ältere Zwischenwerte **nur für die Textauswahl** auf den nächsten
+Fünferschritt – der gespeicherte Originalwert bleibt unverändert. Die
+Endbeschriftungen der Skala („niedrig/hoch", „gedrückt/sehr gut",
+„fern/nah") stehen jetzt in `font-weight: 750` und in `--text`, der
+Bedeutungstext darunter normal gewichtet in `--muted` mit klarem Abstand
+(`--sp-2`) – ohne zusätzliche Kästen oder Chips, in Light und Dark Mode.
+
+**4. Zentrale Aktivitätsvorlagen.** `ACTIVITY_TEMPLATES` bleibt das einzige
+Aktivitätssystem und umfasst: SMA-Arbeitstag (Unternehmer, 0,2), Buchprojekt
+(Unternehmer, 1,5), Gym (Vitalist, 2,0), Arabisch lernen (Muslim, 1,5),
+Jumʿa (Muslim, 2,0), Moschee (Muslim, 1,0), Jugendgruppe (Muslim, 2,0),
+Clean Up (Wirt, 1,5), Familienzeit (Familienmensch, 1,5) und Eigene
+Aktivität (frei wählbar, 1,0). Die frühere SMA-Sonderlogik ist zu einer
+allgemeinen Tagesbegrenzung `dailyCap` geworden: SMA (0,2), Moschee (1,0)
+und Jumʿa (2,0) zählen höchstens einmal je Kalendertag, alle übrigen
+Vorlagen pro Eintrag. Historische Titel werden weiterhin **nur bei exakter**
+Übereinstimmung zugeordnet (keine Teilwort- oder Fuzzy-Erkennung).
+Vorhandene SMA- und Buchprojekt-Einträge bleiben erhalten und werden mit
+0,2 bzw. 1,5 berechnet.
+
+**5. Rollenpräsenz statt Rollenverteilung.** Sämtliche sichtbaren Texte
+heißen jetzt „Rollenpräsenz" – Karte, Überschrift, Umschalter-Label,
+Info-Dialog, Impulse und Monatsreport. Der Info-Dialog nennt ausdrücklich,
+dass die Punkte die Aussagekraft einer Aktivität gewichten und weder
+Zeitaufwand noch persönlichen Wert oder vollständige Rollenerfüllung messen,
+und dass die fünf Pflichtgebete vollständig außerhalb dieser Punkte bleiben.
+
+**6. Auswertungsseite neu aufgebaut.** Reihenfolge: Rollenpräsenz, darunter
+Monatsrückblick. Die erste Karte enthält Überschrift, Info-Button,
+Woche/Monat-Umschalter, eine gut lesbare Zeitraumangabe, drei Kennzahlen
+(Aktivitäten, Präsenzpunkte, sichtbare Rollen als „x von 7"), eine ruhige
+mehrfarbige Gesamtverteilung mit Anteilslegende und anschließend alle sieben
+Rollen in stabiler Reihenfolge mit Emoji, Name, Punkten, Anzahl der
+Aktivitäten und aktiven Tage, relativem Balken und neutralem Status
+(„Schwerpunkt", „sichtbar", „nicht erfasst"). Rollen mit null Punkten bleiben
+sichtbar; wertende Begriffe kommen nicht vor. Die Detailaufschlüsselung je
+Rolle (Datum, Aktivität, Einzelgewicht, Tagessumme) und die Rollenfokus-Logik
+sind unverändert.
+
+**7. Tagesphasen chronologisch.** `CHECKIN_SLOTS`, `CHECKIN_CHRONOLOGY` und
+`LEGACY_CHECKIN_CHRONOLOGY` folgen jetzt Morgen → Mittag → Nachmittag →
+Abend → Nacht bzw. Morgen → Mittag → Abend → Nacht. Ein neuer Tag beginnt mit
+„Morgen" als erstem offenen Check-in, „Nacht" steht am Ende. Slot-Schlüssel
+und gespeicherte Uhrzeiten sind unverändert; historische Vierer-Tage behalten
+ihre Sonderbehandlung, der Nachmittag gilt dort weiterhin nicht als Versäumnis.
+Schlafqualität und Trauminformationen bleiben dem Nacht-Check-in zugeordnet.
+
+**8. Pflichtgebete aus dem Liniengraphen entfernt.** Der Graph zeigt nur noch
+Energie, Laune und Gottesfurcht; `prayerPercent`, Gebetsserie, Legende, Linie
+und Punkte sowie die zugehörigen CSS-Regeln (auch die ungenutzte
+`load`-Serie und `--load-chart`) sind entfallen, das SVG-`aria-label` ist
+aktualisiert. Unverändert bleiben Gebetserfassung, die separate
+Wochenübersicht „Pflichtgebete pro Tag", die Sterne bei 5/5, die
+Monatskennzahl, Impulse, Backup, CSV-Export und die türkise Gebetsfarbwelt.
+
+**9. UI-Finishing.** Neue und überarbeitete Flächen benutzen ausschließlich
+die vorhandenen Tokens (`--sp-*`, `--fs-*`, `--r-*`, `--control-h*`,
+Oberflächen-, Schatten-, Fokus- und Bewegungstokens). Verwaiste Regeln wurden
+an ihrer Stelle entfernt statt am Dateiende überschrieben; es gibt keine neuen
+`!important`-Reparaturen und keine Patch-Sammlung. Glas bleibt Kopfzeile,
+Navigation und Dialogen vorbehalten, ruhende Karten bleiben klar.
+
+**10. Version und Cache.** `APP_VERSION` 6.2.0, Service-Worker-Cache
+`roleplay-v6-2-0`, aktualisierte Manifest-Beschreibung. `STORAGE_NAMESPACE`
+bleibt `roleplay-v25`, das Schema bleibt 7.
+
+**Datenkompatibilität.** Es wurden keine Speicherschlüssel, Feldnamen oder
+Slot-Schlüssel umbenannt und keine Werte gelöscht oder erfunden. Bestehende
+lokale Daten und ältere Backups bleiben vollständig importierbar; geänderte
+Gewichtungen wirken ausschließlich in der Auswertung.
 
 ## Version 6.1.0 – funktionale Ergänzungen
 
@@ -64,9 +168,17 @@ aktuellen Bestands heruntergeladen.
 ## Tests
 
 `node tests/run-tests.mjs` prüft die Berechnungen und die Migration ohne
-Browser: Gewichtungen mit und ohne Taqwa, Schutzgrenzen, Aktivitätspunkte
-inklusive SMA-Tagesbegrenzung, Zeiträume beider Rückblicksmodi, Rollenfokus,
-Streak-Umrechnung und die Normalisierung alter Backups.
+Browser: Gewichtungen mit und ohne Taqwa, Schutzgrenzen, die finalen
+Aktivitätsvorlagen und ihre Tagesbegrenzungen (SMA 0,2 · Moschee 1,0 ·
+Jumʿa 2,0), exakte und ausdrücklich nicht unscharfe Alias-Zuordnung,
+Tagessummen und Rollenpräsenz inklusive aller sieben sichtbaren Rollen,
+21 Bedeutungstexte je Regler samt Rundung alter Zwischenwerte, die neue
+Check-in-Reihenfolge und die historische Vierer-Reihenfolge, den
+Liniengraphen ohne Gebetsserie bei erhaltener Gebets-Wochenübersicht,
+Zeiträume beider Rückblicksmodi, Rollenfokus, Streak-Umrechnung und die
+Normalisierung alter Backups.
+
+Stand 6.2.0: **162 von 162 Prüfungen bestanden.**
 
 ## Visueller Relaunch (6.0.0-Design)
 

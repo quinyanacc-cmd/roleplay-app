@@ -224,6 +224,22 @@
       </section>
 
       <section id="analysisPage" class="app-page" aria-label="Auswertung">
+        <section class="card role-presence-card" aria-labelledby="roleSplitTitle">
+          <div class="section-title-row">
+            <h2 id="roleSplitTitle">Rollenpräsenz</h2>
+            <button id="roleSplitInfo" class="icon-button info-button" type="button" aria-haspopup="dialog" aria-label="Erklärung zur Rollenpräsenz">i</button>
+          </div>
+          <div class="rp-segmented role-split-switch" id="roleSplitRange" role="group" aria-label="Zeitraum der Rollenpräsenz">
+            <button type="button" class="rp-segment is-selected" data-role-range="week" aria-pressed="true">Woche</button>
+            <button type="button" class="rp-segment" data-role-range="month" aria-pressed="false">Monat</button>
+          </div>
+          <p id="roleSplitSummary" class="role-presence-period"></p>
+          <div id="roleSplitMetrics" class="role-presence-metrics"></div>
+          <div id="roleSplitDistribution" class="role-presence-distribution"></div>
+          <div id="roleSplitList" class="role-split-list"></div>
+          <div id="roleSplitImpulses" class="month-impulses"></div>
+        </section>
+
         <section class="card" aria-labelledby="monthReviewTitle">
           <div class="section-title-row">
             <h2 id="monthReviewTitle">Monatsrückblick</h2>
@@ -238,20 +254,6 @@
           <div class="export-buttons">
             <button id="exportMonthReport" class="small-button export-button" type="button">Monatsreport exportieren</button>
           </div>
-        </section>
-
-        <section class="card" aria-labelledby="roleSplitTitle">
-          <div class="section-title-row">
-            <h2 id="roleSplitTitle">Rollenverteilung</h2>
-            <button id="roleSplitInfo" class="icon-button info-button" type="button" aria-haspopup="dialog" aria-label="Erklärung zur Rollenverteilung">i</button>
-          </div>
-          <div class="rp-segmented role-split-switch" id="roleSplitRange" role="group" aria-label="Zeitraum der Rollenverteilung">
-            <button type="button" class="rp-segment is-selected" data-role-range="week" aria-pressed="true">Woche</button>
-            <button type="button" class="rp-segment" data-role-range="month" aria-pressed="false">Monat</button>
-          </div>
-          <p id="roleSplitSummary" class="section-hint role-split-summary"></p>
-          <div id="roleSplitList" class="role-split-list"></div>
-          <div id="roleSplitImpulses" class="month-impulses"></div>
         </section>
       </section>
 
@@ -509,7 +511,7 @@
   </dialog>
 
   <dialog id="roleSplitInfoDialog" class="form-dialog">
-    <h3>Rollenverteilung</h3>
+    <h3>Rollenpräsenz</h3>
     <div id="roleSplitInfoBody" class="info-dialog-body"></div>
     <div class="dialog-actions">
       <button id="closeRoleSplitInfo" type="button" class="primary-button compact">Schließen</button>

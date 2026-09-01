@@ -158,18 +158,23 @@ const SUPPORT_OPTIONS = {
   none: { label: "Nicht verfügbar", score: 28 }
 };
 
+/* Tagesphasen in chronologischer Reihenfolge: Morgen → Mittag → Nachmittag →
+   Abend → Nacht. Die Schlüssel bleiben unverändert, damit gespeicherte
+   Einträge weiterhin exakt zugeordnet werden. Die hinterlegten Uhrzeiten
+   sind Vorschläge für neue Einträge und ändern gespeicherte Zeiten nie. */
 const CHECKIN_SLOTS = [
-  { key: "night", label: "Nacht", icon: "🌙", time: "07:00", color: "#6256C7" },
   { key: "morning", label: "Morgens", icon: "🌅", time: "08:00", color: "#F2A93B" },
   { key: "midday", label: "Mittags", icon: "☀️", time: "13:00", color: "#E5B52E" },
   { key: "afternoon", label: "Nachmittags", icon: "🌤️", time: "16:00", color: "#E29A63" },
-  { key: "evening", label: "Abends", icon: "🌇", time: "19:00", color: "#B268C4" }
+  { key: "evening", label: "Abends", icon: "🌇", time: "19:00", color: "#B268C4" },
+  { key: "night", label: "Nacht", icon: "🌙", time: "07:00", color: "#6256C7" }
 ];
 /* Verbindliche Reihenfolge der Tagesreise. Sie bestimmt allein, welcher
-   Check-in als nächster offen ist – die Uhrzeit tut das ausdrücklich nicht. */
-const CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "afternoon", "evening"];
+   Check-in als nächster offen ist – die Uhrzeit tut das ausdrücklich nicht.
+   Ein neuer Tag beginnt deshalb immer mit „Morgen"; „Nacht" steht am Ende. */
+const CHECKIN_CHRONOLOGY = ["morning", "midday", "afternoon", "evening", "night"];
 // Tage vor Version 6 kennen nur vier Phasen; der Nachmittag fehlt dort.
-const LEGACY_CHECKIN_CHRONOLOGY = ["night", "morning", "midday", "evening"];
+const LEGACY_CHECKIN_CHRONOLOGY = ["morning", "midday", "evening", "night"];
 const LOAD_OPTIONS = {
   low: { label: "Niedrig", score: 86, icon: "○" },
   normal: { label: "Normal", score: 62, icon: "◐" },
@@ -470,39 +475,105 @@ function coachImpulse(energy, mood, key) {
   };
 }
 
-/* Kurze Bedeutungsbeschreibung unter jedem der drei Regler. Fünf Stufen je
-   Regler, rein beschreibend – keine Bewertung, keine Aufgabe. */
+/* Bedeutungsbeschreibung unter jedem der drei Regler.
+
+   Für jeden möglichen Reglerwert steht genau ein fester Text: 21 Stufen je
+   Regler (0, 5, 10 … 100), insgesamt 63 Texte. Es gibt keinen Zufall und
+   keine wechselnden Formulierungen; gleiche Werte ergeben immer denselben
+   Satz. Die Texte beschreiben ausschließlich das eigene Erleben – sie
+   bewerten nicht und stellen keine Aufgabe.
+
+   Gottesfurcht beschreibt dabei ausdrücklich nur das eigene Erleben von
+   Gottesbewusstsein, niemals Allahs tatsächliche Nähe. */
+const SLIDER_MEANING_STEPS = Array.from({ length: 21 }, (_, index) => index * 5);
+
 const SLIDER_MEANINGS = {
-  energy: [
-    "Kaum Reserven – nur das Nötigste ist heute realistisch.",
-    "Wenig Kraft – kleine Schritte tragen weiter als große.",
-    "Grundspannung vorhanden – ein normales Pensum ist machbar.",
-    "Gut belastbar – auch Anspruchsvolles ist tragbar.",
-    "Sehr wach und kräftig – volle Handlungsfähigkeit."
-  ],
-  mood: [
-    "Deutlich gedrückt – Milde mit dir ist angemessen.",
-    "Gedämpft – vieles fühlt sich schwerer an als es ist.",
-    "Ausgeglichen – weder getragen noch belastet.",
-    "Gute Stimmung – Vorhaben fallen leichter.",
-    "Sehr gute Stimmung – offen, klar und zugewandt."
-  ],
-  taqwa: [
-    "Sehr fern – Gottesbewusstsein spielt gerade kaum eine Rolle.",
-    "Fern – die Verbindung ist da, aber nicht spürbar.",
-    "Vorhanden – Gottesbewusstsein begleitet den Tag im Hintergrund.",
-    "Nah – Handeln und Absicht sind bewusst ausgerichtet.",
-    "Sehr nah – Gottesbewusstsein trägt das Handeln erkennbar."
-  ]
+  energy: {
+    0: "Keine nutzbare Reserve – vollständige Entlastung steht im Vordergrund.",
+    5: "Fast keine Kraft – selbst kleine Anforderungen kosten viel.",
+    10: "Kaum Reserven – nur das Nötigste ist heute realistisch.",
+    15: "Sehr wenig Energie – kleine Schritte und Pausen sind angemessen.",
+    20: "Wenig Kraft – ein reduziertes Tempo schützt die verbleibende Energie.",
+    25: "Begrenzte Reserve – ein kleiner, klarer Schritt ist gut machbar.",
+    30: "Noch eher kraftarm – Umfang und Tempo sollten überschaubar bleiben.",
+    35: "Etwas Energie ist da – ein ruhiges Pensum ist realistisch.",
+    40: "Grundenergie vorhanden – einfache Aufgaben sind gut tragbar.",
+    45: "Solide Basis – ein normales, begrenztes Pensum ist möglich.",
+    50: "Mittlere Energie – Alltag und einzelne Anforderungen sind machbar.",
+    55: "Ausreichende Kraft – verlässliches Handeln ist gut möglich.",
+    60: "Stabile Energie – ein normales Pensum ist gut tragbar.",
+    65: "Gute Reserven – auch konzentriertes Arbeiten ist möglich.",
+    70: "Deutlich belastbar – anspruchsvollere Aufgaben passen heute gut.",
+    75: "Viel Energie – Tempo und Tiefe können bewusst erhöht werden.",
+    80: "Hohe Kraft – auch größere Vorhaben sind realistisch.",
+    85: "Sehr gute Reserven – längere Konzentration ist gut möglich.",
+    90: "Sehr hohe Energie – es besteht viel Handlungsspielraum.",
+    95: "Nahezu volle Kraft – besonders anspruchsvolle Schritte sind tragbar.",
+    100: "Volle Energie – die verfügbare Handlungsfähigkeit ist maximal."
+  },
+  mood: {
+    0: "Extrem gedrückt – der Moment fühlt sich kaum tragbar an.",
+    5: "Sehr stark gedrückt – fast alles wirkt gerade schwer.",
+    10: "Deutlich gedrückt – Milde mit dir ist angemessen.",
+    15: "Stark gedämpft – Leichtigkeit ist im Moment kaum erreichbar.",
+    20: "Niedrige Stimmung – vieles kostet spürbar mehr Überwindung.",
+    25: "Gedrückt – positive Impulse kommen nur schwer durch.",
+    30: "Eher niedergeschlagen – der Tag fühlt sich belastet an.",
+    35: "Gedämpfte Stimmung – einzelne gute Momente bleiben erreichbar.",
+    40: "Leicht gedrückt – Belastendes steht noch im Vordergrund.",
+    45: "Etwas unter der eigenen Mitte – die Stimmung bleibt verhalten.",
+    50: "Neutral – weder deutlich belastet noch besonders getragen.",
+    55: "Leicht aufgehellt – erste positive Energie ist spürbar.",
+    60: "Ziemlich ausgeglichen – der Tag fühlt sich grundsätzlich stimmig an.",
+    65: "Gute Stimmung – vieles fällt etwas leichter.",
+    70: "Deutlich positiv – Offenheit und Zuversicht sind spürbar.",
+    75: "Sehr gute Grundstimmung – Vorhaben fühlen sich zugänglich an.",
+    80: "Freudige Stimmung – der Tag wird offen und zugewandt erlebt.",
+    85: "Sehr positiv – Motivation und Verbundenheit sind deutlich spürbar.",
+    90: "Ausgesprochen gute Stimmung – Leichtigkeit trägt das Handeln.",
+    95: "Fast euphorisch – sehr viel Freude und Schwung sind vorhanden.",
+    100: "Höchste Stimmung – vollständige Begeisterung und Leichtigkeit sind spürbar."
+  },
+  taqwa: {
+    0: "Gottesbewusstsein ist im eigenen Erleben kaum zugänglich.",
+    5: "Sehr große innere Distanz – die Ausrichtung auf Allah tritt stark zurück.",
+    10: "Sehr fern – Gottesbewusstsein spielt gerade kaum eine Rolle.",
+    15: "Kaum spürbar – die innere Hinwendung bleibt schwach.",
+    20: "Fern – die Verbindung wird nur vereinzelt wahrgenommen.",
+    25: "Noch deutlich fern – die Erinnerung an Allah erreicht den Alltag selten.",
+    30: "Eher fern – Gottesbewusstsein erscheint nur in einzelnen Momenten.",
+    35: "Erste Nähe – die Hinwendung wird zeitweise wieder spürbar.",
+    40: "Leicht präsent – Gottesbewusstsein begleitet einzelne Entscheidungen.",
+    45: "Im Hintergrund vorhanden – die Ausrichtung ist noch wechselhaft.",
+    50: "Spürbar vorhanden – Nähe und Distanz halten sich die Waage.",
+    55: "Regelmäßig präsent – Gottesbewusstsein begleitet den Alltag zunehmend.",
+    60: "Stabil vorhanden – die Ausrichtung wirkt in mehreren Situationen.",
+    65: "Deutlich präsent – Absichten werden bewusster auf Allah ausgerichtet.",
+    70: "Nah – Gottesbewusstsein prägt viele Entscheidungen.",
+    75: "Spürbare Nähe – Handeln und Absicht greifen zunehmend ineinander.",
+    80: "Sehr nah – die Ausrichtung auf Allah trägt den Tag.",
+    85: "Tiefe Nähe – Gottesbewusstsein bleibt auch im Handeln gegenwärtig.",
+    90: "Sehr starke Präsenz – Absicht und Verhalten sind klar ausgerichtet.",
+    95: "Fast durchgehend nah – Gottesbewusstsein prägt den gesamten Tag.",
+    100: "Durchgehend gegenwärtig – Gottesbewusstsein trägt Absicht und Handeln."
+  }
 };
+
+/* Nur für die Textauswahl wird auf den nächsten Fünferschritt gerundet –
+   ältere Zwischenwerte behalten ihren gespeicherten Originalwert. */
+function sliderMeaningStep(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return Math.round(clamp(numeric, 0, 100) / 5) * 5;
+}
 
 function sliderMeaning(kind, value) {
   const texts = SLIDER_MEANINGS[kind];
   if (!texts) return "";
   if (value === null || value === undefined || value === "") return "";
-  const v = clamp(Number(value), 0, 100);
-  const index = v <= 20 ? 0 : v <= 40 ? 1 : v <= 60 ? 2 : v <= 80 ? 3 : 4;
-  return texts[index];
+  const step = sliderMeaningStep(value);
+  if (step === null) return "";
+  return texts[step] || "";
 }
 
 const RESPONSIBILITY_KEYS = ["situationState", "responsibilityClarity", "roleScope", "appropriateness", "effectLearning"];
@@ -684,19 +755,32 @@ const DEFAULT_ROUTINES = {
    stehen ausschließlich hier – es gibt keine manuelle Punkteingabe.
    ========================================================================== */
 const ACTIVITY_TEMPLATES = [
-  { key: "sma",    label: "SMA-Arbeitstag",   title: "SMA-Arbeitstag",   role: "Unternehmer", weight: 0.5, isSma: true },
-  { key: "gym",    label: "Gym",              title: "Gym",              role: "Vitalist",    weight: 2.0 },
-  { key: "arabic", label: "Arabisch lernen",  title: "Arabisch lernen",  role: "Muslim",      weight: 1.5 },
-  { key: "book",   label: "Buchprojekt",      title: "Buchprojekt",      role: "Unternehmer", weight: 1.2 },
-  { key: "custom", label: "Eigene Aktivität", title: "",                 role: "",            weight: 1.0 }
+  { key: "sma",     label: "SMA-Arbeitstag",   title: "SMA-Arbeitstag",   role: "Unternehmer",    weight: 0.2, isSma: true, dailyCap: 0.2 },
+  { key: "book",    label: "Buchprojekt",      title: "Buchprojekt",      role: "Unternehmer",    weight: 1.5 },
+  { key: "gym",     label: "Gym",              title: "Gym",              role: "Vitalist",       weight: 2.0 },
+  { key: "arabic",  label: "Arabisch lernen",  title: "Arabisch lernen",  role: "Muslim",         weight: 1.5 },
+  { key: "jumua",   label: "Jumʿa",            title: "Jumʿa",            role: "Muslim",         weight: 2.0, dailyCap: 2.0 },
+  { key: "mosque",  label: "Moschee",          title: "Moschee",          role: "Muslim",         weight: 1.0, dailyCap: 1.0 },
+  { key: "youth",   label: "Jugendgruppe",     title: "Jugendgruppe",     role: "Muslim",         weight: 2.0 },
+  { key: "cleanup", label: "Clean Up",         title: "Clean Up",         role: "Wirt",           weight: 1.5 },
+  { key: "family",  label: "Familienzeit",     title: "Familienzeit",     role: "Familienmensch", weight: 1.5 },
+  { key: "custom",  label: "Eigene Aktivität", title: "",                 role: "",               weight: 1.0 }
 ];
-
-// Ein Kalendertag mit mindestens einem SMA-Eintrag ergibt insgesamt so viele Punkte.
-const SMA_DAY_POINTS = 0.5;
 
 function activityTemplate(key) {
   return ACTIVITY_TEMPLATES.find(template => template.key === key) || null;
 }
+
+/* Tagesbegrenzung einer Vorlage. Mehrere Einträge derselben begrenzten
+   Vorlage an einem Kalendertag ergeben zusammen genau diesen Wert.
+   Vorlagen ohne Begrenzung zählen pro tatsächlichem Eintrag. */
+function activityDailyCap(key) {
+  const template = activityTemplate(key);
+  return template && Number.isFinite(template.dailyCap) ? template.dailyCap : null;
+}
+
+// Ein Kalendertag mit mindestens einem SMA-Eintrag ergibt insgesamt so viele Punkte.
+const SMA_DAY_POINTS = activityDailyCap("sma");
 
 /* Historische Titel dürfen einer Vorlage zugeordnet werden, wenn sie exakt
    übereinstimmen – unabhängig von Groß- und Kleinschreibung. Sonst wird
@@ -740,29 +824,50 @@ function formatPoints(value) {
   return text.replace(".", ",");
 }
 
-/* Punktzeilen eines Tages in Eingabereihenfolge. Alle SMA-Einträge eines
-   Datums werden zu genau einer Zeile mit 0,5 Punkten zusammengefasst –
-   dadurch stimmen Einzelwerte und Tagessumme immer exakt überein. */
+/* Punktzeilen eines Tages in Eingabereihenfolge. Mehrere Einträge einer
+   tagesbegrenzten Vorlage (SMA-Arbeitstag, Moschee, Jumʿa) werden zu genau
+   einer Zeile mit dem Tageswert zusammengefasst – dadurch stimmen
+   Einzelwerte und Tagessumme immer exakt überein. */
 function activityPointRows(data, date) {
   const activities = (data?.activities || []).map(normalizeActivity);
-  const rows = [];
-  let smaCounted = false;
-  const smaEntries = activities.filter(activity => activity.isSma).length;
+  const entriesPerTemplate = {};
   activities.forEach(activity => {
-    if (activity.isSma) {
-      if (smaCounted) return;
-      smaCounted = true;
+    if (activityDailyCap(activity.template) === null) return;
+    entriesPerTemplate[activity.template] = (entriesPerTemplate[activity.template] || 0) + 1;
+  });
+
+  const counted = {};
+  const rows = [];
+  activities.forEach(activity => {
+    const cap = activityDailyCap(activity.template);
+    if (cap !== null) {
+      if (counted[activity.template]) return;
+      counted[activity.template] = true;
       rows.push({
         date,
         title: activity.title,
         role: activity.role,
-        points: SMA_DAY_POINTS,
-        isSma: true,
-        smaEntries
+        points: cap,
+        template: activity.template,
+        isSma: activity.isSma,
+        capped: true,
+        entries: entriesPerTemplate[activity.template],
+        // Bestandsfeld: bleibt für ältere Auswertungen und Exporte lesbar.
+        smaEntries: activity.isSma ? entriesPerTemplate[activity.template] : 0
       });
       return;
     }
-    rows.push({ date, title: activity.title, role: activity.role, points: activity.weight, isSma: false, smaEntries: 0 });
+    rows.push({
+      date,
+      title: activity.title,
+      role: activity.role,
+      points: activity.weight,
+      template: activity.template,
+      isSma: false,
+      capped: false,
+      entries: 1,
+      smaEntries: 0
+    });
   });
   return rows;
 }
@@ -772,7 +877,7 @@ function dayPointTotal(data, date) {
 }
 
 const ROUTINE_MINUTE_CHOICES = Array.from({ length: 180 }, (_, index) => index + 1);
-const APP_VERSION = "6.1.0";
+const APP_VERSION = "6.2.0";
 const SCHEMA_VERSION = 7;
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
@@ -1542,8 +1647,10 @@ function phaseGlyph(key) {
   </svg>`;
 }
 
-/* Horizontale Tagesbahn über fünf Phasen: Nacht → Morgen → Mittag →
-   Nachmittag → Abend. Vier sichtbar unterscheidbare Zustände:
+/* Horizontale Tagesbahn über fünf Phasen: Morgen → Mittag → Nachmittag →
+   Abend → Nacht. Sichtbar sind ausschließlich Tagesphase, Symbol und Status –
+   Prozentwerte stehen im Check-in-Dialog, im Verlauf und in den Auswertungen.
+   Vier sichtbar unterscheidbare Zustände:
      erledigt  – farbig, mit Haken
      jetzt     – moderat größer und farbig
      später    – ruhig und neutral
@@ -1556,9 +1663,6 @@ function renderCheckinSlots() {
   const bySlot = Object.fromEntries((currentData.stateCheckins || []).map(entry => [entry.slot, entry]));
   const pending = pendingPhaseKey();
   const active = activeChronology();
-
-  const dayHasTaqwa = (currentData.stateCheckins || [])
-    .some(entry => entry.taqwa !== null && entry.taqwa !== undefined && entry.taqwa !== "");
 
   const stops = CHECKIN_CHRONOLOGY.map(key => {
     const phase = CYCLE_PHASES[key];
@@ -1576,26 +1680,29 @@ function renderCheckinSlots() {
 
   const nodes = stops.map(stop => {
     const { key, phase, entry, state } = stop;
-    const energy = entry && entry.energy !== null && entry.energy !== undefined ? `${entry.energy} %` : "– %";
-    const mood = entry && entry.mood !== null && entry.mood !== undefined ? `${entry.mood} %` : "– %";
+    /* Die Zahlen bleiben ausschließlich in der Vorlesehilfe erhalten; sichtbar
+       zeigt die Bahn nur Tagesphase, Symbol und Status. */
+    const hasEnergy = entry && entry.energy !== null && entry.energy !== undefined;
+    const hasMood = entry && entry.mood !== null && entry.mood !== undefined;
     const hasTaqwa = entry && entry.taqwa !== null && entry.taqwa !== undefined && entry.taqwa !== "";
-    const taqwa = hasTaqwa ? `${entry.taqwa} %` : "– %";
     const action = state === "done" ? "bearbeiten" : "eintragen";
-    const status = entry ? `Energie ${energy}, Laune ${mood}${hasTaqwa ? `, Gottesfurcht ${taqwa}` : ""}`
+    const values = entry
+      ? [
+          hasEnergy ? `Energie ${entry.energy} %` : "",
+          hasMood ? `Laune ${entry.mood} %` : "",
+          hasTaqwa ? `Gottesfurcht ${entry.taqwa} %` : ""
+        ].filter(Boolean).join(", ")
+      : "";
+    const status = entry ? (values || "erfasst")
       : state === "outside" ? "für diesen Tag nicht erfasst" : "noch nicht erfasst";
     return `<button type="button" class="journey-stop is-${state}" data-open-checkin-slot="${key}"
         style="--stop-a:${phase.a};--stop-b:${phase.b};--stop-line:${phase.line};--stop-glow:${phase.glow}"
-        aria-label="${escapeHTML(phase.short)} ${action}. ${status}.">
+        aria-label="${escapeHTML(phase.short)} ${action}. ${escapeHTML(status)}.">
       <span class="stop-node">
         <span class="stop-icon">${phaseGlyph(key)}</span>
         ${state === "done" ? `<span class="stop-check" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="M3 7.4 5.9 10.2 11 4.6"></path></svg></span>` : ""}
       </span>
       <span class="stop-name">${escapeHTML(phase.short)}</span>
-      <span class="stop-values">
-        <span class="stop-value"><small>Energie</small><b>${energy}</b></span>
-        <span class="stop-value"><small>Laune</small><b>${mood}</b></span>
-        ${dayHasTaqwa ? `<span class="stop-value"><small>Taqwa</small><b>${taqwa}</b></span>` : ""}
-      </span>
     </button>`;
   }).join("");
 
@@ -1639,11 +1746,11 @@ function renderStateOverview() {
     summary.removeAttribute("style");
     summary.innerHTML = `<p class="readout-empty">Noch kein Check-in</p>`;
   } else {
-    /* Die Auswertung liest sich als Ergebnis: zuerst Tagesrolle und Modus,
-       dann die beiden Messwerte, darunter der Coach-Impuls. Es erscheinen
-       hier bewusst keine Aufgaben und keine Begründungstexte. */
+    /* Die Auswertung liest sich als Ergebnis: Tagesrolle, Rollenmodus und
+       darunter der Coach-Impuls. Es erscheinen hier bewusst keine Aufgaben,
+       keine Begründungstexte und keine Prozentwerte – die Zahlen stehen im
+       Check-in-Dialog, im aufgeklappten Verlauf und in den Auswertungen. */
     summary.className = "current-state-summary state-readout";
-    const hasLatestTaqwa = latest.taqwa !== null && latest.taqwa !== undefined && latest.taqwa !== "";
     summary.style.setProperty("--mode-color", mode.color);
     summary.style.setProperty("--mode-soft", hexToRgba(mode.color, .13));
     summary.style.setProperty("--mode-line", hexToRgba(mode.color, .28));
@@ -1651,20 +1758,6 @@ function renderStateOverview() {
       <div class="readout-head">
         <span class="readout-role">${escapeHTML(role.roleName)}</span>
         <strong class="readout-mode">${escapeHTML(mode.label)}</strong>
-      </div>
-      <div class="readout-metrics${hasLatestTaqwa ? " with-taqwa" : ""}">
-        <div class="readout-metric energy">
-          <span>Energie</span><b>${latest.energy ?? "–"} %</b>
-          <i style="--fill:${clamp(Number(latest.energy ?? 0), 0, 100)}%"></i>
-        </div>
-        <div class="readout-metric mood">
-          <span>Laune</span><b>${latest.mood ?? "–"} %</b>
-          <i style="--fill:${clamp(Number(latest.mood ?? 0), 0, 100)}%"></i>
-        </div>
-        ${hasLatestTaqwa ? `<div class="readout-metric taqwa">
-          <span>Taqwa</span><b>${latest.taqwa} %</b>
-          <i style="--fill:${clamp(Number(latest.taqwa), 0, 100)}%"></i>
-        </div>` : ""}
       </div>
       ${coachImpulseHTML(latest.energy, latest.mood, mode.key)}`;
   }
@@ -2166,13 +2259,17 @@ function renderActivities() {
   if (!list) return;
   const activities = (currentData.activities || []).map(normalizeActivity);
   currentData.activities = activities;
-  let smaShown = false;
+  // Tagesbegrenzte Vorlagen zählen nur mit ihrem ersten Eintrag des Tages.
+  const cappedShown = {};
   list.innerHTML = activities.length ? activities.map((activity, index) => {
     const role = getRole(activity.role);
+    const cap = activityDailyCap(activity.template);
     let points;
-    if (activity.isSma) {
-      points = smaShown ? "Tagesbegrenzung" : `${formatPoints(SMA_DAY_POINTS)} Punkte`;
-      smaShown = true;
+    if (cap !== null) {
+      points = cappedShown[activity.template]
+        ? "Tagesbegrenzung"
+        : `${formatPoints(cap)} ${cap === 1 ? "Punkt" : "Punkte"}`;
+      cappedShown[activity.template] = true;
     } else {
       points = `${formatPoints(activity.weight)} ${activity.weight === 1 ? "Punkt" : "Punkte"}`;
     }
@@ -2220,11 +2317,12 @@ function applyActivityTemplate() {
   }
   const hint = $("activityWeightHint");
   if (hint) {
-    hint.textContent = template.key === "sma"
-      ? `${template.role} · ${formatPoints(SMA_DAY_POINTS)} Punkte je Kalendertag, unabhängig von der Anzahl der Einträge.`
+    const cap = activityDailyCap(template.key);
+    hint.textContent = cap !== null
+      ? `${template.role} · ${formatPoints(cap)} ${cap === 1 ? "Punkt" : "Punkte"} je Kalendertag, unabhängig von der Anzahl der Einträge.`
       : isCustom
         ? `Frei wählbar · ${formatPoints(template.weight)} Punkt`
-        : `${template.role} · ${formatPoints(template.weight)} Punkte`;
+        : `${template.role} · ${formatPoints(template.weight)} ${template.weight === 1 ? "Punkt" : "Punkte"}`;
   }
 }
 
@@ -2464,7 +2562,7 @@ function buildWeeklyTrendChart(labels, series, options = {}) {
 
   return `<div class="trend-panel">
     <div class="trend-legend">${legend}</div>
-    <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf von Energie, Laune, Gottesfurcht und Pflichtgebeten">
+    <svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Verlauf von Energie, Laune und Gottesfurcht">
       ${todayBand}
       <g class="trend-grid">${grid}</g>
       ${paths}
@@ -2509,9 +2607,9 @@ function renderStats() {
   const energy = reviews.map(item => item.stored ? dailyAverageEnergy(item.data) : null);
   const mood = reviews.map(item => item.stored ? dailyAverageMood(item.data) : null);
   const taqwa = reviews.map(item => item.stored ? dailyAverageTaqwa(item.data) : null);
+  /* Die Pflichtgebete stehen ausschließlich in ihrer eigenen Wochenübersicht
+     darunter – sie sind bewusst keine Kurve im Liniengraphen. */
   const prayerCounts = reviews.map(item => item.stored ? dailyPrayerProgress(item.data).count : null);
-  // 0/5 = 0 %, 1/5 = 20 % … 5/5 = 100 % – gleiche Skala wie Energie und Laune.
-  const prayerPercent = prayerCounts.map(count => count === null ? null : Math.round(count / PRAYERS.length * 100));
   const routineStates = reviews.map(item => item.stored ? dailyRoutineStates(item.data) : ["", ""]);
   const today = todayISO();
 
@@ -2537,8 +2635,7 @@ function renderStats() {
     ${buildWeeklyTrendChart(labels, [
       { label: "Energie", className: "energy", values: energy },
       { label: "Laune", className: "mood", values: mood },
-      { label: "Gottesfurcht", className: "taqwa", values: taqwa },
-      { label: "Pflichtgebete", className: "prayers", values: prayerPercent }
+      { label: "Gottesfurcht", className: "taqwa", values: taqwa }
     ], { todayIndex: dates.indexOf(today) })}
     ${buildPrayerWeekPanel(labels, prayerCounts)}
     ${buildRoutineWeekPanel(labels, routineStates)}`;
@@ -2740,10 +2837,10 @@ function exportMonthReport() {
     `SMA-Arbeitstage: ${stats.smaDays} · ${formatPoints(stats.smaPoints)} Punkte`,
     "",
     "",
-    "Rollenverteilung",
+    "Rollenpräsenz",
     ...ROLES.map(role => {
       const entry = split.roles.find(item => item.role === role.name);
-      return `  ${role.name}: ${formatPoints(entry.points)} Punkte · ${entry.rows.length} ${entry.rows.length === 1 ? "Aktivität" : "Aktivitäten"}`;
+      return `  ${role.name}: ${formatPoints(entry.points)} Präsenzpunkte · ${entry.rows.length} ${entry.rows.length === 1 ? "Aktivität" : "Aktivitäten"}`;
     }),
     "",
     "Rückblick & Impulse",
@@ -2755,7 +2852,10 @@ function exportMonthReport() {
 }
 
 /* --------------------------------------------------------------------------
-   Rollenverteilung
+   Rollenpräsenz
+   Die Punkte zeigen, welchen Rollen durch bewusst erfasste Aktivitäten Raum
+   gegeben wurde. Sie messen ausdrücklich weder Zeitaufwand noch Auslastung,
+   Produktivität, Pflichterfüllung oder persönlichen Wert.
    -------------------------------------------------------------------------- */
 function roleSplitDates() {
   return roleSplitRange === "month" ? monthDates(analysisMonth) : weekDates(selectedDate, 0);
@@ -2771,7 +2871,12 @@ function roleSplitData(dates) {
   });
   const roles = ROLES.map(role => {
     const rows = [...(rowsByRole[role.name] || [])].sort((a, b) => a.date.localeCompare(b.date));
-    return { role: role.name, rows, points: roundPoints(rows.reduce((sum, row) => sum + row.points, 0)) };
+    return {
+      role: role.name,
+      rows,
+      activeDays: new Set(rows.map(row => row.date)).size,
+      points: roundPoints(rows.reduce((sum, row) => sum + row.points, 0))
+    };
   });
   const total = roundPoints(roles.reduce((sum, item) => sum + item.points, 0));
   const activityCount = roles.reduce((sum, item) => sum + item.rows.length, 0);
@@ -2786,21 +2891,52 @@ function roleSplitImpulseList(split) {
     impulses.push("In diesem Zeitraum sind noch keine Aktivitäten eingetragen.");
     return impulses;
   }
-  impulses.push(`Du hast ${split.activityCount} ${split.activityCount === 1 ? "Aktivität" : "Aktivitäten"} festgehalten und dabei ${formatPoints(split.total)} ${split.total === 1 ? "Punkt" : "Punkte"} auf ${split.represented} ${split.represented === 1 ? "Rolle" : "Rollen"} verteilt.`);
+  impulses.push(`Du hast ${split.activityCount} ${split.activityCount === 1 ? "Aktivität" : "Aktivitäten"} festgehalten; daraus ergeben sich ${formatPoints(split.total)} ${split.total === 1 ? "Präsenzpunkt" : "Präsenzpunkte"} auf ${split.represented} ${split.represented === 1 ? "Rolle" : "Rollen"}.`);
   if (split.leader) {
-    impulses.push(`Schwerpunkt war ${split.leader.role} mit ${formatPoints(split.leader.points)} Punkten.`);
+    impulses.push(`Schwerpunkt der Rollenpräsenz war ${split.leader.role} mit ${formatPoints(split.leader.points)} Punkten.`);
   }
   const open = split.roles.filter(item => item.points === 0).map(item => item.role);
   // Während eines aktiven Fokus wird keine andere Rolle als offen ausgewiesen.
   if (open.length && !roleFocusIsActive()) {
     impulses.push(open.length === 1
-      ? `${open[0]} ist bislang noch nicht vertreten – eine kleine Aktivität würde genügen.`
-      : `Noch nicht vertreten: ${open.join(", ")}. Eine einzelne Aktivität reicht, um eine davon aufzunehmen.`);
+      ? `${open[0]} ist in diesem Zeitraum nicht erfasst – eine kleine Aktivität würde genügen.`
+      : `Nicht erfasst: ${open.join(", ")}. Eine einzelne Aktivität reicht, um eine davon aufzunehmen.`);
   }
   if (roleFocusIsActive()) {
     impulses.push(`Der Rollenfokus liegt derzeit auf ${roleFocus.role} – ${roleFocusRangeLabel()}.`);
   }
   return impulses;
+}
+
+/* Neutraler Status einer Rolle. Bewusst ohne wertende Begriffe: eine Rolle
+   ohne Eintrag ist „nicht erfasst" – nicht schwach, schlecht oder
+   vernachlässigt. */
+function rolePresenceStatus(item, split) {
+  if (item.points === 0) return "nicht erfasst";
+  if (split.leader && split.leader.role === item.role) return "Schwerpunkt";
+  return "sichtbar";
+}
+
+/* Ruhige Gesamtverteilung: die Anteile aller vertretenen Rollen an der
+   erfassten Präsenz, in stabiler Rollenreihenfolge. */
+function rolePresenceDistributionHTML(split) {
+  if (!split.total) {
+    return `<p class="role-presence-empty">Noch keine Präsenzpunkte in diesem Zeitraum.</p>`;
+  }
+  const segments = split.roles.filter(item => item.points > 0).map(item => {
+    const role = getRole(item.role);
+    const share = Math.round(item.points / split.total * 100);
+    return `<span class="role-presence-segment" style="--role-color:${role.color};--share:${item.points / split.total * 100}%"
+      title="${escapeHTML(role.name)} ${share} %"></span>`;
+  }).join("");
+  const legend = split.roles.filter(item => item.points > 0).map(item => {
+    const role = getRole(item.role);
+    const share = Math.round(item.points / split.total * 100);
+    return `<span class="role-presence-key"><i style="--role-color:${role.color}"></i>${escapeHTML(role.emoji)} ${escapeHTML(role.name)} <b>${share} %</b></span>`;
+  }).join("");
+  return `<div class="role-presence-share" role="img"
+      aria-label="Anteile der Rollen an der erfassten Präsenz">${segments}</div>
+    <div class="role-presence-keys">${legend}</div>`;
 }
 
 function renderRoleSplit() {
@@ -2822,20 +2958,41 @@ function renderRoleSplit() {
     ? monthLabelText(analysisMonth)
     : `${formatShortDate(dates[0])} – ${formatShortDate(dates[6])}`;
 
-  summary.textContent = `${periodLabel} · ${split.activityCount} ${split.activityCount === 1 ? "Aktivität" : "Aktivitäten"} · ${formatPoints(split.total)} ${split.total === 1 ? "Punkt" : "Punkte"} · ${split.represented} von ${ROLES.length} Rollen vertreten`;
+  summary.textContent = periodLabel;
 
+  const metrics = $("roleSplitMetrics");
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="role-presence-metric">
+        <span>Aktivitäten</span><strong>${split.activityCount}</strong>
+      </div>
+      <div class="role-presence-metric">
+        <span>Präsenzpunkte</span><strong>${formatPoints(split.total)}</strong>
+      </div>
+      <div class="role-presence-metric">
+        <span>Sichtbare Rollen</span><strong>${split.represented} von ${ROLES.length}</strong>
+      </div>`;
+  }
+
+  const distribution = $("roleSplitDistribution");
+  if (distribution) distribution.innerHTML = rolePresenceDistributionHTML(split);
+
+  // Alle sieben Rollen bleiben in ihrer stabilen Reihenfolge sichtbar.
   list.innerHTML = split.roles.map(item => {
     const role = getRole(item.role);
-    const isLeader = split.leader && split.leader.role === item.role;
-    const note = item.points === 0 ? "noch nicht vertreten" : isLeader ? "Schwerpunkt" : `${item.rows.length} ${item.rows.length === 1 ? "Aktivität" : "Aktivitäten"}`;
+    const status = rolePresenceStatus(item, split);
+    const count = item.rows.length
+      ? `${item.rows.length} ${item.rows.length === 1 ? "Aktivität" : "Aktivitäten"} · ${item.activeDays} ${item.activeDays === 1 ? "Tag" : "Tage"}`
+      : "keine Aktivität erfasst";
     return `<button type="button" class="role-split-row${item.points === 0 ? " is-open" : ""}" data-role-detail="${escapeHTML(item.role)}"
-      style="--role-color:${role.color};--role-soft:${hexToRgba(role.color, .16)}">
+      style="--role-color:${role.color};--role-soft:${hexToRgba(role.color, .16)}"
+      aria-label="${escapeHTML(role.name)}: ${formatPoints(item.points)} Präsenzpunkte, ${escapeHTML(count)}, ${escapeHTML(status)}. Details öffnen.">
       <span class="role-split-head">
         <span class="role-split-name">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</span>
         <b>${formatPoints(item.points)}</b>
       </span>
       <span class="role-split-bar"><i style="--fill:${Math.round(item.points / max * 100)}%"></i></span>
-      <small>${escapeHTML(note)}</small>
+      <small class="role-split-meta"><span>${escapeHTML(count)}</span><span class="role-split-status">${escapeHTML(status)}</span></small>
     </button>`;
   }).join("");
 
@@ -2847,7 +3004,7 @@ function renderRoleSplit() {
 }
 
 /* Detailaufschlüsselung einer Rolle. Die angezeigten Einzelwerte und die
-   Tagessummen ergeben zusammen exakt den Wert der Rollenverteilung. */
+   Tagessummen ergeben zusammen exakt den Wert der Rollenpräsenz. */
 function openRoleDetailDialog(roleName) {
   const dialog = $("roleDetailDialog");
   if (!dialog) return;
@@ -2866,7 +3023,7 @@ function openRoleDetailDialog(roleName) {
     return `<div class="role-detail-day">
       <div class="role-detail-day-head"><strong>${escapeHTML(formatLongDate(date))}</strong><b>${formatPoints(daySum)}</b></div>
       ${rows.map(row => `<div class="role-detail-row">
-        <span>${escapeHTML(row.title)}${row.isSma && row.smaEntries > 1 ? ` <small>(${row.smaEntries} Einträge · Tagesbegrenzung)</small>` : ""}</span>
+        <span>${escapeHTML(row.title)}${row.capped && row.entries > 1 ? ` <small>(${row.entries} Einträge · Tagesbegrenzung)</small>` : ""}</span>
         <b>${formatPoints(row.points)}</b>
       </div>`).join("")}
     </div>`;
@@ -2881,22 +3038,28 @@ function openRoleDetailDialog(roleName) {
 function roleSplitInfoHTML() {
   const rows = ACTIVITY_TEMPLATES.map(template => {
     const role = template.key === "custom" ? "frei wählbar" : template.role;
-    const points = template.key === "sma"
-      ? `${formatPoints(SMA_DAY_POINTS)} je Kalendertag`
-      : `${formatPoints(template.weight)}`;
+    const cap = activityDailyCap(template.key);
+    const points = cap === null
+      ? `${formatPoints(template.weight)}`
+      : `${formatPoints(cap)} je Kalendertag`;
     return `<div class="info-row"><span>${escapeHTML(template.label)}</span><small>${escapeHTML(role)}</small><b>${escapeHTML(points)}</b></div>`;
   }).join("");
-  return `<p>Die Rollenverteilung zeigt, wie sich deine eingetragenen Aktivitäten im gewählten Zeitraum auf die sieben Rollen verteilen. Sie beschreibt und bewertet nicht.</p>
+  const capped = ACTIVITY_TEMPLATES.filter(template => activityDailyCap(template.key) !== null)
+    .map(template => `${template.label} (${formatPoints(activityDailyCap(template.key))})`).join(", ");
+  return `<p>Diese Auswertung zeigt, welchen Rollen du durch bewusst erfasste Aktivitäten Raum gegeben hast. Die Punkte gewichten die Aussagekraft einer Aktivität. Sie messen weder Zeitaufwand noch deinen persönlichen Wert oder die vollständige Erfüllung einer Rolle.</p>
+    <p>Deshalb kann ein SMA-Arbeitstag trotz großem Zeitaufwand mit ${formatPoints(activityDailyCap("sma"))} gewichtet sein, während eine bewusst prägende Ankeraktivität wie Jumʿa mit ${formatPoints(activityTemplate("jumua").weight)} zählt.</p>
     <p>Jede Aktivität bringt den Punktwert ihrer Vorlage mit. Die Punkte einer Rolle sind die Summe aller ihrer Aktivitäten im Zeitraum; der Balken zeigt den Anteil an der stärksten Rolle.</p>
     <div class="info-rows">${rows}</div>
-    <p>Für SMA-Arbeitstage gilt eine Tagesbegrenzung: Ein Kalendertag mit mindestens einem Eintrag ergibt insgesamt ${formatPoints(SMA_DAY_POINTS)} Punkte, unabhängig davon, wie viele Einträge an diesem Tag stehen. Es gibt kein Wochenlimit.</p>
-    <p>Aktivitäten ohne hinterlegtes Gewicht zählen einen Punkt.</p>`;
+    <p>Tagesbegrenzung: ${escapeHTML(capped)} zählen höchstens einmal pro Kalendertag, unabhängig von der Anzahl der Einträge. Es gibt kein Wochenlimit. Alle übrigen Vorlagen zählen pro Eintrag.</p>
+    <p>Aktivitäten ohne hinterlegtes Gewicht zählen einen Punkt.</p>
+    <p>Die fünf Pflichtgebete bleiben vollständig außerhalb dieser Punkte. Sie werden gesondert erfasst und ergeben ausdrücklich keine Punktzahl religiöser Pflichterfüllung.</p>`;
 }
 
 function renderAnalysis() {
   if (!$("analysisPage")) return;
-  renderMonthReview();
+  // Reihenfolge der Seite: zuerst die Rollenpräsenz, darunter der Monatsrückblick.
   renderRoleSplit();
+  renderMonthReview();
 }
 
 function getAllReviews() {
@@ -4037,10 +4200,73 @@ function bindEvents() {
   window.addEventListener("pagehide", persistRoutineSession);
 }
 
+/* ==========================================================================
+   DIALOGE – gemeinsamer Hintergrundschutz
+   Die Positionierung selbst liegt vollständig in einer einzigen CSS-Regel.
+   Hier wird ausschließlich verhindert, dass die Seite hinter einem offenen
+   Dialog mitscrollt; die Scrollposition wird beim Schließen exakt
+   wiederhergestellt. Fokus, Escape und alle vorhandenen Schließen-Buttons
+   bleiben unverändert.
+   ========================================================================== */
+let dialogScrollOffset = 0;
+let dialogScrollLocked = false;
+
+/* Bei eingeblendeter Tastatur schrumpft der sichtbare Bereich (visual
+   viewport), während die Layouthöhe gleich bleibt. Beides wird hier in zwei
+   CSS-Variablen übersetzt, damit der Dialog sichtbar bleibt und seine
+   Aktionen nicht abgeschnitten werden. Fehlt die API, gilt unverändert die
+   reine CSS-Zentrierung mit 100dvh. */
+function syncDialogViewport() {
+  const view = window.visualViewport;
+  if (!view) return;
+  const root = document.documentElement;
+  const layoutHeight = window.innerHeight || view.height;
+  root.style.setProperty("--dialog-vh", `${Math.round(view.height)}px`);
+  root.style.setProperty("--dialog-shift", `${Math.round(view.offsetTop + view.height / 2 - layoutHeight / 2)}px`);
+}
+
+function updateDialogScrollLock() {
+  const anyOpen = Boolean(document.querySelector("dialog[open]"));
+  if (anyOpen) syncDialogViewport();
+  if (anyOpen && !dialogScrollLocked) {
+    dialogScrollOffset = window.scrollY || 0;
+    document.body.style.top = `-${dialogScrollOffset}px`;
+    document.body.classList.add("dialog-open");
+    dialogScrollLocked = true;
+  } else if (!anyOpen && dialogScrollLocked) {
+    document.body.classList.remove("dialog-open");
+    document.body.style.top = "";
+    window.scrollTo(0, dialogScrollOffset);
+    dialogScrollLocked = false;
+  }
+}
+
+function setupDialogs() {
+  document.querySelectorAll("dialog").forEach(dialog => {
+    if (typeof dialog.showModal === "function") {
+      const nativeShowModal = dialog.showModal.bind(dialog);
+      dialog.showModal = () => {
+        nativeShowModal();
+        updateDialogScrollLock();
+      };
+    }
+    dialog.addEventListener("close", updateDialogScrollLock);
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", () => {
+      if (document.querySelector("dialog[open]")) syncDialogViewport();
+    });
+    window.visualViewport.addEventListener("scroll", () => {
+      if (document.querySelector("dialog[open]")) syncDialogViewport();
+    });
+  }
+}
+
 function init() {
   loadRoleFocus();
   loadWeekMode();
   analysisMonth = todayISO().slice(0, 7);
+  setupDialogs();
   initOptions();
   if ($("appVersionLabel")) $("appVersionLabel").textContent = `ROLEPLAY ${APP_VERSION}`;
   routines = loadRoutines();
