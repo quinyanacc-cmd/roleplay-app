@@ -18,7 +18,7 @@
       <div class="header-title-row" id="headerTitleRow">
         <div class="header-identity">
           <h1 id="pageTitle">Tagesreflexion</h1>
-          <p id="pageSubtitle" class="page-subtitle">Dein täglicher Check-in.</p>
+          <p id="pageSubtitle" class="page-subtitle">Kleine Schritte. Große Wirkung.</p>
         </div>
         <label class="role-picker-wrap" id="rolePickerWrap">
           <span class="sr-only">Tagesrolle auswählen</span>
@@ -31,13 +31,14 @@
         <button id="dateButton" class="date-button" type="button" aria-haspopup="dialog"></button>
         <button id="nextDay" class="icon-button" type="button" aria-label="Nächster Tag">›</button>
       </div>
+
+        <section class="role-coach-stage" aria-label="Coach für heute">
+          <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
+        </section>
     </header>
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
-        <section class="role-coach-stage" aria-label="Coach für heute">
-          <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
-        </section>
 
         <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
           <div class="section-heading-inline">
@@ -45,6 +46,7 @@
               <span class="section-kicker">Check-in</span>
               <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
             </div>
+            <button id="modeInfoButton" class="icon-button info-button" type="button" aria-label="Rollenmodi erklären">i</button>
           </div>
           <div id="checkinSlots" class="checkin-slots" aria-label="Fünf Tages-Check-ins"></div>
           <details class="state-history-details">
@@ -209,9 +211,13 @@
       <section id="rolesPage" class="app-page roles-page" aria-label="Rollen">
         <section class="roles-intro" aria-labelledby="rolesIntroTitle">
           <div>
+            <div class="roles-intro-tools">
+              <button id="rolesInfoButton" class="icon-button info-button" type="button" aria-label="Rollen erklären">i</button>
+              <button id="editRolesButton" class="role-edit-button" type="button">Anpassen</button>
+            </div>
             <span class="section-kicker">Dein System</span>
             <h2 id="rolesIntroTitle">Mehrere Rollen. Ein bewusstes Ich.</h2>
-            <p>Wähle den Lebensbereich, den du gerade gestalten möchtest.</p>
+            <p>Starte mit Empfehlungen und passe Rollen, Farben, Wochenrhythmus und Werkzeuge an dein Leben an.</p>
           </div>
           <div id="rolesTodayCompanion" class="roles-today-companion" aria-hidden="true"></div>
         </section>
@@ -287,7 +293,10 @@
         <div class="nested-page-head">
           <button id="backToRolesFromStreaks" class="back-to-roles" type="button" aria-label="Zurück zu Rollen">‹</button>
           <div><span class="section-kicker">Ich-Person</span><h2>Streaks</h2></div>
+          <button id="addStreakButton" class="small-button plus-button" type="button" aria-label="Streak hinzufügen"><span class="gradient-plus">+</span></button>
         </div>
+        <p class="streaks-intro">Streaks sind bewusst leer gestartet. Lege nur Serien an, die für dich wirklich hilfreich sind.</p>
+        <div id="streakSuggestions" class="streak-suggestions"></div>
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
     </main>
@@ -297,8 +306,17 @@
         <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.8" y="3.5" width="14.4" height="17" rx="3.2"></rect><line x1="8.2" y1="8.5" x2="15.8" y2="8.5"></line><line x1="8.2" y1="12" x2="15.8" y2="12"></line><line x1="8.2" y1="15.5" x2="13.2" y2="15.5"></line></svg></span>
         <span class="nav-label">Eintrag</span>
       </button>
-      <button class="nav-button" data-page="roles" type="button" aria-label="Rollen" title="Rollen">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.8"></rect><rect x="14" y="4" width="6" height="6" rx="1.8"></rect><rect x="4" y="14" width="6" height="6" rx="1.8"></rect><rect x="14" y="14" width="6" height="6" rx="1.8"></rect></svg></span>
+      <button class="nav-button nav-role-button" data-page="roles" type="button" aria-label="Rollen" title="Rollen">
+        <span class="nav-symbol roleplay-rolemark" aria-hidden="true">
+          <svg viewBox="0 0 30 30">
+            <defs><linearGradient id="rpRoleNavGradient" x1="3" y1="4" x2="27" y2="27" gradientUnits="userSpaceOnUse"><stop stop-color="#2D8CFF"/><stop offset=".48" stop-color="#6B67F7"/><stop offset="1" stop-color="#B05EF1"/></linearGradient></defs>
+            <circle cx="15" cy="15" r="4.2" fill="url(#rpRoleNavGradient)"/>
+            <rect x="5" y="5" width="8" height="8" rx="4" fill="none" stroke="url(#rpRoleNavGradient)" stroke-width="2.2"/>
+            <rect x="17" y="5" width="8" height="8" rx="4" fill="none" stroke="url(#rpRoleNavGradient)" stroke-width="2.2"/>
+            <rect x="5" y="17" width="8" height="8" rx="4" fill="none" stroke="url(#rpRoleNavGradient)" stroke-width="2.2"/>
+            <rect x="17" y="17" width="8" height="8" rx="4" fill="none" stroke="url(#rpRoleNavGradient)" stroke-width="2.2"/>
+          </svg>
+        </span>
         <span class="nav-label">Rollen</span>
       </button>
       <button class="nav-button" data-page="analysis" type="button" aria-label="Auswertung" title="Auswertung">
@@ -570,6 +588,68 @@
       <button id="cancelStreakAccess" type="button" class="secondary-button">Abbrechen</button>
       <button id="confirmStreakAccess" type="button" class="primary-button compact">Öffnen</button>
     </div>
+  </dialog>
+
+  <dialog id="genericInfoDialog" class="form-dialog info-sheet">
+    <div class="info-sheet-head"><div><span class="section-kicker">ROLEPLAY erklärt</span><h3 id="genericInfoTitle">Info</h3></div><button id="closeGenericInfo" class="role-hub-close" type="button" aria-label="Schließen">×</button></div>
+    <div id="genericInfoBody" class="info-dialog-body"></div>
+  </dialog>
+
+  <dialog id="roleSettingsDialog" class="form-dialog role-settings-dialog">
+    <form id="roleSettingsForm">
+      <div class="info-sheet-head"><div><span class="section-kicker">Personalisieren</span><h3>Rollen anpassen</h3></div><button id="closeRoleSettings" class="role-hub-close" type="button" aria-label="Schließen">×</button></div>
+      <p class="section-hint">Die Standardrollen sind Startpunkte. Namen, Beschreibung, Farbe und Sichtbarkeit kannst du ändern. „Ich“ bleibt als persönlicher Bereich erhalten; „Muslim“ ist optional.</p>
+      <label for="roleSettingsRole">Rolle</label>
+      <select id="roleSettingsRole"></select>
+      <div class="role-settings-preview" id="roleSettingsPreview"></div>
+      <label for="roleSettingsLabel">Anzeigename</label>
+      <input id="roleSettingsLabel" maxlength="32">
+      <label for="roleSettingsSubtitle">Kurzbeschreibung</label>
+      <input id="roleSettingsSubtitle" maxlength="70">
+      <label for="roleSettingsCoach">Coach-Satz</label>
+      <textarea id="roleSettingsCoach" rows="2" maxlength="140"></textarea>
+      <label for="roleSettingsColor">Rollenfarbe</label>
+      <input id="roleSettingsColor" type="color">
+      <label class="toggle-row" for="roleSettingsEnabled"><span><strong>Rolle anzeigen</strong><small id="roleSettingsEnabledHint">Kann später jederzeit geändert werden.</small></span><input id="roleSettingsEnabled" type="checkbox"></label>
+      <div class="weekday-settings">
+        <div class="section-title-row"><div><strong>Wochenrhythmus</strong><small>Welche Rolle gehört standardmäßig zu welchem Tag?</small></div></div>
+        <div id="weekdayRoleSettings" class="weekday-role-settings"></div>
+      </div>
+      <div class="dialog-actions">
+        <button id="resetRoleSettings" type="button" class="ghost-button">Standard</button>
+        <button type="submit" class="primary-button compact">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="roleToolDialog" class="form-dialog role-tool-dialog">
+    <div class="info-sheet-head"><div><span id="roleToolEyebrow" class="section-kicker">Werkzeug</span><h3 id="roleToolTitle">Werkzeug</h3><p id="roleToolHint" class="section-hint"></p></div><button id="closeRoleTool" class="role-hub-close" type="button" aria-label="Schließen">×</button></div>
+    <div id="roleToolItems" class="role-tool-items"></div>
+    <button id="addRoleToolItem" class="secondary-wide-button plus-button wide" type="button"><span>Eintrag hinzufügen</span></button>
+    <details class="tool-customize">
+      <summary>Werkzeug anpassen</summary>
+      <label for="roleToolTitleEdit">Titel</label><input id="roleToolTitleEdit">
+      <label for="roleToolHintEdit">Beschreibung</label><input id="roleToolHintEdit">
+      <button id="saveRoleToolMeta" type="button" class="small-button">Änderungen sichern</button>
+    </details>
+  </dialog>
+
+  <dialog id="roleToolItemDialog" class="form-dialog">
+    <form id="roleToolItemForm">
+      <h3 id="roleToolItemHeading">Eintrag</h3>
+      <label for="roleToolItemTitle">Titel</label><input id="roleToolItemTitle" required maxlength="80">
+      <label for="roleToolItemNote">Notiz</label><textarea id="roleToolItemNote" rows="3" maxlength="240"></textarea>
+      <div class="dialog-actions"><button id="deleteRoleToolItem" type="button" class="ghost-button danger" hidden>Löschen</button><button id="cancelRoleToolItem" type="button" class="secondary-button">Abbrechen</button><button type="submit" class="primary-button compact">Speichern</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="streakEditorDialog" class="form-dialog">
+    <form id="streakEditorForm">
+      <h3>Streak hinzufügen</h3>
+      <label for="streakEmoji">Emoji</label><input id="streakEmoji" maxlength="8" placeholder="🔥">
+      <label for="streakLabel">Bezeichnung</label><input id="streakLabel" required maxlength="48" placeholder="z. B. 20 Minuten lesen">
+      <div class="dialog-actions"><button id="cancelStreakEditor" type="button" class="secondary-button">Abbrechen</button><button type="submit" class="primary-button compact">Hinzufügen</button></div>
+    </form>
   </dialog>
 
   <script src="app.js"></script>

@@ -32,7 +32,7 @@ const ROLES = [
   { name: "Familienmensch", emoji: "❤️", color: "#E4777F", text: "#6E2630" }
 ];
 
-const STREAKS = [
+let STREAKS = [
   { key: "cannabisFree", label: "Cannabisfrei" },
   { key: "compulsionFree", label: "Begierde" },
   { key: "alcoholFree", label: "Alkoholfrei" },
@@ -309,7 +309,7 @@ const ROLE_CONFIG = {
   familienmensch: { label: "Familienmensch", roleName: "Familienmensch" }
 };
 
-/* ROLEPLAY 7: Die Rollen-Seite ist der zentrale Hub. Die Emojis bleiben
+/* ROLEPLAY 8: Die Rollen-Seite ist der zentrale Hub. Die Emojis bleiben
    absichtlich echte Unicode-Emojis: iOS rendert Apple Color Emoji, Android
    das jeweilige System-Emoji. Die Leuchtwesen sind eigene, neutrale SVGs. */
 const ROLE_HUB_META = {
@@ -338,7 +338,7 @@ const ROLE_HUB_META = {
   "Unternehmer": {
     slug: "unternehmer", subtitle: "Ideen & Projekte", coach: "Fortschritt entsteht aus einem klaren nächsten Schritt.",
     actions: [
-      { icon: "✅", label: "Aktivitäten", hint: "SMA, Buchprojekt und eigene Schritte", action: "review:activitySection" },
+      { icon: "✅", label: "Aktivitäten", hint: "Arbeit, Projekte und eigene Schritte", action: "review:activitySection" },
       { icon: "💡", label: "Projektbereich", hint: "Native Rollenfunktion in Vorbereitung", preview: true }
     ]
   },
@@ -363,6 +363,79 @@ const ROLE_HUB_META = {
       { icon: "💬", label: "Momente", hint: "Native Rollenfunktion in Vorbereitung", preview: true }
     ]
   }
+};
+
+const ROLE_ACCESSORIES = {
+  "Ich-Person": "✦",
+  "Vitalist": "🌱",
+  "Absolvent": "📖",
+  "Unternehmer": "↗️",
+  "Muslim": "🌙",
+  "Wirt": "🥄",
+  "Familienmensch": "♥️"
+};
+
+const ROLE_TOOL_DEFAULTS = {
+  "Ich-Person": [
+    { id: "routines", icon: "☀️", title: "Routinen", hint: "Morgen, Abend und eigene Abläufe", action: "routines" },
+    { id: "streaks", icon: "🔥", title: "Streaks", hint: "Eigene Serien – bewusst selbst gewählt", action: "streaks" },
+    { id: "goals", icon: "🎯", title: "Ziele", hint: "Was du gerade bewegen möchtest", items: [
+      { title: "Mein nächster kleiner Schritt", note: "Formuliere ihn so klein, dass du heute anfangen kannst." }
+    ]},
+    { id: "notes", icon: "📝", title: "Notizen", hint: "Gedanken, Entscheidungen und Erkenntnisse", action: "review:notesSection" }
+  ],
+  "Vitalist": [
+    { id: "training", icon: "🏋️", title: "Training", hint: "Ein einfacher Startplan", items: [
+      { title: "Ganzkörper A", note: "Beinpresse · Rudern · Brustpresse · leicht starten" },
+      { title: "10 Minuten mobilisieren", note: "Für Tage im Schon- oder Minimum-Modus" }
+    ]},
+    { id: "vitality", icon: "🥗", title: "Vitalität", hint: "Mahlzeiten, Wasser und Schritte", action: "review:vitalitySection" },
+    { id: "recovery", icon: "🛌", title: "Erholung", hint: "Schlaf und Regeneration im Blick", items: [
+      { title: "Abend ruhig auslaufen lassen", note: "Licht, Bildschirm und Tempo bewusst reduzieren." }
+    ]}
+  ],
+  "Absolvent": [
+    { id: "learning", icon: "📚", title: "Lernraum", hint: "Lernkarten und Wissensblöcke", items: [
+      { title: "Lernkarten", note: "5 Karten für heute" },
+      { title: "Wiederholung", note: "10 Minuten reichen für den Einstieg." }
+    ]},
+    { id: "studyplan", icon: "🗓️", title: "Lernplan", hint: "Themen und nächste Einheiten", items: [
+      { title: "Diese Woche", note: "1 Schwerpunkt wählen · 3 kleine Einheiten planen" }
+    ]}
+  ],
+  "Unternehmer": [
+    { id: "projects", icon: "💡", title: "Projekte", hint: "Ideen in nächste Schritte übersetzen", items: [
+      { title: "Projektidee", note: "Ziel · nächster Schritt · Hindernis" },
+      { title: "Wochenfokus", note: "Eine Sache, die bis Sonntag sichtbar weiter sein soll." }
+    ]},
+    { id: "activity", icon: "✅", title: "Aktivitäten", hint: "Arbeit und Projektschritte erfassen", action: "review:activitySection" }
+  ],
+  "Muslim": [
+    { id: "islam", icon: "🕌", title: "Gebete & Fasten", hint: "Pflichtgebete, Sunnah und Fastentage", action: "review:islamSection" },
+    { id: "gratitude", icon: "🤲", title: "Dankbarkeit", hint: "Reflexion und Namen Allahs", action: "review:gratitudeSection" },
+    { id: "learning", icon: "📿", title: "Lernen & Dhikr", hint: "Eigene kleine Schritte", items: [
+      { title: "Qurʾān / Wissen", note: "Eine kurze, realistische Einheit eintragen." }
+    ]}
+  ],
+  "Wirt": [
+    { id: "cookbook", icon: "🍲", title: "Kochbuch", hint: "Deine Gerichte an einem Ort", items: [
+      { title: "Linsenbolognese", note: "30 Min · 4 Portionen · gut zum Einfrieren" },
+      { title: "Baked Oats", note: "10 Min Vorbereitung · Frühstück" },
+      { title: "Gemüsereis mit Feta", note: "25 Min · einfach" }
+    ]},
+    { id: "weekplan", icon: "🗓️", title: "Wochenplan", hint: "Essen und Haushalt grob vorplanen", items: [
+      { title: "Plan A", note: "3 Hauptgerichte · 2 Restetage · 1 flexibler Tag" },
+      { title: "Einkauf", note: "Liste aus den geplanten Gerichten ableiten." }
+    ]},
+    { id: "home", icon: "🧹", title: "Zuhause", hint: "Abläufe und Routinen", action: "routines" }
+  ],
+  "Familienmensch": [
+    { id: "moments", icon: "❤️", title: "Gemeinsame Zeit", hint: "Kleine Momente bewusst planen", items: [
+      { title: "Eine Person bewusst kontaktieren", note: "Anrufen, schreiben oder Zeit vereinbaren." },
+      { title: "Gemeinsamer Moment", note: "Etwas Einfaches planen, das Nähe schafft." }
+    ]},
+    { id: "activity", icon: "👥", title: "Aktivitäten", hint: "Familienzeit sichtbar machen", action: "review:activitySection" }
+  ]
 };
 
 /* --------------------------------------------------------------------------
@@ -764,42 +837,29 @@ const DEFAULT_ROUTINES = {
   morning: {
     key: "morning",
     title: "Morgenroutine",
-    description: "Starte deinen Tag mit Klarheit und Fokus.",
+    description: "Ein ruhiger, klarer Start – passe jeden Schritt an dich an.",
     theme: "morning",
     autoNext: false,
     items: [
-      { id: "m-candle", emoji: "🕯️", title: "Kerze", minutes: 1, context: "Alles Lob gebührt Allah, Der uns nach dem Tod wieder lebendig machte - und zu Ihm ist die Auferstehung." },
-      { id: "m-medicine-cat", emoji: "🔛", title: "Tabletten / Katze", minutes: 3, context: "Medikamente einnehmen, Wasser trinken und Zizo versorgen." },
-      { id: "m-ibada", emoji: "🧎🏻", title: "Ibāda", minutes: 25, context: "Gebet, Dhikr und eine bewusste Hinwendung zu Allah." },
-      { id: "m-sport", emoji: "🤸🏻", title: "Sport", minutes: 5, context: "Kurz aktiv werden. Entscheidend ist, überhaupt anzufangen." },
-      { id: "m-bed", emoji: "🛏️", title: "Fertigmachen + Bett", minutes: 15, context: "Waschen, anziehen, Bett machen und den Raum in Ordnung bringen." },
-      { id: "m-breakfast", emoji: "🥗", title: "Frühstücken", minutes: 2, context: "Frühstück vorbereiten oder bewusst einplanen." },
-      { id: "m-thumb-yoga", emoji: "🪷", title: "Daumen Yoga", minutes: 3, context: "Kurze Mobilisation der Hände und Finger." },
-      { id: "m-quizlet", emoji: "📋", title: "Quizlet", minutes: 5, context: "Wiederholung statt Perfektion." },
-      { id: "m-peak", emoji: "💡", title: "Peak", minutes: 15, context: "Kognitives Training konzentriert durchführen." },
-      { id: "m-english", emoji: "🔤", title: "Englisch", minutes: 25, context: "Eine klar definierte Lerneinheit abschließen." },
-      { id: "m-arabic", emoji: "📒", title: "Arabisch", minutes: 5, context: "Auch eine kurze Wiederholung zählt." },
-      { id: "m-writing", emoji: "📝", title: "Schreiben", minutes: 10, context: "Gedanken festhalten oder am Buch weiterarbeiten." },
-      { id: "m-finish", emoji: "🎒", title: "Fertigmachen", minutes: 5, context: "Alles Nötige einpacken und den nächsten Übergang vorbereiten." }
+      { id: "m-water", emoji: "💧", title: "Wasser & Licht", minutes: 2, context: "Ein Glas Wasser trinken und Tageslicht hereinlassen." },
+      { id: "m-arrive", emoji: "🌿", title: "Kurz ankommen", minutes: 3, context: "Einmal bewusst wahrnehmen, wie es dir heute geht." },
+      { id: "m-move", emoji: "🤸", title: "Bewegen", minutes: 5, context: "Mobilisieren, dehnen oder kurz spazieren – klein reicht." },
+      { id: "m-focus", emoji: "🎯", title: "Tagesfokus", minutes: 3, context: "Einen realistischen Schwerpunkt für heute festlegen." },
+      { id: "m-breakfast", emoji: "🥣", title: "Frühstück / Start", minutes: 5, context: "Frühstück vorbereiten oder bewusst entscheiden, wie du in den Tag startest." }
     ]
   },
   evening: {
     key: "evening",
     title: "Abendroutine",
-    description: "Schließe deinen Tag bewusst und ruhig ab.",
+    description: "Den Tag schließen und morgen leichter machen.",
     theme: "evening",
     autoNext: false,
     items: [
-      { id: "e-candle-1", emoji: "🕯️", title: "Kerze", minutes: 2.5, context: "https://diegebetszeiten.de/koran/al-ihlas\n\nOh Allah, hilf mir, Deiner zu gedenken, Dir zu danken und Dir auf die beste Weise zu dienen" },
-      { id: "e-clothes", emoji: "👕", title: "Kleidung", minutes: 10, context: "Kleidung für den nächsten Tag vollständig bereitlegen." },
-      { id: "e-bathroom", emoji: "🧼", title: "Badezimmer", minutes: 5, context: "Waschen, Zähne putzen und dich ruhig auf die Nacht einstellen." },
-      { id: "e-kitchen", emoji: "🍵", title: "Küche", minutes: 10, context: "Küche kurz ordnen und alles für morgen sauber hinterlassen." },
-      { id: "e-plan", emoji: "🗓️", title: "Tag vorbereiten", minutes: 5, context: "Kurz den morgigen Tag gedanklich vorbereiten." },
-      { id: "e-weekplan", emoji: "📋", title: "Wochenplan", minutes: 10, context: "Plane bewusst und prüfe, was morgen wirklich wichtig ist." },
-      { id: "e-quizlet", emoji: "📰", title: "Quizlet", minutes: 5, context: "Nur eine kurze Wiederholung – Kontinuität zählt." },
-      { id: "e-english", emoji: "🔤", title: "Englisch", minutes: 10, context: "Lerneinheit abschließen oder kurz wiederholen." },
-      { id: "e-arabic", emoji: "📒", title: "Arabisch", minutes: 5, context: "Eine kurze Wiederholung oder ein kleiner Lernschritt reicht aus." },
-      { id: "e-candle-2", emoji: "🕯️", title: "Kerze", minutes: 2.5, context: "https://diegebetszeiten.de/koran/al-baqara/#255\n\nĀyat al-Kursī lesen und den Tag im Gedenken an Allah abschließen." }
+      { id: "e-reset", emoji: "🧹", title: "Kurz zurücksetzen", minutes: 5, context: "Eine kleine Fläche oder einen Raum für morgen vorbereiten." },
+      { id: "e-review", emoji: "📝", title: "Rückblick", minutes: 5, context: "Was war heute wichtig? Was darf für heute genug sein?" },
+      { id: "e-plan", emoji: "🗓️", title: "Morgen vorbereiten", minutes: 5, context: "Nur den nächsten sinnvollen Schritt festhalten." },
+      { id: "e-screen", emoji: "🌙", title: "Tempo reduzieren", minutes: 10, context: "Licht, Bildschirm und Aktivität bewusst herunterfahren." },
+      { id: "e-rest", emoji: "🛌", title: "Zur Ruhe kommen", minutes: 5, context: "Eine kleine persönliche Abschlussroutine wählen." }
     ]
   }
 };
@@ -814,7 +874,7 @@ const ACTIVITY_TEMPLATES = [
   { key: "sma",     label: "SMA-Arbeitstag",   title: "SMA-Arbeitstag",   role: "Unternehmer",    weight: 0.2, isSma: true, dailyCap: 0.2 },
   { key: "book",    label: "Buchprojekt",      title: "Buchprojekt",      role: "Unternehmer",    weight: 1.5 },
   { key: "gym",     label: "Gym",              title: "Gym",              role: "Vitalist",       weight: 2.0 },
-  { key: "arabic",  label: "Arabisch lernen",  title: "Arabisch lernen",  role: "Muslim",         weight: 1.5 },
+  { key: "arabic",  label: "Arabisch lernen", title: "Arabisch lernen", role: "Muslim",         weight: 1.5 },
   { key: "jumua",   label: "Jumʿa",            title: "Jumʿa",            role: "Muslim",         weight: 2.0, dailyCap: 2.0 },
   { key: "mosque",  label: "Moschee",          title: "Moschee",          role: "Muslim",         weight: 1.0, dailyCap: 1.0 },
   { key: "youth",   label: "Jugendgruppe",     title: "Jugendgruppe",     role: "Muslim",         weight: 2.0 },
@@ -822,6 +882,24 @@ const ACTIVITY_TEMPLATES = [
   { key: "family",  label: "Familienzeit",     title: "Familienzeit",     role: "Familienmensch", weight: 1.5 },
   { key: "custom",  label: "Eigene Aktivität", title: "",                 role: "",               weight: 1.0 }
 ];
+
+// V8 zeigt neuen Nutzern bewusst neutrale Startvorlagen. Die historischen
+// internen Templates oben bleiben unverändert, damit alte Daten und Backups
+// weiterhin exakt ausgewertet werden können.
+const ACTIVITY_UI_PRESETS = [
+  { key: "custom", label: "Eigene Aktivität", title: "", role: "", weight: 1.0, custom: true },
+  { key: "preset:self", label: "Zeit für mich", title: "Zeit für mich", role: "Ich-Person", weight: 1.0 },
+  { key: "preset:movement", label: "Training / Bewegung", title: "Training / Bewegung", role: "Vitalist", weight: 1.5 },
+  { key: "preset:learning", label: "Lernen / Weiterbildung", title: "Lernen / Weiterbildung", role: "Absolvent", weight: 1.5 },
+  { key: "preset:project", label: "Projektarbeit", title: "Projektarbeit", role: "Unternehmer", weight: 1.5 },
+  { key: "preset:home", label: "Haushalt / Zuhause", title: "Haushalt / Zuhause", role: "Wirt", weight: 1.0 },
+  { key: "preset:family", label: "Gemeinsame Zeit", title: "Gemeinsame Zeit", role: "Familienmensch", weight: 1.5 },
+  { key: "preset:faith", label: "Glaube / Spiritualität", title: "Glaube / Spiritualität", role: "Muslim", weight: 1.0 }
+];
+
+function activityUiPreset(key) {
+  return ACTIVITY_UI_PRESETS.find(template => template.key === key) || ACTIVITY_UI_PRESETS[0];
+}
 
 function activityTemplate(key) {
   return ACTIVITY_TEMPLATES.find(template => template.key === key) || null;
@@ -933,14 +1011,18 @@ function dayPointTotal(data, date) {
 }
 
 const ROUTINE_MINUTE_CHOICES = Array.from({ length: 180 }, (_, index) => index + 1);
-const APP_VERSION = "7.0.0";
-const SCHEMA_VERSION = 7;
+const APP_VERSION = "8.0.0";
+const SCHEMA_VERSION = 8;
 const STORAGE_NAMESPACE = "roleplay-v25";
 const ROUTINES_STORAGE_KEY = `${STORAGE_NAMESPACE}-routines`;
 const BACKUP_TIMESTAMP_KEY = `${STORAGE_NAMESPACE}-last-backup-at`;
 const ROUTINE_SESSION_STORAGE_KEY = `${STORAGE_NAMESPACE}-active-routine-session`;
 const ROLE_FOCUS_STORAGE_KEY = `${STORAGE_NAMESPACE}-role-focus`;
 const WEEK_MODE_STORAGE_KEY = `${STORAGE_NAMESPACE}-week-mode`;
+const ROLE_SETTINGS_STORAGE_KEY = "roleplay-v8-role-settings";
+const WEEKDAY_ROLES_STORAGE_KEY = "roleplay-v8-weekday-roles";
+const ROLE_TOOLS_STORAGE_KEY = "roleplay-v8-role-tools";
+const STREAK_DEFS_STORAGE_KEY = "roleplay-v8-streak-definitions";
 const $ = id => document.getElementById(id);
 
 let selectedDate = todayISO();
@@ -1005,9 +1087,102 @@ function linkifyText(value = "") {
     .replace(/\n/g, "<br>");
 }
 
+let roleSettings = {};
+let weekdayRoles = {};
+let roleTools = {};
+let activeRoleTool = null;
+let editingRoleToolItemId = null;
+
+const WEEKDAY_LABELS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+const DEFAULT_WEEKDAY_ROLES = ["Familienmensch", "Ich-Person", "Vitalist", "Absolvent", "Unternehmer", "Muslim", "Wirt"];
+const STREAK_SUGGESTIONS = [
+  { emoji: "🚶", label: "Täglich bewegen" },
+  { emoji: "📖", label: "Lesen / Lernen" },
+  { emoji: "🌙", label: "Abendroutine" },
+  { emoji: "📵", label: "Bildschirmfreie Zeit" }
+];
+
 function getRole(name) {
   const normalized = ["Yannick", "Ich"].includes(name) ? "Ich-Person" : name;
   return ROLES.find(role => role.name === normalized) || ROLES[0];
+}
+
+function baseRoleMeta(roleName) {
+  return ROLE_HUB_META[roleName] || ROLE_HUB_META["Ich-Person"];
+}
+
+function roleSetting(roleName) {
+  const role = getRole(roleName);
+  const base = baseRoleMeta(role.name);
+  const saved = roleSettings?.[role.name] || {};
+  return {
+    label: String(saved.label || role.name),
+    subtitle: String(saved.subtitle || base.subtitle),
+    coach: String(saved.coach || base.coach),
+    color: /^#[0-9a-f]{6}$/i.test(saved.color || "") ? saved.color : role.color,
+    enabled: role.name === "Ich-Person" ? true : saved.enabled !== false
+  };
+}
+
+function displayRoleName(roleName) { return roleSetting(roleName).label; }
+function visibleRoles() { return ROLES.filter(role => roleSetting(role.name).enabled); }
+function roleVisual(roleName) {
+  const base = getRole(roleName); const setting = roleSetting(base.name);
+  return { ...base, color: setting.color, displayName: setting.label, subtitle: setting.subtitle, coach: setting.coach };
+}
+
+function loadPersonalization() {
+  roleSettings = safeParse(localStorage.getItem(ROLE_SETTINGS_STORAGE_KEY), {}) || {};
+  weekdayRoles = safeParse(localStorage.getItem(WEEKDAY_ROLES_STORAGE_KEY), {}) || {};
+  const savedTools = safeParse(localStorage.getItem(ROLE_TOOLS_STORAGE_KEY), null);
+  roleTools = savedTools && typeof savedTools === "object" ? savedTools : JSON.parse(JSON.stringify(ROLE_TOOL_DEFAULTS));
+  // Neue Werkzeuge aus späteren Versionen ergänzen, persönliche Einträge aber behalten.
+  Object.entries(ROLE_TOOL_DEFAULTS).forEach(([roleName, defaults]) => {
+    if (!Array.isArray(roleTools[roleName])) roleTools[roleName] = JSON.parse(JSON.stringify(defaults));
+    defaults.forEach(tool => {
+      if (!roleTools[roleName].some(item => item.id === tool.id)) roleTools[roleName].push(JSON.parse(JSON.stringify(tool)));
+    });
+  });
+}
+
+function savePersonalization() {
+  localStorage.setItem(ROLE_SETTINGS_STORAGE_KEY, JSON.stringify(roleSettings));
+  localStorage.setItem(WEEKDAY_ROLES_STORAGE_KEY, JSON.stringify(weekdayRoles));
+  localStorage.setItem(ROLE_TOOLS_STORAGE_KEY, JSON.stringify(roleTools));
+}
+
+function loadStreakDefinitions() {
+  const saved = safeParse(localStorage.getItem(STREAK_DEFS_STORAGE_KEY), null);
+  STREAKS = Array.isArray(saved) ? saved.filter(item => item && item.key && item.label).map(item => ({ key: String(item.key), label: String(item.label), emoji: String(item.emoji || "🔥") })) : [];
+}
+function saveStreakDefinitions() { localStorage.setItem(STREAK_DEFS_STORAGE_KEY, JSON.stringify(STREAKS)); }
+function newKey(prefix, label) {
+  const base = String(label || "item").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 28) || "item";
+  return `${prefix}-${base}-${Date.now().toString(36)}`;
+}
+
+function mascotExpressionForMode(mode) {
+  return ["gentle","minimum","standard","focus","development"].includes(mode) ? mode : "standard";
+}
+
+function roleMascotHTML(roleName, expression = "standard", size = "medium", options = {}) {
+  const role = roleVisual(roleName);
+  const accessory = ROLE_ACCESSORIES[getRole(roleName).name] || "✦";
+  const showAccessory = options.accessory !== false;
+  return `<span class="roleling roleling-${size} expression-${mascotExpressionForMode(expression)}" style="--roleling-color:${role.color};--roleling-soft:${hexToRgba(role.color,.26)}" aria-hidden="true">
+    <span class="roleling-halo"></span>
+    <span class="roleling-body">
+      <span class="roleling-eye left"><i></i><b></b></span><span class="roleling-eye right"><i></i><b></b></span>
+      <span class="roleling-mouth"></span>
+      <span class="roleling-foot left"></span><span class="roleling-foot right"></span>
+    </span>
+    ${showAccessory ? `<span class="roleling-accessory native-emoji">${accessory}</span>` : ""}
+  </span>`;
+}
+
+function toolsForRole(roleName) {
+  const canonical = getRole(roleName).name;
+  return Array.isArray(roleTools[canonical]) ? roleTools[canonical] : [];
 }
 
 /* ==========================================================================
@@ -1064,10 +1239,10 @@ function roleFocusRangeLabel() {
 
 function defaultRoleForDate(date) {
   const focus = roleFocusActiveOn(date);
-  if (focus) return focus;
+  if (focus && roleSetting(focus).enabled) return focus;
   const weekday = new Date(`${date}T12:00:00`).getDay();
-  const names = ["Familienmensch", "Ich-Person", "Vitalist", "Absolvent", "Unternehmer", "Muslim", "Wirt"];
-  return names[weekday];
+  const configured = weekdayRoles?.[String(weekday)] || DEFAULT_WEEKDAY_ROLES[weekday];
+  return visibleRoles().some(role => role.name === configured) ? configured : "Ich-Person";
 }
 
 function findPreviousReview(date) {
@@ -1194,15 +1369,16 @@ function normalizeReview(raw, date, hasStoredValue) {
     };
   }).sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time)) : [];
   // Migration: früher lag der Schlafbereich außerhalb der Check-ins. Vorhandene alte
-  // Schlafdaten werden einmalig in einen Nacht-Check-in überführt, sofern noch keiner existiert.
-  if (hasStoredValue && !merged.stateCheckins.some(entry => entry.slot === "night")) {
+  // Schlafdaten gehören ab V8 in den Morgen-Check-in. Bestehende alte Schlafwerte
+  // werden dorthin migriert, sofern morgens noch keine Schlafangabe existiert.
+  if (hasStoredValue && !merged.stateCheckins.some(entry => entry.slot === "morning" && (entry.sleepQualityScore !== "" || entry.dreamCategory || entry.dreamNote))) {
     const legacySleep = merged.sleepQualityScore;
     const legacyDream = merged.dreamCategory || "";
     const legacyDreamNote = String(raw?.dreams || "");
     if (legacySleep !== "" || legacyDream || legacyDreamNote) {
       merged.stateCheckins = [{
-        id: `state-${date}-night-migrated`,
-        slot: "night", time: "07:00",
+        id: `state-${date}-morning-migrated`,
+        slot: "morning", time: "08:00",
         energy: null, mood: null, taqwa: null, load: "normal", body: "stable", mind: "normal", motivation: "available",
         context: "normal", support: "available", emotion: "",
         primaryRole: merged.role, responsibilitySource: "role", responsibility: "",
@@ -1210,7 +1386,7 @@ function normalizeReview(raw, date, hasStoredValue) {
         hydrationMl: Math.max(0, Number(raw?.water || 0)), nutritionScore: null,
         sleepQualityScore: legacySleep, dreamCategory: legacyDream, dreamNote: legacyDreamNote,
         selectedFrameworkKey: "", recommendedFrameworkKey: "", frameworkOverrideReason: "",
-        note: "", createdAt: `${date}T07:00:00`
+        note: "", createdAt: `${date}T08:00:00`
       }, ...merged.stateCheckins];
     }
   }
@@ -1422,15 +1598,12 @@ function mealCategoryLabel(value) {
   return mealCategoryMeta(value)?.label || "Noch offen";
 }
 
-function latestNightCheckin(data = currentData) {
-  return (data?.stateCheckins || []).find(entry => entry.slot === "night") || null;
+function latestMorningCheckin(data = currentData) {
+  return (data?.stateCheckins || []).find(entry => entry.slot === "morning") || null;
 }
 
 function innerStateCapacity(checkin) {
   if (!checkin) return null;
-  if (checkin.slot === "night") {
-    return sleepCapacityScore(checkin.sleepQualityScore) ?? 62;
-  }
   const energy = checkin.energy === null || checkin.energy === undefined ? 60 : clamp(Number(checkin.energy), 0, 100);
   const mood = checkin.mood === null || checkin.mood === undefined ? emotionStateScore(checkin.emotion) : clamp(Number(checkin.mood), 0, 100);
   const emotion = emotionStateScore(checkin.emotion);
@@ -1448,9 +1621,8 @@ function hydrationContextScore(slot, ml) {
 function stateCapacity(checkin, data = currentData) {
   const inner = innerStateCapacity(checkin);
   if (inner === null) return null;
-  if (checkin.slot === "night") return inner;
-  const night = latestNightCheckin(data);
-  const sleep = sleepCapacityScore(night?.sleepQualityScore);
+  const morning = latestMorningCheckin(data);
+  const sleep = sleepCapacityScore(morning?.sleepQualityScore);
   const hydration = hydrationContextScore(checkin.slot, checkin.hydrationMl);
   const nutrition = checkin.nutritionScore;
   const weighted = [{ value: inner, weight: .78 }];
@@ -1779,15 +1951,7 @@ function renderCheckinSlots() {
 /* Coach-Fläche: kleine Überschrift, kräftiger Kernsatz, ruhiger Zusatzsatz.
    Beide Texte stammen ausschließlich aus coachImpulse(). */
 function coachCompanionHTML(mode = "standard", roleName = "Ich-Person") {
-  const role = getRole(roleName);
-  return `<div class="coach-companion mode-${escapeHTML(mode)}" style="--companion-color:${role.color};--companion-soft:${hexToRgba(role.color,.22)}" aria-hidden="true">
-    <span class="companion-glow"></span>
-    <span class="companion-body">
-      <span class="companion-eye eye-left"><i></i></span>
-      <span class="companion-eye eye-right"><i></i></span>
-      <span class="companion-mouth"></span>
-    </span>
-  </div>`;
+  return `<div class="coach-companion roleling-coach">${roleMascotHTML(roleName, mode, "coach")}</div>`;
 }
 
 function coachImpulseHTML(energy, mood, key, roleName = currentData?.role || "Ich-Person") {
@@ -1847,7 +2011,7 @@ function renderStateOverview() {
   timeline.innerHTML = checkins.length ? [...checkins].reverse().map(entry => {
     const entryMode = modeForCheckin(entry);
     const slot = checkinSlot(entry.slot);
-    const sleep = entry.slot === "night" && entry.sleepQualityScore !== "" && entry.sleepQualityScore !== undefined
+    const sleep = entry.slot === "morning" && entry.sleepQualityScore !== "" && entry.sleepQualityScore !== undefined
       ? ` · ${SLEEP_LABELS[Number(entry.sleepQualityScore)] || "Schlaf erfasst"}` : "";
     const taqwaPart = entry.taqwa === null || entry.taqwa === undefined || entry.taqwa === ""
       ? "" : ` · ${entry.taqwa} % Gottesfurcht`;
@@ -1880,9 +2044,9 @@ function dreamCategoryLabel(value) {
 
 
 function toggleNightCheckinFields(slotKey) {
-  const isNight = slotKey === "night";
-  // Die Nacht zeigt zusätzlich Schlaf und Traum – Energie und Laune bleiben sichtbar.
-  if ($("nightCheckinSection")) $("nightCheckinSection").hidden = !isNight;
+  const showSleep = slotKey === "morning";
+  // Schlaf und Träume werden direkt morgens reflektiert – dann sind sie frisch.
+  if ($("nightCheckinSection")) $("nightCheckinSection").hidden = !showSleep;
   if ($("dayCheckinSection")) $("dayCheckinSection").hidden = false;
 }
 
@@ -1911,7 +2075,7 @@ function fillStateCheckinForm(slotKey) {
   $("stateSlotDisplay").style.setProperty("--slot-soft", rgbWithAlpha(phaseMid, .16));
   $("stateSlotDisplay").style.setProperty("--slot-glow", rgbWithAlpha(phaseEnd, .28));
   $("stateSlotDisplay").innerHTML = `<span class="phase-mark" aria-hidden="true"><svg viewBox="0 0 40 30">${phaseGlyph(requestedSlot, 20, 15)}</svg></span>`
-    + `<strong>${escapeHTML(phase.short)}</strong><small>${requestedSlot === "night" ? "Schlaf und Zustand" : "Zustandsaufnahme"}</small>`;
+    + `<strong>${escapeHTML(phase.short)}</strong><small>${requestedSlot === "morning" ? "Schlaf, Traum & Zustand" : (requestedSlot === "night" ? "Tagesabschluss" : "Zustandsaufnahme")}</small>`;
   // Energie und Laune gelten für alle vier Check-ins, auch für die Nacht.
   $("stateEnergy").value = existing?.energy ?? latest?.energy ?? 60;
   $("stateMood").value = existing?.mood ?? latest?.mood ?? 60;
@@ -1960,9 +2124,9 @@ function stateCheckinFromForm() {
     taqwa: Number(taqwaRaw === "" ? 60 : taqwaRaw),
     primaryRole: currentData.role,
     hydrationMl: Math.max(0, Number(currentData.water || 0)),
-    sleepQualityScore: slot === "night" ? (nightSleep === "" ? "" : Number(nightSleep)) : "",
-    dreamCategory: slot === "night" ? $("stateDreamCategory").value : "",
-    dreamNote: slot === "night" ? $("stateDreamNote").value.trim() : "",
+    sleepQualityScore: slot === "morning" ? (nightSleep === "" ? "" : Number(nightSleep)) : "",
+    dreamCategory: slot === "morning" ? $("stateDreamCategory").value : "",
+    dreamNote: slot === "morning" ? $("stateDreamNote").value.trim() : "",
     time: $("stateTime").value || currentClockTime(),
     // Frühere Felder bleiben erhalten, damit alte Tage unverändert bestehen –
     // für die Modusberechnung werden sie nicht mehr gelesen.
@@ -2012,7 +2176,7 @@ function saveStateCheckin(event) {
   entry.createdAt = existing?.createdAt || `${selectedDate}T${entry.time}:00`;
   currentData.stateCheckins = [...(currentData.stateCheckins || []).filter(item => item.slot !== entry.slot), entry]
     .sort((a, b) => slotIndex(a.slot) - slotIndex(b.slot) || a.time.localeCompare(b.time));
-  if (entry.slot === "night") {
+  if (entry.slot === "morning") {
     currentData.sleepQualityScore = entry.sleepQualityScore;
     currentData.dreamCategory = entry.dreamCategory;
     currentData.dreams = entry.dreamNote;
@@ -2045,19 +2209,19 @@ function renderRolePickerOptions() {
   if (!picker) return;
   const previous = picker.value;
   const focusRole = roleFocusIsActive() ? roleFocus.role : "";
-  const options = ROLES.map(role => {
+  const options = visibleRoles().map(role => {
     const marker = role.name === focusRole ? " · Fokus" : "";
-    return `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}${marker}</option>`;
+    return `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(displayRoleName(role.name))}${marker}</option>`;
   }).join("");
   picker.innerHTML = `${options}<option value="${ROLE_FOCUS_OPTION}">◎ Rollenfokus ${focusRole ? "ändern" : "setzen"} …</option>`;
   picker.dataset.focusActive = focusRole ? "true" : "false";
-  if (previous && previous !== ROLE_FOCUS_OPTION) picker.value = previous;
+  if (previous && previous !== ROLE_FOCUS_OPTION && visibleRoles().some(role => role.name === previous)) picker.value = previous;
 }
 
 function fillRoleFocusForm() {
   const active = roleFocusIsActive();
-  $("roleFocusRole").innerHTML = ROLES
-    .map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
+  $("roleFocusRole").innerHTML = visibleRoles()
+    .map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(displayRoleName(role.name))}</option>`).join("");
   $("roleFocusRole").value = active ? roleFocus.role : getRole(currentData?.role || ROLES[0].name).name;
   $("roleFocusDuration").value = active ? roleFocus.mode : "today";
   $("roleFocusDate").value = active && roleFocus.endDate ? roleFocus.endDate : addDays(todayISO(), 7);
@@ -2113,7 +2277,7 @@ function endRoleFocus() {
 }
 
 function applyRolePickerStyle() {
-  const role = getRole($("dayRole").value || currentData?.role);
+  const role = roleVisual($("dayRole").value || currentData?.role);
   const picker = $("dayRole");
   picker.style.setProperty("--role-color", role.color);
   picker.style.setProperty("--role-soft", hexToRgba(role.color, .18));
@@ -2134,7 +2298,7 @@ function mixHex(hex, target, amount) {
    und Schrifttönung. Weil helle Rollenfarben auf Glas sonst verschwinden
    würden, wird die Schriftfarbe aus der Rollenfarbe abgeleitet statt aus dem
    früheren Vollton-Kontrastwert. */
-function applyHeaderTheme(role = getRole($("dayRole")?.value || currentData?.role || ROLES[0].name)) {
+function applyHeaderTheme(role = roleVisual($("dayRole")?.value || currentData?.role || ROLES[0].name)) {
   const header = $("appHeader");
   if (!header) return;
   header.style.setProperty("--header-role", role.color);
@@ -2148,69 +2312,66 @@ function applyHeaderTheme(role = getRole($("dayRole")?.value || currentData?.rol
   document.documentElement.style.setProperty("--active-role-soft", hexToRgba(role.color, .16));
   document.documentElement.style.setProperty("--active-role-fade", hexToRgba(role.color, .06));
   document.documentElement.style.setProperty("--active-role-line", hexToRgba(role.color, .24));
-  document.body.dataset.role = ROLE_HUB_META[role.name]?.slug || "ich";
+  document.body.dataset.role = baseRoleMeta(role.name).slug || "ich";
 }
 
 function roleHubMeta(roleName) {
-  return ROLE_HUB_META[roleName] || ROLE_HUB_META["Ich-Person"];
-}
-
-function roleMascotPath(roleName) {
-  return `assets/mascots/${roleHubMeta(roleName).slug}.svg`;
+  const canonical = getRole(roleName).name;
+  const base = baseRoleMeta(canonical);
+  const setting = roleSetting(canonical);
+  return { ...base, subtitle: setting.subtitle, coach: setting.coach };
 }
 
 function renderRoleHub() {
   const grid = $("roleHubGrid");
   const companion = $("rolesTodayCompanion");
   if (!grid || !currentData) return;
-  const activeRole = getRole(currentData.role || dayRoleConfig(selectedDate).roleName);
+  const activeRole = roleVisual(currentData.role || dayRoleConfig(selectedDate).roleName);
   const activeMeta = roleHubMeta(activeRole.name);
   if (companion) {
-    companion.innerHTML = `<div class="today-role-bubble"><span>${escapeHTML(activeRole.emoji)} Heute: <strong>${escapeHTML(activeRole.name)}</strong></span><small>${escapeHTML(activeMeta.coach)}</small></div><img src="${roleMascotPath(activeRole.name)}" alt="">`;
+    companion.innerHTML = `<div class="today-role-bubble"><span>Heute: <strong>${escapeHTML(displayRoleName(activeRole.name))}</strong></span><small>${escapeHTML(activeMeta.coach)}</small></div>${roleMascotHTML(activeRole.name, "standard", "large")}`;
   }
-  grid.innerHTML = ROLES.map(role => {
+  grid.innerHTML = visibleRoles().map(baseRole => {
+    const role = roleVisual(baseRole.name);
     const meta = roleHubMeta(role.name);
-    const isActive = role.name === activeRole.name;
-    const quick = role.name === "Ich-Person" ? `<div class="role-card-quick" aria-label="Persönliche Bereiche">
-      <button type="button" data-role-quick="routines"><span class="native-emoji">☀️</span><span>Routinen</span></button>
-      <button type="button" data-role-quick="streaks"><span class="native-emoji">🔥</span><span>Streaks</span></button>
-    </div>` : "";
-    return `<article class="role-hub-card role-${meta.slug}${isActive ? " is-active" : ""}" style="--role-card:${role.color};--role-card-soft:${hexToRgba(role.color,.13)};--role-card-line:${hexToRgba(role.color,.24)}">
-      <button type="button" class="role-card-main" data-role-hub="${escapeHTML(role.name)}" aria-label="${escapeHTML(role.name)} öffnen">
-        <span class="role-card-symbol native-emoji">${escapeHTML(role.emoji)}</span>
+    const isActive = role.name === getRole(activeRole.name).name;
+    const tools = toolsForRole(role.name).slice(0, role.name === "Ich-Person" ? 4 : 3)
+      .map(tool => `<span class="role-card-tool"><span class="native-emoji">${escapeHTML(tool.icon || "•")}</span>${escapeHTML(tool.title)}</span>`).join("");
+    const optional = role.name === "Muslim" ? '<span class="role-optional-chip">optional</span>' : "";
+    return `<article class="role-hub-card role-${meta.slug}${isActive ? " is-active" : ""}" style="--role-card:${role.color};--role-card-soft:${hexToRgba(role.color,.14)};--role-card-line:${hexToRgba(role.color,.26)}">
+      <button type="button" class="role-card-main" data-role-hub="${escapeHTML(role.name)}" aria-label="${escapeHTML(displayRoleName(role.name))} öffnen">
+        <span class="role-card-symbol native-emoji">${escapeHTML(role.emoji)}</span>${optional}
         ${isActive ? '<span class="role-today-chip">Heute</span>' : ''}
-        <img class="role-card-mascot" src="${roleMascotPath(role.name)}" alt="">
-        <span class="role-card-copy"><strong>${escapeHTML(role.name)}</strong><small>${escapeHTML(meta.subtitle)}</small></span>
+        <span class="role-card-mascot">${roleMascotHTML(role.name, "standard", "card")}</span>
+        <span class="role-card-copy"><strong>${escapeHTML(displayRoleName(role.name))}</strong><small>${escapeHTML(meta.subtitle)}</small></span>
+        <span class="role-card-tools">${tools}</span>
         <span class="role-card-arrow" aria-hidden="true">›</span>
       </button>
-      ${quick}
     </article>`;
   }).join("");
 
   grid.querySelectorAll("[data-role-hub]").forEach(button => button.addEventListener("click", () => openRoleHubDialog(button.dataset.roleHub)));
-  grid.querySelectorAll("[data-role-quick]").forEach(button => button.addEventListener("click", event => {
-    event.stopPropagation();
-    handleRoleHubAction(button.dataset.roleQuick);
-  }));
 }
 
 function openRoleHubDialog(roleName) {
   const dialog = $("roleHubDialog");
   const body = $("roleHubDialogBody");
   if (!dialog || !body) return;
-  const role = getRole(roleName);
+  const role = roleVisual(roleName);
   const meta = roleHubMeta(role.name);
-  const actions = meta.actions.map(item => item.preview
-    ? `<div class="role-dialog-action is-preview"><span class="native-emoji">${item.icon}</span><span><strong>${escapeHTML(item.label)}</strong><small>${escapeHTML(item.hint)}</small></span><em>Vorschau</em></div>`
-    : `<button type="button" class="role-dialog-action" data-hub-action="${escapeHTML(item.action)}"><span class="native-emoji">${item.icon}</span><span><strong>${escapeHTML(item.label)}</strong><small>${escapeHTML(item.hint)}</small></span><span aria-hidden="true">›</span></button>`).join("");
-  body.innerHTML = `<div class="role-dialog-hero" style="--dialog-role:${role.color};--dialog-role-soft:${hexToRgba(role.color,.14)}">
+  const actions = toolsForRole(role.name).map(tool => tool.action
+    ? `<button type="button" class="role-dialog-action" data-hub-action="${escapeHTML(tool.action)}"><span class="native-emoji">${escapeHTML(tool.icon || "•")}</span><span><strong>${escapeHTML(tool.title)}</strong><small>${escapeHTML(tool.hint || "")}</small></span><span aria-hidden="true">›</span></button>`
+    : `<button type="button" class="role-dialog-action" data-role-tool="${escapeHTML(tool.id)}" data-role-name="${escapeHTML(role.name)}"><span class="native-emoji">${escapeHTML(tool.icon || "•")}</span><span><strong>${escapeHTML(tool.title)}</strong><small>${escapeHTML(tool.hint || "")}</small></span><span aria-hidden="true">›</span></button>`).join("");
+  body.innerHTML = `<div class="role-dialog-hero" style="--dialog-role:${role.color};--dialog-role-soft:${hexToRgba(role.color,.16)}">
       <span class="role-dialog-symbol native-emoji">${escapeHTML(role.emoji)}</span>
-      <img src="${roleMascotPath(role.name)}" alt="${escapeHTML(role.name)} Begleiter">
-      <div><span class="section-kicker">Rolle</span><h2>${escapeHTML(role.name)}</h2><p>${escapeHTML(meta.subtitle)}</p></div>
+      <span class="role-dialog-mascot">${roleMascotHTML(role.name, "standard", "large")}</span>
+      <div><span class="section-kicker">Rolle</span><h2>${escapeHTML(displayRoleName(role.name))}</h2><p>${escapeHTML(meta.subtitle)}</p></div>
     </div>
     <p class="role-dialog-coach">${escapeHTML(meta.coach)}</p>
+    <div class="role-dialog-note"><span>i</span><p>Die Werkzeuge sind Startvorschläge. Inhalte kannst du öffnen und bearbeiten; Rollen selbst unter „Anpassen“ individualisieren.</p></div>
     <div class="role-dialog-actions">${actions}</div>`;
   body.querySelectorAll("[data-hub-action]").forEach(button => button.addEventListener("click", () => handleRoleHubAction(button.dataset.hubAction)));
+  body.querySelectorAll("[data-role-tool]").forEach(button => button.addEventListener("click", () => openRoleToolDialog(button.dataset.roleName, button.dataset.roleTool)));
   if (!dialog.open) dialog.showModal();
 }
 
@@ -2225,6 +2386,98 @@ function handleRoleHubAction(action) {
     switchPage("review");
     setTimeout(() => $(target)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
+}
+
+function openGenericInfo(title, html) {
+  $("genericInfoTitle").textContent = title;
+  $("genericInfoBody").innerHTML = html;
+  $("genericInfoDialog").showModal();
+}
+
+function modeInfoHTML() {
+  return `<p>ROLEPLAY nutzt fünf Modi als <strong>Belastungsrahmen</strong>, nicht als Bewertung. Sie werden aus deinem aktuellen Check-in abgeleitet und sollen die Erwartung an den Tag passend dosieren.</p>
+    <div class="mode-explainer-list">${MODES.map(mode => `<div style="--mode:${mode.color}"><i></i><span><strong>${escapeHTML(mode.label)}</strong><small>${escapeHTML(MODE_COACH_CORE[mode.key])}</small></span></div>`).join("")}</div>
+    <p><strong>Schon-Modus</strong> schützt Kapazität. <strong>Minimum</strong> hält das Wesentliche. <strong>Standard</strong> ist ein normaler Rahmen. <strong>Fokus</strong> erlaubt konzentriertes Arbeiten. <strong>Entwicklungsmodus</strong> steht für Tage mit mehr Reserve.</p>
+    <p>Energie und Laune tragen den Hauptanteil; wenn Gottesfurcht erfasst ist, wird sie als dritte Zustandsdimension berücksichtigt. Sehr niedrige Energie oder Laune setzen Schutzgrenzen.</p>`;
+}
+
+function rolesInfoHTML() {
+  return `<p>Eine Rolle bündelt Aufgaben und Werkzeuge, die zu demselben Lebensbereich gehören. Du musst nicht alle Rollen gleichzeitig „erfüllen“.</p>
+    <p>ROLEPLAY startet mit sechs allgemeinen Rollen plus der optionalen Rolle <strong>Muslim</strong>. Jede Rolle kann in Name, Beschreibung und Farbe angepasst oder – außer „Ich“ – ausgeblendet werden.</p>
+    <p>Der Wochenrhythmus weist jedem Wochentag eine Standardrolle zu. Du kannst ihn ändern oder zeitweise mit einem Rollenfokus überschreiben.</p>
+    <p><strong>Auswertung:</strong> Aktivitäten erhalten je nach Vorlage Präsenzpunkte. Sie zeigen, welchen Rollen du sichtbar Raum gegeben hast; sie sind keine Leistungs- oder Werteskala.</p>`;
+}
+
+function populateRoleSettings(roleName = null) {
+  const select = $("roleSettingsRole");
+  select.innerHTML = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(displayRoleName(role.name))}${role.name === "Muslim" ? " · optional" : ""}</option>`).join("");
+  if (roleName && ROLES.some(role => role.name === roleName)) select.value = roleName;
+  const canonical = select.value || "Ich-Person";
+  const role = roleVisual(canonical); const setting = roleSetting(canonical);
+  $("roleSettingsLabel").value = setting.label; $("roleSettingsSubtitle").value = setting.subtitle; $("roleSettingsCoach").value = setting.coach; $("roleSettingsColor").value = setting.color;
+  $("roleSettingsEnabled").checked = setting.enabled; $("roleSettingsEnabled").disabled = canonical === "Ich-Person";
+  $("roleSettingsEnabledHint").textContent = canonical === "Ich-Person" ? "Der persönliche Bereich bleibt immer sichtbar." : canonical === "Muslim" ? "Optionale Rolle – ausblenden, wenn sie nicht zu dir passt." : "Kann später jederzeit geändert werden.";
+  $("roleSettingsPreview").innerHTML = `${roleMascotHTML(canonical, "standard", "medium")}<div><strong>${escapeHTML(setting.label)}</strong><small>${escapeHTML(setting.subtitle)}</small></div>`;
+  $("roleSettingsPreview").style.setProperty("--role-preview", setting.color);
+  renderWeekdayRoleSettings();
+}
+
+function renderWeekdayRoleSettings() {
+  const container = $("weekdayRoleSettings"); if (!container) return;
+  container.innerHTML = [1,2,3,4,5,6,0].map(day => {
+    const current = weekdayRoles?.[String(day)] || DEFAULT_WEEKDAY_ROLES[day];
+    const options = visibleRoles().map(role => `<option value="${escapeHTML(role.name)}"${role.name === current ? " selected" : ""}>${escapeHTML(displayRoleName(role.name))}</option>`).join("");
+    return `<label><span>${WEEKDAY_LABELS[day]}</span><select data-weekday-role="${day}">${options}</select></label>`;
+  }).join("");
+}
+
+function openRoleSettings(roleName = null) { populateRoleSettings(roleName); $("roleSettingsDialog").showModal(); }
+function saveRoleSettingsFromForm(event) {
+  event.preventDefault();
+  const canonical = $("roleSettingsRole").value; const base = baseRoleMeta(canonical); const role = getRole(canonical);
+  roleSettings[canonical] = {
+    label: $("roleSettingsLabel").value.trim() || role.name,
+    subtitle: $("roleSettingsSubtitle").value.trim() || base.subtitle,
+    coach: $("roleSettingsCoach").value.trim() || base.coach,
+    color: $("roleSettingsColor").value || role.color,
+    enabled: canonical === "Ich-Person" ? true : $("roleSettingsEnabled").checked
+  };
+  document.querySelectorAll("[data-weekday-role]").forEach(select => { weekdayRoles[String(select.dataset.weekdayRole)] = select.value; });
+  savePersonalization(); renderRolePickerOptions(); currentData = loadReview(selectedDate); fillForm(); renderRoleHub(); renderAnalysis(); $("roleSettingsDialog").close();
+}
+function resetCurrentRoleSettings() {
+  const canonical = $("roleSettingsRole").value; delete roleSettings[canonical]; savePersonalization(); populateRoleSettings(canonical);
+}
+
+function findRoleTool(roleName, toolId) { return toolsForRole(roleName).find(tool => tool.id === toolId) || null; }
+function saveRoleTools() { localStorage.setItem(ROLE_TOOLS_STORAGE_KEY, JSON.stringify(roleTools)); }
+function openRoleToolDialog(roleName, toolId) {
+  const canonical = getRole(roleName).name; const tool = findRoleTool(canonical, toolId); if (!tool) return;
+  activeRoleTool = { roleName: canonical, toolId }; $("roleToolEyebrow").textContent = displayRoleName(canonical); $("roleToolTitle").textContent = tool.title; $("roleToolHint").textContent = tool.hint || "";
+  $("roleToolTitleEdit").value = tool.title; $("roleToolHintEdit").value = tool.hint || ""; renderRoleToolItems();
+  if ($("roleHubDialog").open) $("roleHubDialog").close(); $("roleToolDialog").showModal();
+}
+function renderRoleToolItems() {
+  if (!activeRoleTool) return; const tool = findRoleTool(activeRoleTool.roleName, activeRoleTool.toolId); const container = $("roleToolItems"); if (!tool || !container) return;
+  const items = Array.isArray(tool.items) ? tool.items : (tool.items = []);
+  container.innerHTML = items.length ? items.map((item,index) => `<button type="button" class="role-tool-item" data-tool-item-index="${index}"><span><strong>${escapeHTML(item.title || "Eintrag")}</strong><small>${escapeHTML(item.note || "")}</small></span><span aria-hidden="true">›</span></button>`).join("") : `<div class="tool-empty">Noch keine Einträge. Dieses Werkzeug gehört dir – füge den ersten hinzu.</div>`;
+  container.querySelectorAll("[data-tool-item-index]").forEach(button => button.addEventListener("click", () => openRoleToolItemEditor(Number(button.dataset.toolItemIndex))));
+}
+function openRoleToolItemEditor(index = null) {
+  if (!activeRoleTool) return; const tool = findRoleTool(activeRoleTool.roleName, activeRoleTool.toolId); if (!tool) return;
+  editingRoleToolItemId = Number.isInteger(index) ? index : null; const item = editingRoleToolItemId === null ? null : tool.items?.[editingRoleToolItemId];
+  $("roleToolItemHeading").textContent = item ? "Eintrag bearbeiten" : "Eintrag hinzufügen"; $("roleToolItemTitle").value = item?.title || ""; $("roleToolItemNote").value = item?.note || ""; $("deleteRoleToolItem").hidden = !item; $("roleToolItemDialog").showModal();
+}
+function saveRoleToolItem(event) {
+  event.preventDefault(); if (!activeRoleTool) return; const tool = findRoleTool(activeRoleTool.roleName, activeRoleTool.toolId); if (!tool) return;
+  tool.items = Array.isArray(tool.items) ? tool.items : []; const value = { title: $("roleToolItemTitle").value.trim(), note: $("roleToolItemNote").value.trim() }; if (!value.title) return;
+  if (editingRoleToolItemId === null) tool.items.push(value); else tool.items[editingRoleToolItemId] = value; saveRoleTools(); $("roleToolItemDialog").close(); renderRoleToolItems();
+}
+function deleteRoleToolItem() {
+  if (!activeRoleTool || editingRoleToolItemId === null) return; const tool = findRoleTool(activeRoleTool.roleName, activeRoleTool.toolId); if (!tool) return; tool.items.splice(editingRoleToolItemId,1); saveRoleTools(); $("roleToolItemDialog").close(); renderRoleToolItems();
+}
+function saveRoleToolMeta() {
+  if (!activeRoleTool) return; const tool = findRoleTool(activeRoleTool.roleName, activeRoleTool.toolId); if (!tool) return; tool.title = $("roleToolTitleEdit").value.trim() || tool.title; tool.hint = $("roleToolHintEdit").value.trim(); saveRoleTools(); $("roleToolTitle").textContent = tool.title; $("roleToolHint").textContent = tool.hint; renderRoleHub();
 }
 
 function statusCircle(icon, variant = "neutral", size = "medium") {
@@ -2465,8 +2718,8 @@ function renderActivities() {
 function applyActivityTemplate() {
   const select = $("activityTemplate");
   if (!select) return;
-  const template = activityTemplate(select.value) || activityTemplate("custom");
-  const isCustom = template.key === "custom";
+  const template = activityUiPreset(select.value);
+  const isCustom = template.custom === true;
   const titleField = $("activityTitle");
   const roleField = $("activityRole");
   if (titleField) {
@@ -2480,12 +2733,9 @@ function applyActivityTemplate() {
   }
   const hint = $("activityWeightHint");
   if (hint) {
-    const cap = activityDailyCap(template.key);
-    hint.textContent = cap !== null
-      ? `${template.role} · ${formatPoints(cap)} ${cap === 1 ? "Punkt" : "Punkte"} je Kalendertag, unabhängig von der Anzahl der Einträge.`
-      : isCustom
-        ? `Frei wählbar · ${formatPoints(template.weight)} Punkt`
-        : `${template.role} · ${formatPoints(template.weight)} ${template.weight === 1 ? "Punkt" : "Punkte"}`;
+    hint.textContent = isCustom
+      ? `Frei wählbar · ${formatPoints(template.weight)} Punkt`
+      : `${displayRoleName(template.role)} · ${formatPoints(template.weight)} ${template.weight === 1 ? "Punkt" : "Punkte"}`;
   }
 }
 
@@ -2509,43 +2759,53 @@ function humanDuration(days) {
 
 function renderStreaks() {
   const list = $("streakList");
+  const suggestions = $("streakSuggestions");
   if (!list || !currentData) return;
-  list.innerHTML = STREAKS.map(streak => {
-    const state = currentData.streaks?.[streak.key] || { days: 0, broken: false, todayStatus: "" };
-    const isActive = !state.broken && Number(state.days || 0) > 0;
-    const daily = STREAK_DAILY_STATES[state.todayStatus || ""] || STREAK_DAILY_STATES[""];
-    const statusText = state.todayStatus === "lapse" ? "Unterbrochen" : isActive ? "Aktiv" : "Offen";
-    return `<div class="streak-card ${state.broken ? "streak-broken" : ""} ${isActive ? "streak-active" : ""} ${state.todayStatus === "resisted" ? "streak-victory" : ""}">
-      <div class="streak-card-head">
-        <div><strong>${escapeHTML(streak.label)}</strong><small>${escapeHTML(daily.label)}</small></div>
-        <span class="streak-status">${statusText}</span>
-      </div>
-      <div class="streak-input-wrap">
-        <input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${streak.key}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage">
-        <span class="streak-unit">Tage</span>
-      </div>
-      ${humanDuration(Number(state.days || 0)) ? `<small class="streak-duration">${escapeHTML(humanDuration(Number(state.days || 0)))}</small>` : ""}
-      <div class="streak-daily-actions" role="group" aria-label="Unterbrechung erfassen">
-        <button type="button" class="danger ${state.todayStatus === "lapse" ? "active" : ""}" data-streak-daily="lapse" data-streak-key="${streak.key}">Unterbrechung</button>
-      </div>
-    </div>`;
-  }).join("");
+  if (suggestions) suggestions.innerHTML = STREAK_SUGGESTIONS.map(item => `<button type="button" data-streak-suggestion="${escapeHTML(item.label)}" data-streak-emoji="${escapeHTML(item.emoji)}"><span class="native-emoji">${escapeHTML(item.emoji)}</span>${escapeHTML(item.label)}</button>`).join("");
+  if (!STREAKS.length) {
+    list.innerHTML = `<div class="streak-empty-state">${roleMascotHTML("Ich-Person", "gentle", "large")}<strong>Noch keine Streaks.</strong><p>Du entscheidest selbst, was du als Serie verfolgen möchtest. Keine persönlichen Vorgaben, kein versteckter Standard.</p><button type="button" class="primary-button compact" data-add-first-streak>Ersten Streak anlegen</button></div>`;
+  } else {
+    list.innerHTML = STREAKS.map(streak => {
+      const state = currentData.streaks?.[streak.key] || { days: 0, broken: false, todayStatus: "" };
+      const isActive = !state.broken && Number(state.days || 0) > 0;
+      const statusText = state.todayStatus === "lapse" ? "Unterbrochen" : isActive ? "Aktiv" : "Offen";
+      return `<div class="streak-card ${state.broken ? "streak-broken" : ""} ${isActive ? "streak-active" : ""}">
+        <div class="streak-card-head"><div><span class="native-emoji streak-emoji">${escapeHTML(streak.emoji || "🔥")}</span><strong>${escapeHTML(streak.label)}</strong></div><div class="streak-head-actions"><span class="streak-status">${statusText}</span><button type="button" class="streak-delete" data-delete-streak="${escapeHTML(streak.key)}" aria-label="Streak löschen">×</button></div></div>
+        <div class="streak-input-wrap"><input class="streak-days-large" type="number" min="0" inputmode="numeric" data-streak-days="${escapeHTML(streak.key)}" value="${Number(state.days || 0)}" aria-label="${escapeHTML(streak.label)} Tage"><span class="streak-unit">Tage</span></div>
+        ${humanDuration(Number(state.days || 0)) ? `<small class="streak-duration">${escapeHTML(humanDuration(Number(state.days || 0)))}</small>` : ""}
+        <div class="streak-daily-actions" role="group" aria-label="Unterbrechung erfassen"><button type="button" class="danger ${state.todayStatus === "lapse" ? "active" : ""}" data-streak-daily="lapse" data-streak-key="${escapeHTML(streak.key)}">Unterbrechung heute</button></div>
+      </div>`;
+    }).join("");
+  }
 
   document.querySelectorAll("[data-streak-days]").forEach(input => input.addEventListener("change", () => {
-    const state = currentData.streaks[input.dataset.streakDays];
-    state.days = Math.max(0, Number(input.value || 0));
-    state.broken = false;
-    if (state.todayStatus === "lapse") state.todayStatus = "";
+    currentData.streaks = currentData.streaks || {};
+    const state = currentData.streaks[input.dataset.streakDays] || (currentData.streaks[input.dataset.streakDays] = { days: 0, broken: false, todayStatus: "" });
+    state.days = Math.max(0, Number(input.value || 0)); state.broken = false; if (state.todayStatus === "lapse") state.todayStatus = "";
     saveReview(true); propagateStreaksForward(selectedDate); renderStreaks();
   }));
   document.querySelectorAll("[data-streak-daily]").forEach(button => button.addEventListener("click", () => {
-    const state = currentData.streaks[button.dataset.streakKey];
-    state.todayStatus = state.todayStatus === "lapse" ? "" : "lapse";
-    state.broken = state.todayStatus === "lapse";
-    if (state.broken) state.days = 0;
+    currentData.streaks = currentData.streaks || {};
+    const state = currentData.streaks[button.dataset.streakKey] || (currentData.streaks[button.dataset.streakKey] = { days: 0, broken: false, todayStatus: "" });
+    state.todayStatus = state.todayStatus === "lapse" ? "" : "lapse"; state.broken = state.todayStatus === "lapse"; if (state.broken) state.days = 0;
     saveReview(true); propagateStreaksForward(selectedDate); renderStreaks(); renderStats();
   }));
+  document.querySelectorAll("[data-delete-streak]").forEach(button => button.addEventListener("click", () => deleteStreakDefinition(button.dataset.deleteStreak)));
+  document.querySelectorAll("[data-streak-suggestion]").forEach(button => button.addEventListener("click", () => addStreakDefinition(button.dataset.streakSuggestion, button.dataset.streakEmoji)));
+  document.querySelectorAll("[data-add-first-streak]").forEach(button => button.addEventListener("click", openStreakEditor));
 }
+
+function addStreakDefinition(label, emoji = "🔥") {
+  const clean = String(label || "").trim(); if (!clean) return;
+  STREAKS.push({ key: newKey("streak", clean), label: clean, emoji: String(emoji || "🔥") });
+  saveStreakDefinitions(); currentData = loadReview(selectedDate); renderStreaks();
+}
+function deleteStreakDefinition(key) {
+  const def = STREAKS.find(item => item.key === key); if (!def) return;
+  if (!confirm(`„${def.label}" aus deinen Streaks entfernen? Bereits gespeicherte Tagesdaten bleiben im Backup erhalten.`)) return;
+  STREAKS = STREAKS.filter(item => item.key !== key); saveStreakDefinitions(); renderStreaks();
+}
+function openStreakEditor() { $("streakEmoji").value = "🔥"; $("streakLabel").value = ""; $("streakEditorDialog").showModal(); setTimeout(() => $("streakLabel").focus(), 50); }
 
 /* --------------------------------------------------------------------------
    Wochenrückblick
@@ -2661,11 +2921,11 @@ function dailyPrayerProgress(data) {
 
 function buildWeeklyTrendChart(labels, series, options = {}) {
   const width = 440;
-  const height = 250;
+  const height = 320;
   const padLeft = 30;
   const padRight = 12;
-  const padTop = 14;
-  const padBottom = 28;
+  const padTop = 20;
+  const padBottom = 34;
   const plotWidth = width - padLeft - padRight;
   const plotHeight = height - padTop - padBottom;
   const xFor = index => padLeft + (labels.length === 1 ? plotWidth / 2 : plotWidth * index / (labels.length - 1));
@@ -3025,14 +3285,15 @@ function roleSplitDates() {
 }
 
 function roleSplitData(dates) {
-  const rowsByRole = Object.fromEntries(ROLES.map(role => [role.name, []]));
+  const roleSet = visibleRoles();
+  const rowsByRole = Object.fromEntries(roleSet.map(role => [role.name, []]));
   storedReviews(dates).forEach(({ date, data }) => {
     activityPointRows(data, date).forEach(row => {
       if (!rowsByRole[row.role]) rowsByRole[row.role] = [];
       rowsByRole[row.role].push(row);
     });
   });
-  const roles = ROLES.map(role => {
+  const roles = roleSet.map(role => {
     const rows = [...(rowsByRole[role.name] || [])].sort((a, b) => a.date.localeCompare(b.date));
     return {
       role: role.name,
@@ -3090,12 +3351,12 @@ function rolePresenceDistributionHTML(split) {
     const role = getRole(item.role);
     const share = Math.round(item.points / split.total * 100);
     return `<span class="role-presence-segment" style="--role-color:${role.color};--share:${item.points / split.total * 100}%"
-      title="${escapeHTML(role.name)} ${share} %"></span>`;
+      title="${escapeHTML(displayRoleName(role.name))} ${share} %"></span>`;
   }).join("");
   const legend = split.roles.filter(item => item.points > 0).map(item => {
     const role = getRole(item.role);
     const share = Math.round(item.points / split.total * 100);
-    return `<span class="role-presence-key"><i style="--role-color:${role.color}"></i>${escapeHTML(role.emoji)} ${escapeHTML(role.name)} <b>${share} %</b></span>`;
+    return `<span class="role-presence-key"><i style="--role-color:${role.color}"></i>${escapeHTML(role.emoji)} ${escapeHTML(displayRoleName(role.name))} <b>${share} %</b></span>`;
   }).join("");
   return `<div class="role-presence-share" role="img"
       aria-label="Anteile der Rollen an der erfassten Präsenz">${segments}</div>
@@ -3133,7 +3394,7 @@ function renderRoleSplit() {
         <span>Präsenzpunkte</span><strong>${formatPoints(split.total)}</strong>
       </div>
       <div class="role-presence-metric">
-        <span>Sichtbare Rollen</span><strong>${split.represented} von ${ROLES.length}</strong>
+        <span>Sichtbare Rollen</span><strong>${split.represented} von ${visibleRoles().length}</strong>
       </div>`;
   }
 
@@ -3151,7 +3412,7 @@ function renderRoleSplit() {
       style="--role-color:${role.color};--role-soft:${hexToRgba(role.color, .16)}"
       aria-label="${escapeHTML(role.name)}: ${formatPoints(item.points)} Präsenzpunkte, ${escapeHTML(count)}, ${escapeHTML(status)}. Details öffnen.">
       <span class="role-split-head">
-        <span class="role-split-name">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</span>
+        <span class="role-split-name">${roleMascotHTML(role.name, "standard", "tiny", {accessory:false})}<span>${escapeHTML(displayRoleName(role.name))}</span></span>
         <b>${formatPoints(item.points)}</b>
       </span>
       <span class="role-split-bar"><i style="--fill:${Math.round(item.points / max * 100)}%"></i></span>
@@ -3173,7 +3434,7 @@ function openRoleDetailDialog(roleName) {
   if (!dialog) return;
   const split = roleSplitData(roleSplitDates());
   const entry = split.roles.find(item => item.role === roleName);
-  $("roleDetailTitle").textContent = `${getRole(roleName).emoji} ${roleName}`;
+  $("roleDetailTitle").textContent = `${getRole(roleName).emoji} ${displayRoleName(roleName)}`;
 
   const byDate = new Map();
   (entry?.rows || []).forEach(row => {
@@ -3199,7 +3460,7 @@ function openRoleDetailDialog(roleName) {
 }
 
 function roleSplitInfoHTML() {
-  const rows = ACTIVITY_TEMPLATES.map(template => {
+  const rows = ACTIVITY_UI_PRESETS.map(template => {
     const role = template.key === "custom" ? "frei wählbar" : template.role;
     const cap = activityDailyCap(template.key);
     const points = cap === null
@@ -3207,13 +3468,12 @@ function roleSplitInfoHTML() {
       : `${formatPoints(cap)} je Kalendertag`;
     return `<div class="info-row"><span>${escapeHTML(template.label)}</span><small>${escapeHTML(role)}</small><b>${escapeHTML(points)}</b></div>`;
   }).join("");
-  const capped = ACTIVITY_TEMPLATES.filter(template => activityDailyCap(template.key) !== null)
-    .map(template => `${template.label} (${formatPoints(activityDailyCap(template.key))})`).join(", ");
+  const capped = "";
   return `<p>Diese Auswertung zeigt, welchen Rollen du durch bewusst erfasste Aktivitäten Raum gegeben hast. Die Punkte gewichten die Aussagekraft einer Aktivität. Sie messen weder Zeitaufwand noch deinen persönlichen Wert oder die vollständige Erfüllung einer Rolle.</p>
-    <p>Deshalb kann ein SMA-Arbeitstag trotz großem Zeitaufwand mit ${formatPoints(activityDailyCap("sma"))} gewichtet sein, während eine bewusst prägende Ankeraktivität wie Jumʿa mit ${formatPoints(activityTemplate("jumua").weight)} zählt.</p>
+    <p>Die Gewichtung ist absichtlich nicht identisch mit Zeitaufwand: Ein kleiner, aber prägender Schritt kann stärker zählen als eine lange Routine. Die Standardvorlagen sind Startpunkte und eigene Aktivitäten können jederzeit ergänzt werden.</p>
     <p>Jede Aktivität bringt den Punktwert ihrer Vorlage mit. Die Punkte einer Rolle sind die Summe aller ihrer Aktivitäten im Zeitraum; der Balken zeigt den Anteil an der stärksten Rolle.</p>
     <div class="info-rows">${rows}</div>
-    <p>Tagesbegrenzung: ${escapeHTML(capped)} zählen höchstens einmal pro Kalendertag, unabhängig von der Anzahl der Einträge. Es gibt kein Wochenlimit. Alle übrigen Vorlagen zählen pro Eintrag.</p>
+    ${capped ? `<p>Tagesbegrenzung: ${escapeHTML(capped)} zählen höchstens einmal pro Kalendertag. Alle übrigen Vorlagen zählen pro Eintrag.</p>` : ""}
     <p>Aktivitäten ohne hinterlegtes Gewicht zählen einen Punkt.</p>
     <p>Die fünf Pflichtgebete bleiben vollständig außerhalb dieser Punkte. Sie werden gesondert erfasst und ergeben ausdrücklich keine Punktzahl religiöser Pflichterfüllung.</p>`;
 }
@@ -3263,7 +3523,11 @@ function backupPayload() {
     routines,
     settings: {
       roleFocus: roleFocus || null,
-      weekMode
+      weekMode,
+      roleSettings,
+      weekdayRoles,
+      roleTools,
+      streakDefinitions: STREAKS
     }
   };
 }
@@ -3305,7 +3569,11 @@ function importBackup(file) {
     const importedFocus = normalizeRoleFocus(payload?.settings?.roleFocus);
     if (importedFocus) { roleFocus = importedFocus; saveRoleFocus(); }
     if (payload?.settings?.weekMode) setWeekMode(payload.settings.weekMode);
-    loadRoleFocus();
+    if (payload?.settings?.roleSettings) roleSettings = payload.settings.roleSettings;
+    if (payload?.settings?.weekdayRoles) weekdayRoles = payload.settings.weekdayRoles;
+    if (payload?.settings?.roleTools) roleTools = payload.settings.roleTools;
+    if (Array.isArray(payload?.settings?.streakDefinitions)) STREAKS = payload.settings.streakDefinitions;
+    savePersonalization(); saveStreakDefinitions(); loadRoleFocus();
     localStorage.setItem("roleplay-last-import-at", new Date().toISOString());
     setDate(selectedDate);
     renderAnalysis();
@@ -4051,8 +4319,8 @@ function switchPage(page, options = {}) {
   }
   const titles = { review: "Tagesreflexion", roles: "Meine Rollen", routines: "Routinen", analysis: "Auswertung", streaks: "Streaks" };
   const subtitles = {
-    review: "Dein täglicher Check-in.", roles: "Ein System. Mehrere Rollen.", routines: "Persönliche Abläufe.",
-    analysis: "Deine Entwicklung in Klarheit.", streaks: "Persönliche Beständigkeit."
+    review: "Kleine Schritte. Große Wirkung.", roles: "Ein System. Mehrere Rollen.", routines: "Persönliche Abläufe.",
+    analysis: "Dein Fortschritt. In Klarheit.", streaks: "Persönliche Beständigkeit."
   };
   $("reviewPage").classList.toggle("active", page === "review");
   $("rolesPage")?.classList.toggle("active", page === "roles");
@@ -4095,11 +4363,11 @@ function mealCategoryOptionsHTML(currentValue = "") {
 }
 
 function initOptions() {
-  const roleOptions = ROLES.map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(role.name)}</option>`).join("");
+  const roleOptions = visibleRoles().map(role => `<option value="${escapeHTML(role.name)}">${escapeHTML(role.emoji)} ${escapeHTML(displayRoleName(role.name))}</option>`).join("");
   renderRolePickerOptions();
   $("activityRole").innerHTML = roleOptions;
   if ($("activityTemplate")) {
-    $("activityTemplate").innerHTML = ACTIVITY_TEMPLATES
+    $("activityTemplate").innerHTML = ACTIVITY_UI_PRESETS
       .map(template => `<option value="${template.key}">${escapeHTML(template.label)}</option>`).join("");
   }
   $("stateSlot").innerHTML = CHECKIN_SLOTS.map(slot => `<option value="${slot.key}">${slot.icon} ${escapeHTML(slot.label)}</option>`).join("");
@@ -4291,13 +4559,15 @@ function bindEvents() {
   $("cancelActivity").addEventListener("click", () => $("activityDialog").close());
   $("activityForm").addEventListener("submit", event => {
     event.preventDefault();
-    const template = activityTemplate($("activityTemplate")?.value) || activityTemplate("custom");
-    const title = template.key === "custom" ? $("activityTitle").value.trim() : template.title;
+    const template = activityUiPreset($("activityTemplate")?.value);
+    const isCustom = template.custom === true;
+    const title = isCustom ? $("activityTitle").value.trim() : template.title;
     if (!title) return;
     currentData.activities.push(normalizeActivity({
       title,
-      role: template.key === "custom" ? $("activityRole").value : template.role,
-      template: template.key
+      role: isCustom ? $("activityRole").value : template.role,
+      template: "custom",
+      weight: template.weight
     }));
     $("activityDialog").close(); saveReview(true); renderActivities();
   });
@@ -4322,6 +4592,26 @@ function bindEvents() {
   $("importBackupInput").addEventListener("change", event => {
     const file = event.target.files?.[0]; if (file) importBackup(file); event.target.value = "";
   });
+
+  if ($("modeInfoButton")) $("modeInfoButton").addEventListener("click", () => openGenericInfo("Die fünf Rollenmodi", modeInfoHTML()));
+  if ($("rolesInfoButton")) $("rolesInfoButton").addEventListener("click", () => openGenericInfo("So funktioniert das Rollensystem", rolesInfoHTML()));
+  if ($("closeGenericInfo")) $("closeGenericInfo").addEventListener("click", () => $("genericInfoDialog").close());
+  if ($("genericInfoDialog")) $("genericInfoDialog").addEventListener("cancel", event => { event.preventDefault(); $("genericInfoDialog").close(); });
+  if ($("editRolesButton")) $("editRolesButton").addEventListener("click", () => openRoleSettings(currentData?.role));
+  if ($("roleSettingsRole")) $("roleSettingsRole").addEventListener("change", () => populateRoleSettings($("roleSettingsRole").value));
+  if ($("roleSettingsForm")) $("roleSettingsForm").addEventListener("submit", saveRoleSettingsFromForm);
+  if ($("resetRoleSettings")) $("resetRoleSettings").addEventListener("click", resetCurrentRoleSettings);
+  if ($("closeRoleSettings")) $("closeRoleSettings").addEventListener("click", () => $("roleSettingsDialog").close());
+  if ($("roleSettingsDialog")) $("roleSettingsDialog").addEventListener("cancel", event => { event.preventDefault(); $("roleSettingsDialog").close(); });
+  if ($("closeRoleTool")) $("closeRoleTool").addEventListener("click", () => $("roleToolDialog").close());
+  if ($("addRoleToolItem")) $("addRoleToolItem").addEventListener("click", () => openRoleToolItemEditor());
+  if ($("saveRoleToolMeta")) $("saveRoleToolMeta").addEventListener("click", saveRoleToolMeta);
+  if ($("roleToolItemForm")) $("roleToolItemForm").addEventListener("submit", saveRoleToolItem);
+  if ($("cancelRoleToolItem")) $("cancelRoleToolItem").addEventListener("click", () => $("roleToolItemDialog").close());
+  if ($("deleteRoleToolItem")) $("deleteRoleToolItem").addEventListener("click", deleteRoleToolItem);
+  if ($("addStreakButton")) $("addStreakButton").addEventListener("click", openStreakEditor);
+  if ($("cancelStreakEditor")) $("cancelStreakEditor").addEventListener("click", () => $("streakEditorDialog").close());
+  if ($("streakEditorForm")) $("streakEditorForm").addEventListener("submit", event => { event.preventDefault(); addStreakDefinition($("streakLabel").value, $("streakEmoji").value || "🔥"); $("streakEditorDialog").close(); });
 
   document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => switchPage(button.dataset.page)));
   if ($("closeRoleHub")) $("closeRoleHub").addEventListener("click", () => $("roleHubDialog").close());
@@ -4442,6 +4732,8 @@ function setupDialogs() {
 }
 
 function init() {
+  loadPersonalization();
+  loadStreakDefinitions();
   loadRoleFocus();
   loadWeekMode();
   analysisMonth = todayISO().slice(0, 7);
@@ -4453,7 +4745,9 @@ function init() {
   const lastBackupAt = localStorage.getItem(BACKUP_TIMESTAMP_KEY);
   if (lastBackupAt) $("backupStatus").textContent = `Letztes Backup: ${new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lastBackupAt))}`;
   setDate(todayISO());
-  switchPage("review", { instant: true });
+  const requestedPage = new URLSearchParams(location.search).get("page");
+  const initialPage = ["review", "roles", "analysis"].includes(requestedPage) ? requestedPage : "review";
+  switchPage(initialPage, { instant: true });
   restoreRoutineSession();
   registerServiceWorker();
 }
