@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="ROLEPLAY vitalist Begleiter">
+<defs>
+  <linearGradient id="body" x1="20%" y1="5%" x2="78%" y2="95%"><stop offset="0" stop-color="#fff"/><stop offset=".26" stop-color="#86D9FF"/><stop offset="1" stop-color="#1958B8"/></linearGradient>
+  <radialGradient id="shine" cx="37%" cy="24%" r="64%"><stop offset="0" stop-color="#fff" stop-opacity=".88"/><stop offset=".55" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<ellipse cx="154" cy="269" rx="88" ry="18" fill="#1958B8" opacity=".16" filter="url(#soft)"/>
+<g filter="url(#glow)">
+  <path d="M67 198c0-39 10-93 38-120 25-25 73-34 108-17 37 18 54 58 50 101-2 21 9 29 6 52-3 21-20 35-41 35-13 0-22-6-31-14-7 24-24 39-46 39-22 0-37-13-46-33-10 8-20 13-34 10-22-4-34-24-28-45 3-10 10-18 24-8Z" fill="url(#body)"/>
+  <path d="M88 178c-23-7-40 7-42 24-2 18 11 31 28 30 15-1 27-13 29-27" fill="url(#body)"/>
+  <path d="M244 177c27-7 44 7 44 26 0 18-15 31-32 28-14-2-25-15-26-29" fill="url(#body)"/>
+  <path d="M76 88c32-37 99-48 143-18 20 14 35 34 41 58-39-31-130-37-184-8 0-13 0-21 0-32Z" fill="url(#shine)" opacity=".68"/>
+</g>
+<g aria-hidden="true">
+  <ellipse cx="126" cy="146" rx="18" ry="24" fill="#fff"/>
+  <ellipse cx="189" cy="146" rx="18" ry="24" fill="#fff"/>
+  <ellipse cx="131" cy="150" rx="5" ry="8" fill="#28345D" opacity=".66"/>
+  <ellipse cx="194" cy="150" rx="5" ry="8" fill="#28345D" opacity=".66"/>
+  <circle cx="121" cy="137" r="5" fill="#fff" opacity=".9"/>
+  <circle cx="184" cy="137" r="5" fill="#fff" opacity=".9"/>
+  <path d="M142 185c11 9 24 9 35 0" fill="none" stroke="#243054" stroke-width="7" stroke-linecap="round" opacity=".82"/>
+</g>
+<path d="M248 70c28-11 42 2 31 29-9 22-29 29-46 27 2-17 7-39 15-56Z" fill="#68D78D"/><path d="M237 125c12-20 24-32 39-44" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+</svg>

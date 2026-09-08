@@ -2936,3 +2936,691 @@ input:disabled { opacity: .42; }
 @media (min-width: 430px) {
   .month-summary { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ==========================================================================
+   ROLEPLAY 7.0 — LIGHT REDESIGN
+   Drei Hauptbereiche: Eintrag · Rollen · Auswertung.
+   Ruhige Flächen statt Kartenstapel, Rollenfarbe als Kontext und kleine
+   neutrale Begleiter als wiederkehrende Coaching-Sprache.
+   ========================================================================== */
+
+:root {
+  color-scheme: only light;
+  --bg: #f8f9fc;
+  --card: #ffffff;
+  --card-solid: #ffffff;
+  --field: #f7f8fb;
+  --field-2: #f5f7fb;
+  --text: #151a2c;
+  --muted: #737b90;
+  --line: #e8ebf2;
+  --line-strong: #dfe3ec;
+  --surface-card: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-glass: rgba(250,251,254,.82);
+  --surface-glass-line: rgba(32,43,72,.08);
+  --accent: #665df5;
+  --accent-strong: #5147ee;
+  --tint-accent: rgba(102,93,245,.10);
+  --tint-accent-line: rgba(102,93,245,.24);
+  --shadow-card: 0 12px 34px rgba(52,63,91,.055);
+  --shadow-raised: 0 16px 40px rgba(46,57,83,.10);
+  --nav-height: 76px;
+  --r-card: 24px;
+  --r-lg: 24px;
+  --active-role: #6C7CF2;
+  --active-role-soft: rgba(108,124,242,.16);
+  --active-role-fade: rgba(108,124,242,.06);
+  --active-role-line: rgba(108,124,242,.24);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #f8f9fc;
+    --card: #ffffff;
+    --card-solid: #ffffff;
+    --field: #f7f8fb;
+    --field-2: #f5f7fb;
+    --text: #151a2c;
+    --muted: #737b90;
+    --line: #e8ebf2;
+    --line-strong: #dfe3ec;
+    --surface-card: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-glass: rgba(250,251,254,.82);
+    --surface-glass-line: rgba(32,43,72,.08);
+    --accent: #665df5;
+    --accent-strong: #5147ee;
+    --tint-accent: rgba(102,93,245,.10);
+    --tint-accent-line: rgba(102,93,245,.24);
+    --dim-rgb: 248,249,252;
+  }
+}
+
+html, body { background: var(--bg); }
+body {
+  background:
+    radial-gradient(circle at 105% -4%, rgba(119,151,255,.10), transparent 24rem),
+    radial-gradient(circle at -8% 18%, rgba(128,213,240,.06), transparent 22rem),
+    var(--bg);
+}
+
+.native-emoji,
+.role-card-symbol,
+.role-dialog-symbol {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-weight: 400;
+}
+
+.app-shell {
+  width: min(100%, 680px);
+  padding-bottom: calc(var(--nav-height) + 20px + env(safe-area-inset-bottom));
+}
+main { padding: 0 16px 22px; }
+
+/* Kopf: keine Marke als Eyebrow, stattdessen Rolle als atmosphärischer Kontext. */
+.app-header {
+  position: sticky;
+  top: 0;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+  color: var(--text);
+  background: rgba(248,249,252,.84);
+  border-bottom: 0;
+  box-shadow: none;
+  backdrop-filter: saturate(1.35) blur(24px);
+  -webkit-backdrop-filter: saturate(1.35) blur(24px);
+}
+body[data-page="review"] .app-header {
+  background:
+    linear-gradient(180deg, var(--active-role-soft) 0%, rgba(250,251,254,.88) 72%, rgba(248,249,252,.82) 100%);
+}
+.app-header::after {
+  height: 1px;
+  opacity: .42;
+  background: linear-gradient(90deg, transparent 2%, var(--active-role-line) 30%, var(--active-role-line) 70%, transparent 98%);
+}
+.app-header h1 { color: var(--text); font-size: clamp(22px, 6vw, 28px); line-height: 1.08; font-weight: 750; }
+.header-title-row { align-items: flex-end; max-height: 74px; margin-bottom: 12px; }
+.header-identity { display: grid; gap: 3px; }
+.page-subtitle { font-size: 12.5px; color: var(--muted); line-height: 1.25; }
+
+.role-picker-wrap { max-width: 46%; }
+.role-picker {
+  min-height: 40px;
+  padding-inline: 14px 30px;
+  color: var(--text);
+  background-color: rgba(255,255,255,.65);
+  border-color: var(--active-role-line);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.78), 0 6px 18px rgba(45,58,92,.055);
+  font-size: 13px;
+}
+
+.date-nav { grid-template-columns: 38px 1fr 38px; gap: 8px; margin-top: 0; }
+.app-header .icon-button,
+.app-header .date-button {
+  height: 38px;
+  min-height: 38px;
+  background: rgba(255,255,255,.66);
+  border-color: rgba(55,68,100,.10);
+  color: #27324d;
+  border-radius: 14px;
+}
+.app-header .date-button { font-size: 13.5px; }
+
+body[data-page="routines"] .app-header,
+body[data-page="streaks"] .app-header { display: none; }
+
+/* Bottom navigation: drei klare Ziele, schwebend und zurückhaltend. */
+.bottom-nav {
+  left: max(10px, calc((100vw - 680px) / 2 + 10px));
+  right: max(10px, calc((100vw - 680px) / 2 + 10px));
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  height: 66px;
+  padding: 5px;
+  border: 1px solid rgba(42,53,82,.08);
+  border-radius: 24px;
+  background: rgba(252,253,255,.88);
+  box-shadow: 0 14px 42px rgba(36,49,82,.13), inset 0 1px 0 rgba(255,255,255,.86);
+  backdrop-filter: saturate(1.5) blur(26px);
+  -webkit-backdrop-filter: saturate(1.5) blur(26px);
+}
+.nav-button {
+  height: 56px;
+  align-content: center;
+  gap: 2px;
+  border-radius: 19px;
+  color: #7d8496;
+  transition: color .2s ease, background .2s ease, transform .18s ease;
+}
+.nav-button::before { display: none; }
+.nav-button.active {
+  color: #5f56ec;
+  background: linear-gradient(145deg, rgba(111,100,246,.13), rgba(107,165,255,.09));
+}
+.nav-button:active { transform: scale(.97); }
+.nav-symbol { width: 24px; height: 24px; }
+.nav-label { position: relative; font-size: 10.5px; font-weight: 750; line-height: 1; }
+
+/* Allgemeiner Sektionsrhythmus. */
+.section-kicker {
+  display: inline-block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.section-heading-inline { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.section-heading-inline h2 { margin-bottom: 0; }
+
+/* Eintrag: bewusst entkastet. Nur der Coach darf als stärkere Fläche stehen. */
+#reviewPage { padding-top: 4px; }
+#reviewPage > .card,
+#reviewPage > details.card {
+  margin: 0;
+  padding: 24px 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+}
+#reviewPage > .card:last-of-type { border-bottom: 0; }
+#reviewPage h2 { margin-bottom: 16px; font-size: 21px; }
+
+.role-coach-stage {
+  position: relative;
+  margin: 10px 0 2px;
+  border-radius: 28px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 22%, var(--active-role-soft), transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,.98), rgba(247,249,255,.96));
+  border: 1px solid var(--active-role-line);
+  box-shadow: 0 14px 42px rgba(44,60,98,.07);
+}
+.current-state-summary { margin: 0; }
+.state-readout,
+.state-readout.is-empty {
+  min-height: 150px;
+  padding: 20px 18px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
+  text-align: left;
+}
+.state-readout::before { display: none; }
+.readout-head {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  z-index: 2;
+  gap: 1px;
+}
+.readout-role { color: var(--muted); }
+.readout-mode { font-size: 15px; color: var(--mode-color, var(--text)); }
+
+.coach-layout {
+  min-height: 110px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  gap: 10px;
+  align-items: end;
+}
+.state-readout:not(.is-empty) .coach-layout { padding-top: 28px; }
+.coach-impulse {
+  align-self: end;
+  gap: 5px;
+  padding: 0 0 3px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.coach-eyebrow { font-size: 9.5px; color: var(--mode-color, var(--active-role)); }
+.coach-core { max-width: 360px; font-size: 18px; line-height: 1.26; color: var(--text); }
+.coach-addition { max-width: 390px; font-size: 12.5px; line-height: 1.42; color: var(--muted); }
+
+/* Dynamisches Leuchtwesen für den Coach. Augen hell, Mimik je Modus. */
+.coach-companion {
+  position: relative;
+  width: 100px;
+  height: 102px;
+  justify-self: end;
+  align-self: end;
+  filter: drop-shadow(0 12px 22px var(--companion-soft));
+}
+.companion-glow {
+  position: absolute;
+  inset: 15px 2px 0;
+  border-radius: 50%;
+  background: var(--companion-soft);
+  filter: blur(18px);
+  opacity: .9;
+}
+.companion-body {
+  position: absolute;
+  left: 14px; right: 8px; bottom: 5px;
+  height: 76px;
+  border-radius: 48% 52% 43% 47% / 48% 48% 52% 52%;
+  background:
+    radial-gradient(circle at 34% 21%, rgba(255,255,255,.98) 0 9%, rgba(255,255,255,.46) 18%, transparent 36%),
+    linear-gradient(145deg, rgba(255,255,255,.92), var(--companion-color));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), inset 0 -12px 24px rgba(52,67,120,.08);
+  transform: rotate(-1.5deg);
+}
+.companion-body::before,
+.companion-body::after {
+  content: "";
+  position: absolute;
+  top: 43px;
+  width: 26px;
+  height: 19px;
+  border-radius: 50%;
+  background: inherit;
+  box-shadow: inherit;
+}
+.companion-body::before { left: -12px; transform: rotate(-22deg); }
+.companion-body::after { right: -12px; transform: rotate(22deg); }
+.companion-eye {
+  position: absolute;
+  top: 26px;
+  width: 15px;
+  height: 21px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 0 -1px 2px rgba(31,47,82,.12), 0 1px 2px rgba(31,47,82,.08);
+}
+.companion-eye i {
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  width: 4px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(31,47,82,.66);
+}
+.companion-eye.eye-left { left: 21px; }
+.companion-eye.eye-right { right: 20px; }
+.companion-mouth {
+  position: absolute;
+  left: 50%;
+  top: 52px;
+  width: 16px;
+  height: 7px;
+  transform: translateX(-50%);
+  border: 0 solid rgba(31,47,82,.72);
+  border-bottom-width: 2.5px;
+  border-radius: 0 0 14px 14px;
+}
+.mode-gentle .companion-eye { transform: scaleY(.9); }
+.mode-gentle .companion-mouth { width: 13px; height: 5px; opacity: .68; }
+.mode-minimum .companion-mouth { width: 12px; height: 0; border-radius: 99px; }
+.mode-standard .companion-mouth { width: 16px; height: 7px; }
+.mode-focus .companion-mouth { width: 11px; height: 0; border-bottom-width: 2px; }
+.mode-focus .companion-body { transform: rotate(1deg) translateY(-1px); }
+.mode-development .companion-mouth { width: 18px; height: 9px; border-bottom-width: 3px; }
+.mode-development .companion-body { transform: rotate(-2deg) translateY(-3px); }
+
+/* Tagesbahn: frei in der Fläche, keine zusätzliche Kachel. */
+.state-overview-card .day-journey { margin: 14px -4px 10px; }
+.stop-node { background: #f1f3f7; box-shadow: inset 0 0 0 1px rgba(40,52,83,.07); }
+.stop-name { background: transparent; padding-inline: 1px; }
+.journey-stop.is-current .stop-name { background: transparent; color: var(--stop-line); font-weight: 800; }
+.state-history-details {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  background: transparent;
+}
+.state-history-details > summary { min-height: 48px; padding-inline: 2px; }
+
+/* Eintragsmodule: klare Zeilen statt Kasten-in-Kasten. */
+.entry-section .section-title-row { margin-bottom: 12px; }
+.prayer-strip { gap: 7px; }
+.prayer-card {
+  min-height: 96px;
+  border-color: rgba(225,86,103,.18);
+  background: linear-gradient(180deg, rgba(255,248,249,.94), rgba(253,247,249,.72));
+  border-radius: 18px;
+}
+.sunnah-prayer-details,
+.ramadan-box {
+  border-color: var(--line);
+  background: #f7f8fb;
+  box-shadow: none;
+}
+.ramadan-box { border-radius: 18px; }
+
+.activity-list { gap: 0; }
+.activity-list > * {
+  border-radius: 0;
+  border-width: 0 0 1px 0;
+  border-color: var(--line);
+  background: transparent;
+  box-shadow: none;
+}
+.activity-list > *:last-child { border-bottom: 0; }
+
+.routine-review-grid { gap: 10px; }
+.routine-review-card { min-height: 142px; border-radius: 20px; box-shadow: 0 10px 28px rgba(42,51,79,.08); }
+.routine-cycle-button { min-height: 42px; border-radius: 14px; }
+
+.meal-list { gap: 0; }
+.meal-entry,
+.meal-entry.is-selected,
+.meal-entry.meal-none {
+  padding: 15px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.meal-entry:last-child { border-bottom: 0; }
+.meal-entry select,
+.meal-entry input,
+.vitality-metrics input,
+.reflection-field textarea,
+.reflection-field select,
+.notes-card textarea {
+  border-color: transparent;
+  background: #f5f7fb;
+  box-shadow: none;
+}
+.meal-entry.is-selected select,
+.meal-entry.is-selected input { background: #f3f6fc; }
+
+.primary-button {
+  border-radius: 18px;
+  background: linear-gradient(135deg, #5d64ef, #6e7cf5);
+  box-shadow: 0 10px 26px rgba(92,99,237,.20);
+}
+#saveButton { margin: 16px 0 10px; }
+
+/* Rollen — neue Hauptseite. */
+.roles-page { padding: 10px 0 4px; }
+.roles-intro {
+  min-height: 144px;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 150px;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 18px;
+  padding: 8px 2px 12px;
+}
+.roles-intro h2 { margin: 0 0 7px; max-width: 330px; font-size: 23px; line-height: 1.18; }
+.roles-intro p { max-width: 330px; color: var(--muted); font-size: 13px; line-height: 1.42; }
+.roles-today-companion { position: relative; min-height: 128px; }
+.roles-today-companion img {
+  position: absolute;
+  right: -8px;
+  bottom: -4px;
+  width: 118px;
+  height: 118px;
+  object-fit: contain;
+}
+.today-role-bubble {
+  position: absolute;
+  right: 56px;
+  top: 0;
+  z-index: 2;
+  width: 138px;
+  padding: 9px 11px;
+  border: 1px solid var(--active-role-line);
+  border-radius: 16px 16px 5px 16px;
+  background: rgba(255,255,255,.84);
+  box-shadow: 0 8px 26px rgba(54,65,95,.07);
+}
+.today-role-bubble span { display: block; font-size: 11.5px; color: var(--text); white-space: nowrap; }
+.today-role-bubble small { display: block; margin-top: 3px; font-size: 9.5px; line-height: 1.25; color: var(--muted); }
+
+.role-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+}
+.role-hub-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid var(--role-card-line);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 82% 16%, var(--role-card-soft), transparent 46%),
+    linear-gradient(145deg, rgba(255,255,255,.98), var(--role-card-soft));
+  box-shadow: 0 10px 30px rgba(45,57,87,.055);
+}
+.role-hub-card.is-active { box-shadow: 0 12px 34px var(--role-card-soft), 0 0 0 1px var(--role-card-line); }
+.role-card-main {
+  position: relative;
+  width: 100%;
+  min-height: 174px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  overflow: hidden;
+}
+.role-card-main:active { transform: scale(.985); }
+.role-card-symbol { position: absolute; left: 15px; top: 14px; font-size: 22px; }
+.role-today-chip {
+  position: absolute;
+  right: 14px;
+  top: 13px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  color: var(--role-card);
+  font-size: 9px;
+  font-weight: 800;
+  border: 1px solid var(--role-card-line);
+}
+.role-card-mascot {
+  position: absolute;
+  right: -5px;
+  top: 28px;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  transform: rotate(1deg);
+}
+.role-card-copy {
+  position: absolute;
+  left: 16px; right: 38px; bottom: 16px;
+  display: grid;
+  gap: 2px;
+}
+.role-card-copy strong { font-size: 17px; font-weight: 800; color: var(--text); }
+.role-card-copy small { font-size: 11px; color: var(--muted); }
+.role-card-arrow { position: absolute; right: 14px; bottom: 17px; font-size: 23px; color: var(--role-card); }
+.role-ich { grid-column: 1 / -1; }
+.role-ich .role-card-main { min-height: 138px; }
+.role-ich .role-card-mascot { width: 120px; height: 120px; top: 7px; right: 6px; }
+.role-card-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  padding: 0 12px 12px;
+}
+.role-card-quick button {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,.8);
+  border-radius: 14px;
+  background: rgba(255,255,255,.72);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 750;
+}
+.roles-quote {
+  margin: 24px 10px 10px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  color: #6f7690;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.45;
+  background: linear-gradient(145deg, rgba(108,124,242,.055), rgba(82,190,205,.045));
+}
+
+/* Rollen-Detaildialog: große Identität, wenige eindeutige Aktionen. */
+.role-hub-dialog { padding: 0; overflow: hidden; }
+.role-hub-close {
+  position: absolute;
+  right: 13px;
+  top: 13px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.78);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+}
+.role-hub-dialog-body { padding: 18px; }
+.role-dialog-hero {
+  position: relative;
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  padding: 18px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: radial-gradient(circle at 82% 20%, var(--dialog-role-soft), transparent 55%), #f8f9fc;
+}
+.role-dialog-hero img { position: absolute; right: 4px; top: 6px; width: 142px; height: 142px; object-fit: contain; }
+.role-dialog-hero > div { position: relative; z-index: 2; max-width: 55%; }
+.role-dialog-hero h2 { margin: 0 0 3px; font-size: 23px; }
+.role-dialog-hero p { color: var(--muted); font-size: 12px; }
+.role-dialog-symbol { position: absolute; left: 18px; top: 18px; font-size: 23px; }
+.role-dialog-coach { margin: 15px 4px 12px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.role-dialog-actions { display: grid; gap: 0; }
+.role-dialog-action {
+  width: 100%;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.role-dialog-action:last-child { border-bottom: 0; }
+.role-dialog-action > .native-emoji { font-size: 22px; }
+.role-dialog-action > span:nth-child(2) { display: grid; gap: 2px; }
+.role-dialog-action strong { font-size: 14px; }
+.role-dialog-action small { color: var(--muted); font-size: 10.5px; line-height: 1.25; }
+.role-dialog-action > span:last-child { font-size: 20px; color: #9aa1b2; }
+.role-dialog-action.is-preview { opacity: .62; }
+.role-dialog-action.is-preview em { font-size: 9px; font-style: normal; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+
+/* Verschachtelte Bereiche gehören sichtbar zur Ich-Person. */
+.nested-role-page {
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+.nested-page-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 2px 2px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.nested-page-head h2 { margin: 0; font-size: 24px; }
+.back-to-roles {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text);
+  font-size: 24px;
+}
+
+/* Auswertung: Daten dürfen strukturiert sein, aber die Hauptflächen bleiben offen. */
+#analysisPage { padding-top: 6px; }
+#analysisPage > .card {
+  margin: 0;
+  padding: 24px 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid var(--line);
+}
+#analysisPage > .card:last-child { border-bottom: 0; }
+.role-presence-metrics { gap: 8px; }
+.role-presence-metric {
+  border-color: transparent;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #f7f8fc, #f2f5fb);
+}
+.role-presence-distribution { margin-top: 10px; }
+.role-split-list { gap: 0; }
+.role-split-row {
+  padding: 13px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.role-split-row:last-child { border-bottom: 0; }
+.role-split-bar { height: 7px; background: #edf0f5; }
+.role-split-name { font-size: 13px; }
+.role-split-row small { font-size: 10.5px; }
+.month-summary { gap: 8px; }
+.month-stat { border: 0; border-radius: 18px; background: #f5f7fb; }
+.month-impulses { padding: 14px 16px; border-radius: 18px; background: #f7f8fb; }
+
+/* Modalflächen in Light Mode zuverlässig hell halten, auch wenn das Gerät dunkel steht. */
+.form-dialog,
+.calendar-dialog,
+.routine-session-dialog { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  .app-header { --header-role-text: var(--text); }
+  .app-header, .bottom-nav { background-color: rgba(250,251,254,.88); }
+  .stop-node { background: #f1f3f7; }
+  .form-dialog::before, .calendar-dialog::before { background: rgba(37,48,76,.13); }
+  .status-circle.neutral { background: #f0f2f7; }
+}
+
+@media (max-width: 390px) {
+  main { padding-inline: 13px; }
+  .app-header { padding-inline: 13px; }
+  .role-picker-wrap { max-width: 48%; }
+  .role-picker { font-size: 11.8px; }
+  .coach-layout { grid-template-columns: minmax(0,1fr) 90px; }
+  .coach-companion { width: 88px; height: 94px; }
+  .roles-intro { grid-template-columns: minmax(0,1fr) 122px; }
+  .roles-today-companion img { width: 104px; height: 104px; }
+  .today-role-bubble { right: 42px; width: 122px; }
+  .role-card-main { min-height: 160px; padding: 13px; }
+  .role-card-mascot { width: 100px; height: 100px; }
+  .role-card-copy { left: 13px; bottom: 13px; }
+  .role-card-copy strong { font-size: 15.5px; }
+}
+
+/* Final visual QA: keep the role coach clear of the intro copy on phone widths. */
+.roles-intro > div:first-child { min-width: 0; }
+.roles-intro h2 { max-width: 205px; }
+.roles-intro p { max-width: 210px; }
+.today-role-bubble { width: 116px; right: 42px; }
+.today-role-bubble span { white-space: normal; line-height: 1.18; }
+
+@media (max-width: 390px) {
+  .roles-intro h2 { max-width: 185px; font-size: 22px; }
+  .roles-intro p { max-width: 190px; }
+  .today-role-bubble { right: 28px; width: 108px; padding: 8px 9px; }
+}

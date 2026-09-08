@@ -3,23 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f2f4f8" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0d1017" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f7f9fd">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Roleplay">
   <link rel="apple-touch-icon" href="logo.jpeg">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
-  <title>Roleplay</title>
+  <title>ROLEPLAY</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header" id="appHeader">
       <div class="header-title-row" id="headerTitleRow">
         <div class="header-identity">
-          <p class="eyebrow">ROLEPLAY</p>
           <h1 id="pageTitle">Tagesreflexion</h1>
+          <p id="pageSubtitle" class="page-subtitle">Dein täglicher Check-in.</p>
         </div>
         <label class="role-picker-wrap" id="rolePickerWrap">
           <span class="sr-only">Tagesrolle auswählen</span>
@@ -36,17 +35,25 @@
 
     <main>
       <section id="reviewPage" class="app-page active" aria-label="Tagesreview">
-        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
-          <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
-          <div id="checkinSlots" class="checkin-slots" aria-label="Fünf Tages-Check-ins"></div>
+        <section class="role-coach-stage" aria-label="Coach für heute">
           <div id="currentStateSummary" class="current-state-summary empty-state-summary"></div>
+        </section>
+
+        <section class="card state-overview-card" aria-labelledby="stateOverviewTitle">
+          <div class="section-heading-inline">
+            <div>
+              <span class="section-kicker">Check-in</span>
+              <h2 id="stateOverviewTitle">Zustand &amp; Rollenmodus</h2>
+            </div>
+          </div>
+          <div id="checkinSlots" class="checkin-slots" aria-label="Fünf Tages-Check-ins"></div>
           <details class="state-history-details">
             <summary><strong>Verlauf &amp; Details</strong></summary>
             <div id="stateTimeline" class="state-timeline"></div>
           </details>
         </section>
 
-        <section class="card">
+        <section id="islamSection" class="card entry-section entry-section-islam">
           <h2>Islam</h2>
           <div id="prayerList" class="prayer-strip"></div>
           <details class="sunnah-prayer-details">
@@ -66,7 +73,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section id="activitySection" class="card entry-section">
           <div class="section-title-row">
             <h2>Aktivitäten</h2>
             <button id="addActivity" class="small-button plus-button plus-only" type="button" aria-label="Aktivität hinzufügen"><span class="gradient-plus">+</span></button>
@@ -74,7 +81,7 @@
           <div id="activityList" class="stack activity-list"></div>
         </section>
 
-        <section class="card routine-review-section">
+        <section id="routineReviewSection" class="card routine-review-section entry-section">
           <div class="section-title-row">
             <h2>Routinen</h2>
             <button id="openRoutines" class="text-button" type="button">Öffnen</button>
@@ -95,7 +102,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section id="vitalitySection" class="card entry-section">
           <h2>Vitalität</h2>
 
           <div class="meal-list">
@@ -141,7 +148,7 @@
           </div>
         </section>
 
-        <section class="card mindfulness-card">
+        <section id="gratitudeSection" class="card mindfulness-card entry-section">
           <h2>Dankbarkeit</h2>
           <div class="reflection-stack">
             <div class="field-group reflection-field">
@@ -159,14 +166,14 @@
           </div>
         </section>
 
-        <section class="card notes-card">
+        <section id="notesSection" class="card notes-card entry-section">
           <h2>Tagesnotiz</h2>
           <textarea id="notes" rows="14" placeholder="Gedanken, Erkenntnisse, Ereignisse oder ein längerer Tagebucheintrag …"></textarea>
         </section>
 
         <button id="saveButton" class="primary-button" type="button">Tagesreview speichern</button>
 
-        <details class="card stats-card week-course-card" open>
+        <details id="weekReviewSection" class="card stats-card week-course-card entry-section" open>
           <summary class="lean-card-summary week-course-summary">
             <h2>Wochenrückblick</h2>
             <span id="weekLabel" class="week-label"></span>
@@ -185,7 +192,7 @@
           </div>
         </details>
 
-        <section class="card">
+        <section id="backupSection" class="card entry-section">
           <h2>Export & Sicherung</h2>
           <div class="export-buttons">
             <button id="exportBackup" class="small-button export-button" type="button">Backup speichern</button>
@@ -199,7 +206,26 @@
         <p class="privacy-note">Alle Einträge werden ausschließlich lokal in diesem Browser gespeichert.<br><span id="appVersionLabel"></span></p>
       </section>
 
-      <section id="routinesPage" class="app-page" aria-label="Routinen">
+      <section id="rolesPage" class="app-page roles-page" aria-label="Rollen">
+        <section class="roles-intro" aria-labelledby="rolesIntroTitle">
+          <div>
+            <span class="section-kicker">Dein System</span>
+            <h2 id="rolesIntroTitle">Mehrere Rollen. Ein bewusstes Ich.</h2>
+            <p>Wähle den Lebensbereich, den du gerade gestalten möchtest.</p>
+          </div>
+          <div id="rolesTodayCompanion" class="roles-today-companion" aria-hidden="true"></div>
+        </section>
+        <div id="roleHubGrid" class="role-hub-grid" aria-label="Deine Rollen"></div>
+        <section class="roles-quote" aria-label="Gedanke">
+          <span>„Nicht mehrere Leben führen, sondern eines bewusst gestalten.“</span>
+        </section>
+      </section>
+
+      <section id="routinesPage" class="app-page nested-role-page" aria-label="Routinen">
+        <div class="nested-page-head">
+          <button id="backToRolesFromRoutines" class="back-to-roles" type="button" aria-label="Zurück zu Rollen">‹</button>
+          <div><span class="section-kicker">Ich-Person</span><h2>Routinen</h2></div>
+        </div>
         <div id="routineOverview" class="routine-overview">
           <div id="routineCards" class="routine-cards"></div>
           <button id="addRoutine" class="bottom-add-routine" type="button"><span class="gradient-plus">+</span><span>Routine hinzufügen</span></button>
@@ -257,26 +283,36 @@
         </section>
       </section>
 
-      <section id="streaksPage" class="app-page" aria-label="Streaks">
+      <section id="streaksPage" class="app-page nested-role-page" aria-label="Streaks">
+        <div class="nested-page-head">
+          <button id="backToRolesFromStreaks" class="back-to-roles" type="button" aria-label="Zurück zu Rollen">‹</button>
+          <div><span class="section-kicker">Ich-Person</span><h2>Streaks</h2></div>
+        </div>
         <div id="streakList" class="stack streak-list streaks-page-list"></div>
       </section>
     </main>
 
     <nav class="bottom-nav" aria-label="Hauptnavigation">
-      <button class="nav-button active" data-page="review" type="button" aria-label="Tagesreflexion" title="Tagesreflexion">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.6" y="3.4" width="14.8" height="17.2" rx="3.4"></rect><line x1="8.4" y1="8.6" x2="15.6" y2="8.6"></line><line x1="8.4" y1="12" x2="15.6" y2="12"></line><line x1="8.4" y1="15.4" x2="13" y2="15.4"></line></svg></span>
+      <button class="nav-button active" data-page="review" type="button" aria-label="Eintrag" title="Eintrag">
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.8" y="3.5" width="14.4" height="17" rx="3.2"></rect><line x1="8.2" y1="8.5" x2="15.8" y2="8.5"></line><line x1="8.2" y1="12" x2="15.8" y2="12"></line><line x1="8.2" y1="15.5" x2="13.2" y2="15.5"></line></svg></span>
+        <span class="nav-label">Eintrag</span>
       </button>
-      <button class="nav-button" data-page="routines" type="button" aria-label="Routinen" title="Routinen">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 15.4a5 5 0 0 1 10 0"></path><line x1="3.4" y1="15.4" x2="20.6" y2="15.4"></line><line x1="12" y1="3.6" x2="12" y2="6.2"></line><line x1="5.4" y1="6.3" x2="7.2" y2="8.1"></line><line x1="18.6" y1="6.3" x2="16.8" y2="8.1"></line><line x1="6.4" y1="19.4" x2="17.6" y2="19.4"></line></svg></span>
+      <button class="nav-button" data-page="roles" type="button" aria-label="Rollen" title="Rollen">
+        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.8"></rect><rect x="14" y="4" width="6" height="6" rx="1.8"></rect><rect x="4" y="14" width="6" height="6" rx="1.8"></rect><rect x="14" y="14" width="6" height="6" rx="1.8"></rect></svg></span>
+        <span class="nav-label">Rollen</span>
       </button>
       <button class="nav-button" data-page="analysis" type="button" aria-label="Auswertung" title="Auswertung">
         <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><line x1="4.2" y1="19.4" x2="19.8" y2="19.4"></line><line x1="8" y1="19.4" x2="8" y2="12.6"></line><line x1="12" y1="19.4" x2="12" y2="7.4"></line><line x1="16" y1="19.4" x2="16" y2="15"></line></svg></span>
-      </button>
-      <button class="nav-button" data-page="streaks" type="button" aria-label="Streaks" title="Streaks">
-        <span class="nav-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21.2a5.9 5.9 0 0 0 5.9-5.9c0-4-3-6.6-5.9-9.6-2.9 3-5.9 5.6-5.9 9.6A5.9 5.9 0 0 0 12 21.2Z"></path><path d="M12 21.2a2.6 2.6 0 0 0 2.6-2.6c0-1.7-1.3-2.8-2.6-4.2-1.3 1.4-2.6 2.5-2.6 4.2A2.6 2.6 0 0 0 12 21.2Z"></path></svg></span>
+        <span class="nav-label">Auswertung</span>
       </button>
     </nav>
   </div>
+
+
+  <dialog id="roleHubDialog" class="form-dialog role-hub-dialog">
+    <button id="closeRoleHub" class="role-hub-close" type="button" aria-label="Rollenbereich schließen">×</button>
+    <div id="roleHubDialogBody" class="role-hub-dialog-body"></div>
+  </dialog>
 
   <dialog id="stateCheckinDialog" class="form-dialog state-checkin-dialog">
     <form id="stateCheckinForm">

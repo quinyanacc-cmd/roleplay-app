@@ -1,11 +1,11 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "ROLEPLAY 6.2 – Tagesreflexion mit fünf Check-ins in Tagesreihenfolge, Gottesfurcht, Rollenfokus und Rollenpräsenz – lokal auf dem Gerät",
+  "description": "ROLEPLAY 7.0 – Light-Mode PWA mit Eintrag, Rollen-Hub, Auswertung, lokalem Coaching und Rollenpräsenz",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f2f4f8",
-  "theme_color": "#f2f4f8",
+  "background_color": "#f8f9fc",
+  "theme_color": "#f7f9fd",
   "icons": [
     {
       "src": "logo.jpeg",

@@ -1,8 +1,29 @@
-# ROLEPLAY App 6.2.0
+# ROLEPLAY App 7.0.0
 
-Lokale iPhone-PWA für Tagesreflexion, Routinen und adaptive Rollenmodi.
-Alle Daten bleiben im Browser des Geräts (`localStorage`), keine Serververbindung,
-kein Framework, keine externen Bibliotheken.
+Lokale iPhone-/Android-PWA als Design- und Funktionsprototyp für den späteren nativen Rebuild.
+Alle Daten bleiben wie in 6.2.0 im Browser des Geräts (`localStorage`); Namespace und Schema sind unverändert.
+
+## Version 7.0.0 – vollständiges UI-Redesign
+
+**Drei Hauptbereiche.** Die feste Navigation besteht jetzt aus **Eintrag**, **Rollen** und **Auswertung**. Routinen und Streaks sind keine eigenen Haupttabs mehr, sondern liegen unter **Ich-Person** auf der Rollen-Seite. Bestehende Funktionen bleiben erhalten.
+
+**Light Mode als verbindliche Designsprache.** Die Oberfläche wird unabhängig vom Gerätefarbschema hell dargestellt. Futura bleibt die primäre Schrift. Die Rollenfarbe färbt den Kopf der Eintragsseite nur subtil als Verlauf; Dienstag/Vitalist bleibt beispielsweise dunkelblau verankert.
+
+**Eintragsseite entkastet.** Große Container wurden aufgelöst. Bereiche werden primär durch Abstand, Typografie und feine Trennlinien gegliedert. Der Coach bildet bewusst eine einzelne stärkere Bühne, während Zustand, Islam, Aktivitäten, Routinen, Vitalität, Reflexion und Sicherung offener in der Seite liegen.
+
+**Neue Rollen-Seite.** Sieben Rollen erscheinen als ruhiges 2-Spalten-System mit Rollenfarbe, System-Emoji und eigenem neutralen Leuchtwesen. Die aktuelle Tagesrolle wird hervorgehoben. Jede Rolle öffnet einen kleinen Rollenbereich; bereits vorhandene Funktionen verlinken direkt zu den passenden App-Bereichen. Noch nicht vorhandene native Funktionen sind klar als Vorschau gekennzeichnet.
+
+**Begleiter/Figuren.** Unter `assets/mascots/` liegen sieben eigens erstellte SVG-Leuchtwesen. Sie vermeiden Geschlecht, Ethnie und Alter als Identitätsmerkmal. Die Augen sind hell; ein kleiner Mund erlaubt freundlichere Mimik. Im Coach wird zusätzlich ein dynamisches CSS-Leuchtwesen verwendet, dessen Ausdruck sich je Rollenmodus leicht verändert.
+
+**Native Emojis.** Rollen- und Funktionssymbole sind echte Unicode-Emojis. Dadurch werden sie auf iOS mit Apple Color Emoji und auf Android mit dem jeweiligen Android-Systememoji dargestellt.
+
+**Auswertung beruhigt.** Die Rollenpräsenz und Monatsauswertung behalten ihre Datenlogik, wurden aber aus großen Karten gelöst. Kennzahlen dürfen als kompakte Datenflächen bleiben; Rollen werden als offene Zeilen mit Balken dargestellt.
+
+**Kompatibilität.** `STORAGE_NAMESPACE` bleibt `roleplay-v25`, `SCHEMA_VERSION` bleibt 7. Bestehende lokale Daten und Backups aus 6.2.0 werden unverändert weiterverwendet. `APP_VERSION` und Service-Worker-Cache wurden auf 7.0.0 erhöht.
+
+**Prüfung.** Die vorhandene automatisierte Suite umfasst 162 Prüfungen für Moduslogik, Migration, Rollenpräsenz, Gewichte, Zeiträume, Streaks und Check-ins.
+
+---
 
 ## Version 6.2.0 – Änderungsprotokoll
 
