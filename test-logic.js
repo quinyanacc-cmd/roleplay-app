@@ -1,10 +1,10 @@
 /* ==========================================================================
-   ROLEPLAY – Logiktests
+   ROLEPLAY – Tests der Kernlogik
 
        node test-logic.js
 
-   Ohne Netzwerk, ohne Abhängigkeiten. Geprüft wird ausschließlich logic.js,
-   also genau der Code, den auch die App im Browser ausführt.
+   Ohne Netzwerk, ohne Abhängigkeiten. Geprüft wird ausschließlich logic.js:
+   Datumsrechnung, Profilmodell, Migration, Auswertung.
    ========================================================================== */
 
 const L = require("./logic.js");
@@ -12,474 +12,340 @@ const L = require("./logic.js");
 let passed = 0;
 const failures = [];
 
-function check(name, condition, detail = "") {
+function check(label, condition, detail = "") {
   if (condition) { passed += 1; return; }
-  failures.push(`${name}${detail ? ` → ${detail}` : ""}`);
+  failures.push(`${label}${detail ? ` → ${detail}` : ""}`);
 }
 
-function eq(name, actual, expected) {
-  const a = JSON.stringify(actual);
-  const e = JSON.stringify(expected);
-  check(name, a === e, `erhalten ${a}, erwartet ${e}`);
+function equal(label, actual, expected) {
+  check(label, JSON.stringify(actual) === JSON.stringify(expected), `erhalten ${JSON.stringify(actual)}, erwartet ${JSON.stringify(expected)}`);
 }
 
-function day(date, data = {}) { return { date, stored: true, data: { activities: [], stateCheckins: [], prayers: {}, streaks: {}, ...data } }; }
-function emptyDay(date) { return { date, stored: false, data: null }; }
+function section(title) { console.log(`\n${title}`); }
 
-/* --------------------------------------------------------------------------
-   1. Datum, ISO-Wochen, Schaltjahre
-   -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+section("Datum");
 
-eq("addDays über Monatsgrenze", L.addDays("2026-01-31", 1), "2026-02-01");
-eq("addDays rückwärts über Jahresgrenze", L.addDays("2026-01-01", -1), "2025-12-31");
-eq("Schaltjahr 2024 hat den 29. Februar", L.addDays("2024-02-28", 1), "2024-02-29");
-eq("Nicht-Schaltjahr 2026 springt auf März", L.addDays("2026-02-28", 1), "2026-03-01");
-eq("addMonths begrenzt auf kürzeren Monat", L.addMonths("2026-01-31", 1), "2026-02-28");
-eq("addMonths im Schaltjahr", L.addMonths("2024-01-31", 1), "2024-02-29");
-eq("lastOfMonth Februar 2024", L.lastOfMonth("2024-02-10"), "2024-02-29");
-eq("lastOfMonth Februar 2026", L.lastOfMonth("2026-02-10"), "2026-02-28");
-eq("mondayOf für einen Sonntag", L.mondayOf("2026-08-23"), "2026-08-17");
-eq("mondayOf für einen Montag", L.mondayOf("2026-08-17"), "2026-08-17");
-eq("daysBetween", L.daysBetween("2026-01-01", "2026-01-31"), 30);
-eq("datesBetween liefert alle Tage", L.datesBetween("2026-03-01", "2026-03-05").length, 5);
+equal("addDays über den Monatswechsel", L.addDays("2026-01-31", 1), "2026-02-01");
+equal("addDays rückwärts", L.addDays("2026-03-01", -1), "2026-02-28");
+equal("addMonths kappt auf den letzten Tag", L.addMonths("2026-01-31", 1), "2026-02-28");
+equal("mondayOf am Sonntag", L.mondayOf("2026-09-13"), "2026-09-07");
+equal("mondayOf am Montag", L.mondayOf("2026-09-07"), "2026-09-07");
+equal("sundayOf", L.sundayOf("2026-09-07"), "2026-09-13");
+equal("weekDates umfasst sieben Tage", L.weekDates("2026-09-11").length, 7);
+equal("monthDates im Februar", L.monthDates("2026-02").length, 28);
+equal("firstOfMonth", L.firstOfMonth("2026-09-11"), "2026-09-01");
+equal("lastOfMonth", L.lastOfMonth("2026-09-11"), "2026-09-30");
+equal("daysBetween", L.daysBetween("2026-09-01", "2026-09-11"), 10);
+equal("datesBetween ist einschließend", L.datesBetween("2026-09-01", "2026-09-03"), ["2026-09-01", "2026-09-02", "2026-09-03"]);
+check("todayISO hat das ISO-Format", L.isISODate(L.todayISO()));
+equal("humanDuration unter 30 Tagen bleibt leer", L.humanDuration(12), "");
+equal("humanDuration in Monaten", L.humanDuration(90), "≈ 3 Monate");
+equal("humanDuration in Jahren", L.humanDuration(400), "≈ 1 Jahr und 1 Monat");
 
-eq("ISO-Woche 2026-08-20", L.isoWeekKey("2026-08-20"), "2026-W34");
-// 1.1.2027 ist ein Freitag und gehört noch zur letzten Woche von 2026.
-eq("ISO-Woche am Jahreswechsel", L.isoWeekKey("2027-01-01"), "2026-W53");
-eq("ISO-Woche 4. Januar ist immer KW 1", L.isoWeekKey("2026-01-04"), "2026-W01");
-eq("ISO-Woche 2024-12-30 gehört zu 2025", L.isoWeekKey("2024-12-30"), "2025-W01");
+/* -------------------------------------------------------------------------- */
+section("Text und Farbe");
 
-/* --------------------------------------------------------------------------
-   2. Streak-Umrechnung
-   -------------------------------------------------------------------------- */
+equal("escapeHTML entschärft Markup", L.escapeHTML('<b>"x"</b>'), "&lt;b&gt;&quot;x&quot;&lt;/b&gt;");
+check("linkifyText erzeugt einen Link", L.linkifyText("siehe https://example.org").includes('href="https://example.org"'));
+check("linkifyText entschärft trotzdem", L.linkifyText("<script>").includes("&lt;script&gt;"));
+equal("slugify bildet Umlaute ab", L.slugify("Körper & Geist"), "koerper-geist");
+equal("slugify fällt zurück", L.slugify("!!!", "rolle"), "rolle");
+equal("uniqueId zählt hoch", L.uniqueId("rolle", ["rolle", "rolle-2"]), "rolle-3");
+equal("pluralDE Einzahl", L.pluralDE(1, "Tag", "Tage"), "1 Tag");
+equal("pluralDE Mehrzahl", L.pluralDE(3, "Tag", "Tage"), "3 Tage");
+equal("joinDE verbindet mit und", L.joinDE(["A", "B", "C"]), "A, B und C");
+equal("hexToRgba", L.hexToRgba("#ffffff", .5), "rgba(255,255,255,0.5)");
+equal("readableTextColor auf hell", L.readableTextColor("#F2C94C"), "#15181f");
+equal("readableTextColor auf dunkel", L.readableTextColor("#193C8C"), "#ffffff");
+check("nextRoleColor meidet belegte Farben", L.nextRoleColor([L.ROLE_COLORS[0]]) !== L.ROLE_COLORS[0]);
 
-const s413 = L.streakDuration(413, "2026-08-20");
-eq("413 Tage ergeben 59 volle Wochen", s413.weeks, 59);
-eq("413 Tage: abgeleiteter Zählbeginn", s413.startDate, "2025-07-03");
-check("413 Tage: Text nennt Wochen und Kalenderdauer",
-  s413.text.includes("59 Wochen") && s413.text.includes("Jahr"), s413.text);
-eq("413 Tage kalendarisch", [s413.years, s413.months, s413.restDays], [1, 1, 17]);
+/* -------------------------------------------------------------------------- */
+section("Rollenmodus");
 
-const s0 = L.streakDuration(0, "2026-08-20");
-eq("0 Tage sprachlich sauber", s0.text, "Noch kein voller Tag gezählt.");
-eq("1 Tag: keine Wochenangabe", L.streakDuration(1, "2026-08-20").weekText, "");
-eq("1 Tag: Kalendertext", L.streakDuration(1, "2026-08-20").calendarText, "1 Tag");
-eq("6 Tage: keine Wochenangabe", L.streakDuration(6, "2026-08-20").weeks, 0);
-eq("7 Tage: genau eine Woche", L.streakDuration(7, "2026-08-20").weekText, "1 Woche");
+equal("Zwei Werte behalten die bisherige Gewichtung", L.stateScore([40, 80]), Math.round(40 * .42 + 80 * .58));
+equal("Drei Werte behalten die bisherige Gewichtung", L.stateScore([40, 80, 60]), Math.round(40 * .32 + 80 * .36 + 60 * .32));
+equal("Vier Werte werden gleich gewichtet", L.stateScore([40, 40, 40, 40]), 40);
+equal("Fehlende Werte fallen heraus", L.stateScore([null, 80]), 80);
+equal("Ohne Werte kein Ergebnis", L.stateScore([null, null]), null);
 
-// Über Monats- und Jahresgrenzen, kalendarisch statt pauschal 30 Tage
-eq("Streak über Jahresgrenze", L.streakDuration(365, "2026-03-01").calendarText, "1 Jahr");
-eq("Streak über Schaltjahresgrenze", L.streakDuration(366, "2024-03-01").calendarText, "1 Jahr");
-eq("Streak genau ein Monat (Februar 2026)", L.streakDuration(28, "2026-03-01").calendarText, "1 Monat");
-eq("Streak genau ein Monat (Februar 2024)", L.streakDuration(29, "2024-03-01").calendarText, "1 Monat");
-eq("Streak 31 Tage im Januar", L.streakDuration(31, "2026-02-01").calendarText, "1 Monat");
+equal("Ein sehr niedriger Wert erzwingt den Schon-Modus", L.resolveMode([10, 95]).key, "gentle");
+equal("Niedrige Energie begrenzt auf Minimum", L.resolveMode([30, 70]).key, "minimum");
+equal("Sehr gute Laune hebt eine Begrenzung um eine Stufe", L.resolveMode([30, 85]).key, "standard");
+check("Die Anhebung wird ausgewiesen", L.resolveMode([30, 85]).lifted === true);
+equal("Hohe Werte ergeben den Entwicklungsmodus", L.resolveMode([95, 95]).key, "development");
+equal("Ohne Werte kein Modus", L.resolveMode([]), null);
+equal("Frühere Modusschlüssel werden abgebildet", L.modeKey("peak"), "development");
+equal("Unbekannte Schlüssel bleiben leer", L.modeKey("phantasie"), "");
 
-eq("calendarBreakdown identisch = 0", L.calendarBreakdown("2026-05-05", "2026-05-05"), { years: 0, months: 0, days: 0 });
-eq("calendarBreakdown mit Übertrag", L.calendarBreakdown("2026-01-31", "2026-03-01"), { years: 0, months: 1, days: 1 });
+/* -------------------------------------------------------------------------- */
+section("Coach-Impuls");
 
-/* --------------------------------------------------------------------------
-   3. Migration alter Aktivitäten
-   -------------------------------------------------------------------------- */
+const impulse = L.coachImpulse([85, 85], "development");
+equal("Kategorie bei zwei hohen Werten", impulse.category, "bothHigh");
+check("Der Kernsatz stammt aus der Tabelle", impulse.core === L.MODE_COACH_CORE.development);
+equal("Gleiche Werte ergeben denselben Text", L.coachImpulse([50, 50], "standard"), L.coachImpulse([50, 50], "standard"));
+equal("Ohne Modus kein Impuls", L.coachImpulse([50, 50], ""), null);
+equal("Führende zweite Skala", L.coachStateCategory(40, 70), "secondLeads");
+equal("Führende erste Skala", L.coachStateCategory(70, 40), "firstLeads");
+equal("Ausgeglichen", L.coachStateCategory(60, 62), "balanced");
 
-const oldActivity = L.normalizeActivity({ title: "SMA Betriebsratssitzung", role: "Unternehmer" });
-eq("Altdaten bekommen Größe Mittel", oldActivity.size, "medium");
-eq("Altdaten bekommen neutralen Kontext", oldActivity.context, "none");
-check("Titel wird nie als SMA gedeutet", !L.isSmaActivity(oldActivity), JSON.stringify(oldActivity));
+/* -------------------------------------------------------------------------- */
+section("Bedeutungstexte der Regler");
 
-const oldSelf = L.normalizeActivity({ title: "Arabisch", role: "Yannick" });
-eq("Alte Rolle Yannick wird zur Ich-Person", oldSelf.role, "Ich-Person");
-eq("Nicht-Unternehmer bekommen keinen Kontext", L.normalizeActivity({ title: "X", role: "Muslim", context: "sma" }).context, "none");
-eq("Unbekannte Größe fällt auf Mittel zurück", L.normalizeActivity({ title: "X", role: "Wirt", size: "riesig" }).size, "medium");
-eq("Gültige Größe bleibt erhalten", L.normalizeActivity({ title: "X", role: "Wirt", size: "large" }).size, "large");
-eq("Gültiger Kontext bleibt erhalten", L.normalizeActivity({ title: "X", role: "Unternehmer", context: "own" }).context, "own");
+const energyScale = { id: "energy", preset: "energy", lowLabel: "niedrig", highLabel: "hoch" };
+equal("Vorlage liefert einen festen Satz", L.scaleMeaning(energyScale, 60), L.SCALE_MEANING_PRESETS.energy.texts[60]);
+equal("Zwischenwerte runden auf Fünferschritte", L.scaleMeaning(energyScale, 62), L.SCALE_MEANING_PRESETS.energy.texts[60]);
+check("Jede Vorlage deckt alle 21 Stufen ab",
+  L.SCALE_PRESET_KEYS.every(key => Object.keys(L.SCALE_MEANING_PRESETS[key].texts).length === 21));
+const ownScale = { id: "ruhe", preset: "", lowLabel: "unruhig", highLabel: "gelassen" };
+check("Eigene Skalen bekommen einen abgeleiteten Satz", L.scaleMeaning(ownScale, 90).includes("gelassen"));
+check("Auch am unteren Ende", L.scaleMeaning(ownScale, 10).includes("unruhig"));
+equal("Ohne Wert kein Satz", L.scaleMeaning(ownScale, null), "");
 
-eq("Beitragspunkte klein", L.activitySizePoints("small"), 1);
-eq("Beitragspunkte mittel", L.activitySizePoints("medium"), 2);
-eq("Beitragspunkte groß", L.activitySizePoints("large"), 3);
-eq("Beitragspunkte unbekannt = mittel", L.activitySizePoints(undefined), 2);
+/* -------------------------------------------------------------------------- */
+section("Profil");
 
-/* --------------------------------------------------------------------------
-   4. Migration alter Fastendaten
-   -------------------------------------------------------------------------- */
+const empty = L.emptyProfile();
+check("Ein neues Profil ist leer", L.profileIsEmpty(empty));
+equal("Ein neues Profil hat keine Rollen", empty.roles.length, 0);
+equal("Ein neues Profil hat keine Tracker", empty.trackers.length, 0);
+equal("Es gibt zwei Grundskalen", empty.scales.map(scale => scale.id), ["energy", "mood"]);
+check("Beide Grundskalen bilden den Modus", empty.scales.every(scale => scale.inMode));
+check("Es ist noch kein Onboarding gelaufen", empty.onboardedAt === "");
 
-eq("Alter abgeschlossener Fastentag wird 'legacy'", L.normalizeFasting({ fastingCompleted: true }).type, "legacy");
-eq("Kein Fasten bleibt leer", L.normalizeFasting({ fastingCompleted: false }).type, "");
-eq("Neue Angabe hat Vorrang", L.normalizeFasting({ fastingCompleted: true, fasting: { type: "voluntary" } }).type, "voluntary");
-eq("Unbekannte Art wird verworfen", L.normalizeFasting({ fasting: { type: "quatsch" } }).type, "");
-check("Legacy ist nicht auswählbar", !L.FASTING_SELECTABLE.includes("legacy"));
-check("Legacy wird nicht als Nachholfasten gewertet", L.normalizeFasting({ fastingCompleted: true }).type !== "catchUp");
-
-/* Der offene Nachholstand wird abgeleitet, nicht fortgeschrieben.
-   Die App rechnet: offen = Grundstand − Anzahl erfasster Nachholtage. */
-function openCatchUp(baseline, entries) {
-  const recorded = entries.filter(entry => L.normalizeFasting(entry.data).type === "catchUp").length;
-  return Math.max(0, baseline - recorded);
-}
-
-const fastingDays = [
-  day("2026-08-10", { fasting: { type: "catchUp" } }),
-  day("2026-08-11", { fasting: { type: "voluntary" } }),
-  day("2026-08-12", { fasting: { type: "catchUp" } }),
-  day("2026-08-13", { fastingCompleted: true })
-];
-eq("Zwei Nachholtage verringern um genau zwei", openCatchUp(12, fastingDays), 10);
-eq("Mehrfaches Rechnen bleibt identisch (idempotent)",
-  [openCatchUp(12, fastingDays), openCatchUp(12, fastingDays), openCatchUp(12, fastingDays)], [10, 10, 10]);
-eq("Legacy-Tag verringert den Zähler nicht", openCatchUp(12, [day("2026-08-13", { fastingCompleted: true })]), 12);
-eq("Rücknahme eines Nachholtags stellt den Stand wieder her",
-  openCatchUp(12, fastingDays.filter(entry => entry.date !== "2026-08-12")), 11);
-eq("Vollständige Rücknahme führt zum Ausgangsstand", openCatchUp(12, []), 12);
-eq("Der Stand wird nie negativ", openCatchUp(1, fastingDays), 0);
-
-/* --------------------------------------------------------------------------
-   5. SMA-Erfassung und Normalisierung
-   -------------------------------------------------------------------------- */
-
-const smaAct = { title: "Sitzung", role: "Unternehmer", size: "medium", context: "sma" };
-const ownAct = { title: "Buch", role: "Unternehmer", size: "large", context: "own" };
-
-check("Ausdrückliche Markierung zählt", L.isSmaWorkday({ smaWorkday: true, activities: [] }));
-check("SMA-Aktivität zählt als Arbeitstag", L.isSmaWorkday({ activities: [smaAct] }));
-check("Eigene Entwicklung ist kein SMA-Arbeitstag", !L.isSmaWorkday({ activities: [ownAct] }));
-check("Tag ohne alles ist kein Arbeitstag", !L.isSmaWorkday({ activities: [] }));
-eq("Mehrere SMA-Aktivitäten werden einzeln gezählt", L.countSmaActivities({ activities: [smaAct, smaAct, ownAct] }), 2);
-
-eq("SMA 5 von 5 ergibt genau 1,0", L.smaWeekContribution(5, 5), 1);
-eq("SMA 3 von 5", L.smaWeekContribution(3, 5), 0.6);
-eq("SMA 1 von 5", L.smaWeekContribution(1, 5), 0.2);
-eq("SMA 0 von 5", L.smaWeekContribution(0, 5), 0);
-eq("SMA 7 von 5 wird bei 1,0 gedeckelt", L.smaWeekContribution(7, 5), 1);
-eq("SMA 1 von 1", L.smaWeekContribution(1, 1), 1);
-eq("SMA 3 von 1 wird gedeckelt", L.smaWeekContribution(3, 1), 1);
-eq("Null geplante Tage ohne Arbeit", L.smaWeekContribution(0, 0), 0);
-eq("Null geplante Tage mit Arbeit teilt nicht durch null", L.smaWeekContribution(4, 0), 1);
-check("Ergebnis bei 0 geplanten Tagen ist endlich", Number.isFinite(L.smaWeekContribution(4, 0)));
-
-/* --------------------------------------------------------------------------
-   6. Rollenkompass
-   -------------------------------------------------------------------------- */
-
-const compassDays = [
-  day("2026-08-17", { smaWorkday: true, activities: [smaAct, smaAct] }),
-  day("2026-08-18", { smaWorkday: true, activities: [smaAct] }),
-  day("2026-08-19", { smaWorkday: true, activities: [] }),
-  day("2026-08-20", { activities: [{ title: "Dua", role: "Muslim", size: "small", context: "none" }] })
-];
-const compass = L.consciousRolePoints(compassDays);
-eq("SMA-Regelarbeit erzeugt keinen bewussten Unternehmer-Beitrag", compass.points.Unternehmer, 0);
-eq("Andere Rollen zählen ihre Beitragspunkte", compass.points.Muslim, 1);
-
-const mixed = L.consciousRolePoints([day("2026-08-20", { activities: [smaAct, ownAct] })]);
-eq("Eigene Entwicklung wird nicht reduziert", mixed.points.Unternehmer, 3);
-
-/* --------------------------------------------------------------------------
-   7. Zeiträume und Aggregation
-   -------------------------------------------------------------------------- */
-
-eq("Wochenzeitraum Montag bis Sonntag", L.periodRange("week", "2026-08-20"), { kind: "week", start: "2026-08-17", end: "2026-08-23" });
-eq("Monatszeitraum", L.periodRange("month", "2026-08-20"), { kind: "month", start: "2026-08-01", end: "2026-08-31" });
-eq("Jahreszeitraum", L.periodRange("year", "2026-08-20"), { kind: "year", start: "2026-01-01", end: "2026-12-31" });
-eq("Februar im Schaltjahr", L.periodRange("month", "2024-02-05").end, "2024-02-29");
-eq("Woche zurückblättern", L.shiftPeriod("week", "2026-08-20", -1), "2026-08-10");
-eq("Monat zurückblättern", L.shiftPeriod("month", "2026-03-15", -1), "2026-02-01");
-eq("Jahr vorblättern", L.shiftPeriod("year", "2026-03-15", 1), "2027-01-01");
-
-const weekRange = L.periodRange("week", "2026-08-20");
-const weekEntries = [
-  day("2026-08-17", { smaWorkday: true, stateCheckins: [{ slot: "morning", energy: 60, mood: 70 }], prayers: { Fajr: "Normal", Dhuhr: "Normal" } }),
-  day("2026-08-18", { smaWorkday: true, stateCheckins: [{ slot: "morning", energy: 40, mood: 50 }] }),
-  emptyDay("2026-08-19"),
-  day("2026-08-20", { smaWorkday: true, activities: [ownAct], roleplayBalance: { outcome: "fulfilled" } }),
-  emptyDay("2026-08-21"), emptyDay("2026-08-22"), emptyDay("2026-08-23")
-];
-const weekStats = L.buildPeriodStats(weekRange, weekEntries, { today: "2026-08-20", settings: { smaPlannedDaysPerWeek: 5 } });
-
-eq("Zukünftige Tage bleiben außen vor", weekStats.coverage.elapsedDays, 4);
-eq("Nur echte Einträge zählen als Datenbasis", weekStats.coverage.storedDays, 3);
-eq("Energieabdeckung", weekStats.coverage.energyDays, 2);
-eq("Energiemittel nur aus erfassten Tagen", weekStats.energyAverage, 50);
-eq("Leere Tage erzeugen keine Nullwerte", weekStats.energySeries, [60, 40, null, null]);
-eq("SMA-Arbeitstage", weekStats.sma.workdays, 3);
-eq("Normalisierter SMA-Beitrag der Woche", weekStats.sma.contributionSum, 0.6);
-eq("Bewusster Unternehmer-Beitrag getrennt sichtbar",
-  weekStats.roles.find(role => role.name === "Unternehmer").conscious, 3);
-eq("Bilanz beschreibend gezählt", weekStats.balance.fulfilled, 1);
-eq("Gebete gezählt", weekStats.prayers.performed, 2);
-
-// Mehrere SMA-Aktivitäten am selben Datum ergeben genau einen Arbeitstag
-const doubleSma = L.buildPeriodStats(weekRange,
-  [day("2026-08-17", { activities: [smaAct, smaAct, smaAct] })],
-  { today: "2026-08-20", settings: { smaPlannedDaysPerWeek: 5 } });
-eq("Drei SMA-Aktivitäten an einem Tag = ein Arbeitstag", doubleSma.sma.workdays, 1);
-eq("Sie erhöhen den normalisierten Beitrag nicht mehrfach", doubleSma.sma.contributionSum, 0.2);
-eq("Die Detailansicht zeigt sie trotzdem vollständig", doubleSma.sma.activities, 3);
-
-// Monats- und Jahresaggregation
-const monthRange = L.periodRange("month", "2026-08-20");
-const monthEntries = L.datesBetween(monthRange.start, monthRange.end).map((date, index) =>
-  index % 2 === 0 ? day(date, { stateCheckins: [{ slot: "morning", energy: 50 + (index % 10), mood: 60 }] }) : emptyDay(date));
-const monthStats = L.buildPeriodStats(monthRange, monthEntries, { today: "2026-08-20", settings: {} });
-eq("Monat: vergangene Tage", monthStats.coverage.elapsedDays, 20);
-check("Monat: Energiemittel vorhanden", monthStats.energyAverage !== null);
-// Der 1.8.2026 ist ein Samstag, der 31.8. ein Montag – der Monat berührt sechs ISO-Wochen.
-eq("Monat berührt sechs ISO-Wochen", monthStats.weeks.length, 6);
-
-const yearStats = L.buildPeriodStats(L.periodRange("year", "2026-08-20"),
-  L.datesBetween("2026-01-01", "2026-12-31").map(date => emptyDay(date)),
-  { today: "2026-08-20", settings: {} });
-eq("Jahr: keine erfundenen Einträge", yearStats.coverage.storedDays, 0);
-eq("Jahr: vergangene Tage bis heute", yearStats.coverage.elapsedDays, 232);
-
-/* --------------------------------------------------------------------------
-   8. Abgeschlossene gegenüber laufender Woche
-   -------------------------------------------------------------------------- */
-
-const weeks = L.weeksInRange({ start: "2026-08-03", end: "2026-08-23" }, "2026-08-20");
-eq("Anzahl Wochen im Zeitraum", weeks.length, 3);
-eq("Frühere Wochen sind abgeschlossen", [weeks[0].completed, weeks[1].completed], [true, true]);
-eq("Die laufende Woche ist nicht abgeschlossen", weeks[2].completed, false);
-eq("Wochenschlüssel nach ISO", weeks.map(week => week.key), ["2026-W32", "2026-W33", "2026-W34"]);
-
-/* --------------------------------------------------------------------------
-   9. Unsichtbare Rollen
-   -------------------------------------------------------------------------- */
-
-const invisibleInput = [
-  { key: "2026-W32", completed: true, rolesWithContribution: ["Muslim", "Vitalist"], focus: { primary: "", secondary: "" } },
-  { key: "2026-W33", completed: true, rolesWithContribution: ["Muslim"], focus: { primary: "", secondary: "" } },
-  { key: "2026-W34", completed: false, rolesWithContribution: ["Familienmensch"], focus: { primary: "", secondary: "" } }
-];
-const invisible = L.invisibleRoles(invisibleInput, 2).map(item => item.name);
-check("Familienmensch gilt trotz laufender Woche als unsichtbar", invisible.includes("Familienmensch"), invisible.join(","));
-check("Muslim gilt nicht als unsichtbar", !invisible.includes("Muslim"));
-check("Vitalist gilt nicht als unsichtbar (Beitrag in W32)", !invisible.includes("Vitalist"));
-eq("Ohne genügend abgeschlossene Wochen keine Aussage",
-  L.invisibleRoles([invisibleInput[2]], 2), []);
-
-const suggestionItems = L.suggestFocusRoles(invisibleInput, 2);
-const suggestion = suggestionItems.map(item => item.name);
-check("Es wird überhaupt ein Fokus vorgeschlagen", suggestion.length > 0, suggestion.join(","));
-check("Vorschlag enthält höchstens zwei Rollen", suggestion.length <= 2, String(suggestion.length));
-check("Vorschlag enthält nur Rollen ohne jüngsten Beitrag",
-  suggestionItems.every(item => item.sinceContribution > 0), JSON.stringify(suggestionItems));
-check("Vorschlag enthält Muslim nicht (Beitrag in der letzten abgeschlossenen Woche)", !suggestion.includes("Muslim"));
-check("Familienmensch ist als unsichtbare Rolle erkannt", invisible.includes("Familienmensch"));
-
-/* --------------------------------------------------------------------------
-   10. Wochenfokus nach ISO-Kalenderwoche
-   -------------------------------------------------------------------------- */
-
-const focusSettings = L.normalizeSettings({
-  weekFocus: {
-    "2026-W33": { primary: "Muslim", secondary: "Wirt" },
-    "2026-W34": { primary: "Familienmensch", secondary: "Familienmensch" },
-    "kaputt": { primary: "Muslim" },
-    "2026-W35": { primary: "Gibtsnicht", secondary: "Absolvent" }
-  }
+const custom = L.normalizeProfile({
+  roles: [
+    { name: "Körper", emoji: "🧬", color: "#2EC4B6", activeDays: [2, 2, 9], goals: [{ title: "Laufen" }, { title: "" }] },
+    { name: "Körper", emoji: "🏃" }
+  ]
 });
-eq("Historische Woche behält ihre Auswahl", focusSettings.weekFocus["2026-W33"], { primary: "Muslim", secondary: "Wirt" });
-eq("Gleiche Rolle doppelt wird bereinigt", focusSettings.weekFocus["2026-W34"], { primary: "Familienmensch", secondary: "" });
-check("Ungültiger Wochenschlüssel wird verworfen", focusSettings.weekFocus["kaputt"] === undefined);
-eq("Unbekannte Rolle wird verworfen", focusSettings.weekFocus["2026-W35"], { primary: "", secondary: "Absolvent" });
-eq("weekFocusFor findet die Woche zum Datum", L.weekFocusFor(focusSettings, "2026-08-20").primary, "Familienmensch");
-eq("Woche ohne Fokus liefert leere Auswahl", L.weekFocusFor(focusSettings, "2026-06-01"), { primary: "", secondary: "" });
+equal("Gleichnamige Rollen bekommen eigene Kennungen", custom.roles.map(role => role.id), ["koerper", "koerper-2"]);
+equal("Wochentage werden entdoppelt und gefiltert", custom.roles[0].activeDays, [2]);
+equal("Leere Ziele fallen weg", custom.roles[0].goals.length, 1);
+equal("Die Textfarbe entsteht aus der Rollenfarbe", custom.roles[0].text, L.readableTextColor("#2EC4B6"));
+equal("Die Reihenfolge ist lückenlos", custom.roles.map(role => role.order), [0, 1]);
 
-/* --------------------------------------------------------------------------
-   11. Einstellungen
-   -------------------------------------------------------------------------- */
+const single = L.normalizeProfile({ roles: [{ name: "Solo" }] });
+equal("Bei genau einer Rolle ist sie immer die Rolle des Tages", L.rotationRoleId(single, "2026-09-11"), "solo");
+const rotation = L.normalizeProfile({ roles: [{ name: "A" }, { name: "B", activeDays: [5] }] });
+equal("Am passenden Wochentag greift die Rotation", L.rotationRoleId(rotation, "2026-09-11"), "b");
+equal("Ohne passenden Wochentag bleibt die Rolle offen", L.rotationRoleId(rotation, "2026-09-14"), "");
+const noRotation = L.normalizeProfile({ roles: [{ name: "A" }, { name: "B", activeDays: [5] }], settings: { roleRotation: false } });
+equal("Abgeschaltete Rotation schlägt nichts vor", L.rotationRoleId(noRotation, "2026-09-11"), "");
 
-eq("Standard: 5 geplante SMA-Tage", L.defaultSettings().smaPlannedDaysPerWeek, 5);
-eq("Standard: Wochenziel Nachholfasten 1", L.defaultSettings().fastingCatchUpWeeklyGoal, 1);
-eq("Standard: kein Wochenziel für freiwilliges Fasten", L.defaultSettings().fastingVoluntaryWeeklyGoal, 0);
-eq("Geplante Tage werden auf 0–7 begrenzt", L.normalizeSettings({ smaPlannedDaysPerWeek: 19 }).smaPlannedDaysPerWeek, 7);
-eq("Negative geplante Tage werden begrenzt", L.normalizeSettings({ smaPlannedDaysPerWeek: -3 }).smaPlannedDaysPerWeek, 0);
-eq("Unsinniger Wert fällt auf den Standard zurück", L.normalizeSettings({ smaPlannedDaysPerWeek: "viele" }).smaPlannedDaysPerWeek, 5);
-eq("Grundstand wird nie negativ", L.normalizeSettings({ fastingCatchUpBaseline: -5 }).fastingCatchUpBaseline, 0);
+check("Archivierte Rollen verschwinden aus dem Alltag",
+  L.activeRoles(L.normalizeProfile({ roles: [{ name: "Alt", archived: true }] })).length === 0);
+check("Mindestens eine Skala bildet immer den Modus",
+  L.modeScales(L.normalizeProfile({ scales: [{ label: "X", inMode: false }] })).length > 0);
+check("Ohne Skalen kehren die Grundskalen zurück",
+  L.normalizeProfile({ scales: [] }).scales.length === 2);
 
-/* --------------------------------------------------------------------------
-   12. Vereinfachte Bilanz
-   -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+section("Tracker");
 
-eq("Fünf Antwortmöglichkeiten", L.BALANCE_OUTCOMES.length, 5);
-eq("Reihenfolge der Antworten", L.BALANCE_OUTCOMES, ["fulfilled", "adapted", "deferred", "missed", "overextended"]);
-eq("Kurzbezeichnung Erfüllt", L.balanceOutcomeShort("fulfilled"), "Erfüllt");
-eq("Kurzbezeichnung Überdehnt", L.balanceOutcomeShort("overextended"), "Überdehnt");
-check("Kein Punktwert an der Bilanz", Object.values(L.ROLE_REFLECTION_META).every(meta => meta.score === undefined));
+const checklist = L.normalizeTracker({ label: "Medikamente", type: "checklist", items: [{ label: "Morgens" }, { label: "Abends" }] }, 0, []);
+equal("Checklistenpunkte bekommen Kennungen", checklist.items.map(item => item.id), ["morgens", "abends"]);
+equal("Der erste Zustand ist immer offen", checklist.states[0].id, "");
+equal("Ein leerer Checklistenwert ist je Punkt offen", L.emptyTrackerValue(checklist), { morgens: "", abends: "" });
+equal("Unbekannte Zustände fallen auf offen zurück",
+  L.normalizeTrackerValue(checklist, { morgens: "erfunden", abends: "done" }), { morgens: "", abends: "done" });
+check("Ein gesetzter Punkt zählt als Wert", L.trackerHasValue(checklist, { morgens: "done", abends: "" }));
+check("Eine leere Checkliste zählt nicht", !L.trackerHasValue(checklist, { morgens: "", abends: "" }));
 
-const balanceStats = L.buildPeriodStats(weekRange, [
-  day("2026-08-17", { roleplayBalance: { outcome: "fulfilled" } }),
-  day("2026-08-18", { roleplayBalance: { outcome: "missed" } }),
-  day("2026-08-19", { roleplayBalance: { outcome: "fulfilled" } })
-], { today: "2026-08-20", settings: {} });
-eq("Bilanz wird nur gezählt, nicht bewertet", [balanceStats.balance.fulfilled, balanceStats.balance.missed], [2, 1]);
+const counter = L.normalizeTracker({ label: "Wasser", type: "counter", step: 0.5, unit: "Liter", target: 2, decimals: 1 }, 0, []);
+equal("Zähler starten bei null", L.emptyTrackerValue(counter), 0);
+check("Null zählt beim Zähler nicht als Wert", !L.trackerHasValue(counter, 0));
+check("Ein positiver Zähler zählt", L.trackerHasValue(counter, 1.5));
 
-/* --------------------------------------------------------------------------
-   13. Empfindungssätze
-   -------------------------------------------------------------------------- */
+const choice = L.normalizeTracker({ label: "Schlaf", type: "choice", options: [{ label: "Gut", score: 90 }] }, 0, []);
+equal("Auswahloptionen bekommen Kennungen", choice.options[0].id, "gut");
+equal("Unbekannte Auswahl wird verworfen", L.normalizeTrackerValue(choice, "phantasie"), "");
+equal("Eine Auswahl ohne Optionen bekommt zwei Standardoptionen",
+  L.normalizeTracker({ label: "X", type: "choice" }, 0, []).options.length, 2);
 
-eq("Energie 0", L.energySentence(0), "Ich bin nahezu kraftlos.");
-eq("Energie 20", L.energySentence(20), "Ich bin nahezu kraftlos.");
-eq("Energie 25", L.energySentence(25), "Ich habe wenig Energie.");
-eq("Energie 40", L.energySentence(40), "Ich habe wenig Energie.");
-eq("Energie 45", L.energySentence(45), "Meine Kraft reicht für das Nötigste.");
-eq("Energie 60", L.energySentence(60), "Meine Kraft reicht für das Nötigste.");
-eq("Energie 65", L.energySentence(65), "Ich habe gute Energie.");
-eq("Energie 80", L.energySentence(80), "Ich habe gute Energie.");
-eq("Energie 85", L.energySentence(85), "Ich fühle mich voller Energie.");
-eq("Energie 100", L.energySentence(100), "Ich fühle mich voller Energie.");
-eq("Laune 0", L.moodSentence(0), "Mir geht es sehr schlecht.");
-eq("Laune 25", L.moodSentence(25), "Ich bin deutlich gedrückt.");
-eq("Laune 45", L.moodSentence(45), "Ich bin neutral.");
-eq("Laune 65", L.moodSentence(65), "Mir geht es gut.");
-eq("Laune 100", L.moodSentence(100), "Mir geht es sehr gut.");
+equal("Ja/Nein ist immer ein Wahrheitswert", L.normalizeTrackerValue(L.normalizeTracker({ label: "F", type: "toggle" }, 0, []), "ja"), true);
+equal("Text bleibt Text", L.normalizeTrackerValue(L.normalizeTracker({ label: "N", type: "text" }, 0, []), 42), "42");
 
-/* --------------------------------------------------------------------------
-   14. Report: Datenabdeckung, Sprache, genau ein Schritt
-   -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+section("Migration eines Bestands aus Version 6");
 
-const thinStats = L.buildPeriodStats(weekRange, [day("2026-08-17"), day("2026-08-18")], { today: "2026-08-20", settings: {} });
-const thinReport = L.buildReport(thinStats, []);
-check("Zu dünne Datenbasis erzeugt keine Interpretation", thinReport.insufficient);
-check("Zu dünne Datenbasis sagt das ausdrücklich",
-  thinReport.situation.some(line => line.includes("fehlen noch genügend Einträge")), thinReport.situation.join(" | "));
-eq("Keine Entwicklungen ohne Datenbasis", thinReport.developments, []);
-
-const richEntries = L.datesBetween("2026-08-01", "2026-08-20").map((date, index) => day(date, {
-  stateCheckins: [{ slot: "night", energy: null, mood: null, sleepQualityScore: index % 3 === 0 ? 1 : 5 },
-                  { slot: "morning", energy: index % 3 === 0 ? 78 : 42, mood: 60 }],
-  prayers: { Fajr: "Normal", Dhuhr: "Normal", "ʿAsr": "Normal" },
-  activities: [{ title: "SMA", role: "Unternehmer", size: "medium", context: "sma" }],
-  smaWorkday: true,
-  roleplayBalance: { outcome: index % 4 === 0 ? "missed" : "fulfilled" }
-}));
-const richStats = L.buildPeriodStats(L.periodRange("month", "2026-08-20"),
-  L.datesBetween("2026-08-01", "2026-08-31").map(date => richEntries.find(entry => entry.date === date) || emptyDay(date)),
-  { today: "2026-08-20", settings: { smaPlannedDaysPerWeek: 5 } });
-const richReport = L.buildReport(richStats, richEntries);
-
-check("Report wird bei ausreichender Basis erzeugt", !richReport.insufficient);
-check("Höchstens drei Entwicklungen", richReport.developments.length <= 3, String(richReport.developments.length));
-check("Genau ein nächster Schritt", typeof richReport.nextStep === "string" && richReport.nextStep.length > 0);
-check("Datenbasis wird ausgewiesen",
-  richReport.dataBasis.some(line => /Energie erfasst an \d+ von \d+ Tagen/.test(line)), richReport.dataBasis.join(" | "));
-check("Fehlende eigene Entwicklung wird trotz SMA sichtbar",
-  richReport.developments.some(line => line.includes("eigene Entwicklung")), richReport.developments.join(" | "));
-
-const allReportText = [...richReport.situation, ...richReport.developments, ...richReport.compass,
-  ...richReport.connections, richReport.nextStep].join(" ");
-[
-  "Du hast versagt", "undiszipliniert", "beweisen, dass", "Depression", "Diagnose",
-  "Erfolgsquote", "Sünde", "faul", "Versager"
-].forEach(forbidden => {
-  check(`Report enthält nicht „${forbidden}“`, !allReportText.includes(forbidden), allReportText.slice(0, 160));
-});
-check("Zusammenhänge werden nie als Ursache behauptet",
-  !richReport.connections.some(line => /verursacht|weil deine|Ursache dafür ist/.test(line)), richReport.connections.join(" | "));
-check("Zusammenhang wird sprachlich als Zusammenhang benannt",
-  richReport.connections.length === 0 || richReport.connections.some(line => /Zusammenhang|fehlen noch|Einschätzung/.test(line)),
-  richReport.connections.join(" | "));
-
-const pattern = L.sleepEnergyPattern(richEntries);
-check("Schlaf-Energie-Muster wird bei genügend Paaren erkannt", pattern !== null && pattern.pairs >= L.MIN_PAIRS_FOR_PATTERN);
-eq("Kein Muster bei zu wenigen Paaren", L.sleepEnergyPattern(richEntries.slice(0, 3)), null);
-
-/* --------------------------------------------------------------------------
-   15. KI-Export
-   -------------------------------------------------------------------------- */
-
-const exportEntries = [
-  day("2026-08-19", {
-    notes: "Ein sehr persönlicher Tagebucheintrag.",
-    gratitude1: "Dankbar für Zizo", gratitude2: "Dankbar für Ruhe",
-    dreams: "Ein Traum, den ich niemandem zeigen möchte.",
-    stateCheckins: [{ slot: "morning", energy: 70, mood: 65 }],
-    activities: [ownAct], smaWorkday: true, fasting: { type: "voluntary" },
-    roleplayBalance: { outcome: "fulfilled" }
-  })
-];
-
-const plain = L.buildAiExport(exportEntries, {});
-const plainText = JSON.stringify(plain);
-check("Standard: keine Tagesnotizen", !plainText.includes("Tagebucheintrag"));
-check("Standard: keine Dankbarkeitstexte", !plainText.includes("Zizo"));
-check("Standard: keine Traumtexte", !plainText.includes("niemandem zeigen"));
-eq("Standard: alle drei Freitextschalter aus", plain.freeTextIncluded, { notes: false, gratitude: false, dreams: false });
-eq("Standard-Zeitraum 30 Tage", plain.rangeDays, 30);
-check("Ausgeschlossene Felder werden benannt", plain.excludedFields.length === 3, plain.excludedFields.join(","));
-check("Strukturierte Daten sind enthalten", plain.days[0].energy === 70 && plain.days[0].smaWorkday === true);
-check("Aktivitätsgröße und Kontext sind enthalten",
-  plain.days[0].activities[0].size === "large" && plain.days[0].activities[0].context === "own");
-check("Fastenart ist enthalten", plain.days[0].fasting === "voluntary");
-
-const withText = L.buildAiExport(exportEntries, { includeNotes: true, includeGratitude: true, includeDreams: true, rangeDays: 90 });
-const withTextJson = JSON.stringify(withText);
-check("Nach bewusster Auswahl: Notizen enthalten", withTextJson.includes("Tagebucheintrag"));
-check("Nach bewusster Auswahl: Dankbarkeit enthalten", withTextJson.includes("Zizo"));
-check("Nach bewusster Auswahl: Träume enthalten", withTextJson.includes("niemandem zeigen"));
-eq("90-Tage-Auswahl wird übernommen", withText.rangeDays, 90);
-eq("Keine ausgeschlossenen Felder mehr", withText.excludedFields, []);
-
-check("Analyseauftrag ist automatisch enthalten", plain.prompt === L.AI_ANALYSIS_PROMPT && plain.prompt.length > 200);
-[
-  "Trenne klar zwischen dokumentierter Tatsache",
-  "keine medizinischen oder psychologischen Diagnosen",
-  "Erfinde keine Kausalität",
-  "Datenlücken",
-  "mehrere Wochen",
-  "höchstens drei",
-  "genau eine konkrete Handlungsempfehlung",
-  "nicht beschämend"
-].forEach(fragment => {
-  check(`Analyseauftrag verlangt: „${fragment}“`,
-    L.AI_ANALYSIS_PROMPT.toLowerCase().includes(fragment.toLowerCase()));
-});
-
-const text = L.aiExportToText(plain);
-check("Textfassung ist lesbar aufgebaut", text.includes("ROLEPLAY") && text.includes("Tagesdaten:"));
-check("Textfassung ohne Freitext im Standard", !text.includes("Tagebucheintrag"));
-check("Textfassung nennt ausgeschlossene Felder", text.includes("Bewusst NICHT enthalten"));
-
-/* --------------------------------------------------------------------------
-   16. Roundtrip: Export und Reimport verlieren nichts
-   -------------------------------------------------------------------------- */
-
-const roundtripDay = {
-  role: "Unternehmer",
-  activities: [smaAct, ownAct],
-  smaWorkday: true,
-  fasting: { type: "catchUp" },
-  ramadanDays: -12,
-  fastingCompleted: false,
-  roleplayBalance: { outcome: "adapted", detailOutcome: "adapted", detailKeys: ["scope"] },
-  streaks: { cannabisFree: { days: 413, broken: false, todayStatus: "" } },
-  notes: "Text"
+const legacyDay = {
+  role: "Muslim",
+  prayers: { Fajr: "Normal", Dhuhr: "Nicht gebetet", "ʿAsr": "", Maghrib: "", "ʿIschāʾ": "" },
+  sunnahPrayers: { Witr: "Verrichtet" },
+  water: 1500, steps: "8200",
+  sleepQualityScore: 1, dreamCategory: "pleasant", dreams: "Ein Traum",
+  mealCategories: { breakfast: "balanced", lunch: "", dinner: "", snack: "" },
+  breakfast: "Haferbrei",
+  gratitude1: "Gesundheit", gratitude2: "", allahName: "Ar-Rahmān",
+  ramadanDays: -12, fastingCompleted: true,
+  morningRoutineState: "done", eveningRoutine: true,
+  streaks: { smokeFree: { days: 42, broken: false, todayStatus: "" }, cannabisFree: { days: 7, broken: false, todayStatus: "protected" } },
+  activities: [
+    { title: "Gym", role: "Vitalist", template: "gym" },
+    { title: "SMA-Arbeitstag", role: "Unternehmer", template: "sma", isSma: true },
+    { title: "SMA-Arbeitstag", role: "Unternehmer", template: "sma", isSma: true },
+    { title: "Eigenes", role: "Yannick", template: "custom", weight: 1 }
+  ],
+  stateCheckins: [{ id: "a", slot: "morning", time: "08:00", energy: 55, mood: 70, taqwa: 65 }],
+  responsibilityMain: "Arbeit", notes: "Notiz"
 };
-const serialized = JSON.parse(JSON.stringify(roundtripDay));
-eq("Roundtrip: Aktivitäten unverändert", serialized.activities, roundtripDay.activities);
-eq("Roundtrip: Fastenart unverändert", L.normalizeFasting(serialized).type, "catchUp");
-eq("Roundtrip: alter Ramadanwert bleibt erhalten", serialized.ramadanDays, -12);
-eq("Roundtrip: SMA-Markierung bleibt erhalten", L.isSmaWorkday(serialized), true);
-eq("Roundtrip: Streak-Tage bleiben erhalten", serialized.streaks.cannabisFree.days, 413);
-eq("Roundtrip: Zähler unverändert", openCatchUp(12, [{ date: "x", stored: true, data: serialized }]), 11);
+const legacyReviews = [{ date: "2026-09-10", data: legacyDay }];
+const migrated = L.buildMigratedProfile(legacyReviews, { morning: { title: "Morgenroutine", items: [] } });
 
-const settingsRoundtrip = L.normalizeSettings(JSON.parse(JSON.stringify(L.normalizeSettings({
-  smaPlannedDaysPerWeek: 3, fastingCatchUpBaseline: 12, fastingCatchUpWeeklyGoal: 2,
-  fastingVoluntaryWeeklyGoal: 1, fastingMigrated: true,
-  weekFocus: { "2026-W34": { primary: "Wirt", secondary: "Muslim" } },
-  aiExport: { rangeDays: 90, includeNotes: true, includeGratitude: false, includeDreams: false }
-}))));
-eq("Einstellungs-Roundtrip: geplante Tage", settingsRoundtrip.smaPlannedDaysPerWeek, 3);
-eq("Einstellungs-Roundtrip: Grundstand", settingsRoundtrip.fastingCatchUpBaseline, 12);
-eq("Einstellungs-Roundtrip: Wochenfokus", settingsRoundtrip.weekFocus["2026-W34"], { primary: "Wirt", secondary: "Muslim" });
-eq("Einstellungs-Roundtrip: KI-Vorauswahl", settingsRoundtrip.aiExport,
-  { rangeDays: 90, includeNotes: true, includeGratitude: false, includeDreams: false });
+equal("Alle sieben Rollen werden übernommen", migrated.roles.length, 7);
+equal("Die Wochentagsrotation bleibt erhalten", migrated.roles.map(role => role.activeDays[0]), [1, 2, 3, 4, 5, 6, 0]);
+equal("Die dritte Skala entsteht aus der Gottesfurcht", migrated.scales.map(scale => scale.id), ["energy", "mood", "taqwa"]);
+equal("Die Gottesfurcht behält ihren Namen", migrated.scales[2].label, "Gottesfurcht");
+check("Sie bildet weiterhin den Modus mit", migrated.scales[2].inMode);
+check("Die Gebete werden zu einer Checkliste", migrated.trackers.some(tracker => tracker.id === "prayers" && tracker.type === "checklist"));
+equal("Die Gebetszustände bleiben unverändert",
+  L.findTracker(migrated, "prayers").states.map(state => state.id),
+  ["", "Normal", "Gemeinschaft", "Verspätet", "Nachgeholt", "Nicht gebetet"]);
+check("Wasser wird ein Zähler", L.findTracker(migrated, "water").type === "counter");
+check("Schritte werden eine Zahl", L.findTracker(migrated, "steps").type === "number");
+check("Schlafqualität wird eine Auswahl", L.findTracker(migrated, "sleepQuality").type === "choice");
+check("Dankbarkeit wird ein Textfeld", L.findTracker(migrated, "gratitude1").type === "text");
+check("Der Fastentag wird ein Schalter", L.findTracker(migrated, "fastingCompleted").type === "toggle");
+equal("Nur tatsächlich benutzte Streaks wandern mit", migrated.streaks.map(streak => streak.id).sort(), ["cannabisFree", "smokeFree"]);
+check("Die Aktivitätsvorlagen bleiben erhalten", migrated.activityTemplates.some(template => template.id === "sma" && template.dailyCap === 0.2));
+check("Das Onboarding entfällt für bestehende Nutzer", Boolean(migrated.onboardedAt));
 
-/* --------------------------------------------------------------------------
-   Ergebnis
-   -------------------------------------------------------------------------- */
+const emptyMigration = L.buildMigratedProfile([{ date: "2026-09-10", data: { stateCheckins: [{ slot: "morning", energy: 50, mood: 50 }] } }], {});
+equal("Ohne Gebete entsteht kein Gebetstracker", emptyMigration.trackers.filter(tracker => tracker.id === "prayers").length, 0);
+equal("Ohne Gottesfurcht bleibt es bei zwei Skalen", emptyMigration.scales.length, 2);
 
-console.log(`\ntest-logic.js: ${passed} Prüfungen bestanden, ${failures.length} fehlgeschlagen.`);
-if (failures.length) {
-  failures.forEach(failure => console.log(`  ✗ ${failure}`));
-  process.exit(1);
-}
+/* -------------------------------------------------------------------------- */
+section("Tageseintrag");
+
+const review = L.normalizeReview(legacyDay, "2026-09-10", migrated, { hasStored: true, today: "2026-09-11" });
+equal("Die Rolle wird über ihren Namen aufgelöst", review.roleId, "muslim");
+equal("Die Gebete landen in den Trackern", review.trackers.prayers.Fajr, "Normal");
+equal("Der Gebetszustand bleibt wortgleich", review.trackers.prayers.Dhuhr, "Nicht gebetet");
+equal("Milliliter werden zu Litern", review.trackers.water, 1.5);
+equal("Schritte bleiben eine Zahl", review.trackers.steps, 8200);
+equal("Die Schlafqualität behält ihren Schlüssel", review.trackers.sleepQuality, "1");
+equal("Die Mahlzeitkategorie wandert mit", review.trackers["meal-breakfast"], "balanced");
+equal("Die Mahlzeitnotiz wandert mit", review.trackers["mealNote-breakfast"], "Haferbrei");
+equal("Der Fastentag wandert mit", review.trackers.fastingCompleted, true);
+equal("Die Check-in-Werte liegen als Skalen vor", review.stateCheckins[0].scales, { energy: 55, mood: 70, taqwa: 65 });
+equal("Die alten Felder bleiben zusätzlich bestehen", review.stateCheckins[0].energy, 55);
+equal("Die Morgenroutine behält ihren Status", review.routineStates.morning, "done");
+equal("Die Abendroutine wird aus dem Wahrheitswert abgeleitet", review.routineStates.evening, "done");
+equal("Streakstände bleiben erhalten", review.streaks.smokeFree.days, 42);
+equal("Der frühere Status protected heißt jetzt held", review.streaks.cannabisFree.todayStatus, "held");
+equal("Aktivitäten bekommen Rollenkennungen", review.activities.map(item => item.roleId), ["vitalist", "unternehmer", "unternehmer", "ich-person"]);
+equal("Die Notiz bleibt erhalten", review.notes, "Notiz");
+
+const idempotent = L.normalizeReview(review, "2026-09-10", migrated, { hasStored: true, today: "2026-09-11" });
+equal("Erneutes Normalisieren ändert nichts mehr", idempotent.trackers, review.trackers);
+
+const fresh = L.normalizeReview({}, "2026-09-11", migrated, { hasStored: false, today: "2026-09-11", previousData: review });
+equal("Ein neuer Tag erbt die Rolle aus der Rotation", fresh.roleId, "muslim");
+equal("Ein neuer Tag zählt den Streak weiter", fresh.streaks.smokeFree.days, 43);
+
+const broken = L.normalizeReview({}, "2026-09-11", migrated, {
+  hasStored: false, today: "2026-09-11",
+  previousData: { streaks: { smokeFree: { days: 42, broken: true } } }
+});
+equal("Nach einer Unterbrechung beginnt der Streak neu", broken.streaks.smokeFree.days, 0);
+
+/* -------------------------------------------------------------------------- */
+section("Check-in-Ablauf");
+
+const dayWithTwo = { checkinStructure: 5, stateCheckins: [{ slot: "morning", time: "08:00", scales: {} }, { slot: "evening", time: "19:00", scales: {} }] };
+equal("Offen ist die erste Lücke in fester Reihenfolge", L.pendingSlotKey(dayWithTwo), "midday");
+equal("Der letzte Eintrag der Reihenfolge zählt", L.latestCheckin(dayWithTwo).slot, "evening");
+equal("Historische Tage kennen keinen Nachmittag", L.activeChronology({ checkinStructure: 4 }), L.LEGACY_CHECKIN_CHRONOLOGY);
+equal("Alle Phasen erfasst heißt: nichts offen",
+  L.pendingSlotKey({ checkinStructure: 5, stateCheckins: L.CHECKIN_CHRONOLOGY.map(slot => ({ slot, time: "12:00" })) }), null);
+equal("Das Tagesmittel einer Skala",
+  L.dailyScaleAverage({ stateCheckins: [{ scales: { energy: 40 } }, { scales: { energy: 60 } }] }, "energy"), 50);
+equal("Ohne Werte kein Mittel", L.dailyScaleAverage({ stateCheckins: [] }, "energy"), null);
+
+/* -------------------------------------------------------------------------- */
+section("Rollenpräsenz");
+
+const rows = L.activityPointRows(review, "2026-09-10", migrated);
+equal("Tagesbegrenzte Vorlagen ergeben genau eine Zeile", rows.filter(row => row.templateId === "sma").length, 1);
+equal("Die Tagesbegrenzung bestimmt den Wert", rows.find(row => row.templateId === "sma").points, 0.2);
+equal("Die Zeile weist beide Einträge aus", rows.find(row => row.templateId === "sma").entries, 2);
+equal("Die Tagessumme stimmt mit den Zeilen überein", L.dayPointTotal(review, "2026-09-10", migrated), L.roundPoints(2 + 0.2 + 1));
+
+const presence = L.rolePresence([{ date: "2026-09-10", data: review }], migrated);
+equal("Alle Rollen bleiben sichtbar", presence.items.length, 7);
+equal("Der Schwerpunkt ist die stärkste Rolle", presence.leader.roleId, "vitalist");
+equal("Nicht erfasste Rollen stehen auf null", presence.items.find(item => item.roleId === "wirt").points, 0);
+equal("formatPoints nutzt das Komma", L.formatPoints(1.5), "1,5");
+equal("Ganze Zahlen bleiben ohne Komma", L.formatPoints(2), "2");
+
+/* -------------------------------------------------------------------------- */
+section("Zeitraum und Rückblick");
+
+const dates = L.weekDates("2026-09-10");
+const entries = dates.map(date => ({
+  date,
+  data: date === "2026-09-10" ? review : L.normalizeReview({}, date, migrated, { hasStored: false, today: "2026-09-11" }),
+  stored: date === "2026-09-10"
+}));
+const stats = L.buildPeriodStats(dates, entries, migrated, { routineTitles: { morning: "Morgenroutine" } });
+equal("Der Zeitraum umfasst sieben Tage", stats.days, 7);
+equal("Nur gespeicherte Tage zählen als erfasst", stats.trackedDays, 1);
+equal("Die Check-ins werden gezählt", stats.checkinCount, 1);
+equal("Für jede Skala gibt es eine Reihe", stats.scales.length, 3);
+equal("Tage ohne Eintrag bleiben leer", stats.scales[0].perDay.filter(value => value === null).length, 6);
+check("Die Routine erscheint mit ihrem Titel", stats.routines.some(item => item.title === "Morgenroutine"));
+
+const insights = L.buildInsights(stats, migrated, { kind: "week" });
+check("Jeder Rückblicksatz ist einer Gruppe zugeordnet", insights.every(item => typeof item.group === "string" && item.group));
+check("Der erste Satz fasst den Zeitraum zusammen", insights[0].group === "overview");
+check("Die Routine wird mit Titel benannt", insights.some(item => item.text.includes("Morgenroutine")));
+check("Nicht erfasste Rollen werden benannt", insights.some(item => item.tone === "hint" && item.text.includes("Ohne Eintrag")));
+
+const emptyStats = L.buildPeriodStats(dates, dates.map(date => ({ date, data: L.normalizeReview({}, date, migrated, { hasStored: false }), stored: false })), migrated);
+const emptyInsights = L.buildInsights(emptyStats, migrated, { kind: "week" });
+equal("Ein leerer Zeitraum ergibt genau einen Hinweis", emptyInsights.length, 1);
+equal("Und zwar einen leeren", emptyInsights[0].tone, "empty");
+
+equal("trendDelta rechnet die Differenz", L.trendDelta(70, 60), 10);
+equal("Ohne Vorwert kein Trend", L.trendDelta(70, null), null);
+
+/* -------------------------------------------------------------------------- */
+section("Zusammenhänge");
+
+const sleepTracker = L.findTracker(migrated, "sleepQuality");
+const energyScaleObj = migrated.scales[0];
+const pairs = Array.from({ length: 8 }, (_, index) => ({
+  date: L.addDays("2026-09-01", index),
+  stored: true,
+  data: {
+    trackers: { sleepQuality: index % 2 ? "0" : "5" },
+    stateCheckins: [{ scales: { energy: index % 2 ? 80 : 40 } }]
+  }
+}));
+const pattern = L.choiceScalePattern(pairs, sleepTracker, energyScaleObj);
+check("Ein klarer Zusammenhang wird erkannt", pattern !== null);
+check("Und verständlich formuliert", pattern.text.includes("Energie"));
+equal("Zu wenige Paare ergeben keine Aussage", L.choiceScalePattern(pairs.slice(0, 3), sleepTracker, energyScaleObj), null);
+
+/* -------------------------------------------------------------------------- */
+section("Routinen");
+
+const routines = L.normalizeRoutines({
+  abend: { title: "Abendroutine", order: 1, items: [{ title: "Kerze", minutes: 300 }] },
+  morgen: { title: "Morgenroutine", order: 0, items: [{ title: "Wasser", minutes: 2 }, { title: "Sitzen", minutes: 5 }] }
+});
+equal("Die Reihenfolge entscheidet", L.orderedRoutineKeys(routines), ["morgen", "abend"]);
+equal("Die Dauer wird begrenzt", routines.abend.items[0].minutes, 180);
+equal("Die Gesamtdauer summiert die Schritte", L.routineMinutes(routines.morgen), 7);
+equal("Der Fortschritt zählt erledigt und übersprungen",
+  L.routineProgressOf(routines.morgen, { [routines.morgen.items[0].id]: "done", [routines.morgen.items[1].id]: "skipped" }),
+  { done: 1, resolved: 2, total: 2 });
+check("Bewusst ausgelassen zählt wie erledigt", L.isRoutineSettled("responsiblySkipped"));
+check("Nicht erledigt zählt nicht", !L.isRoutineSettled("missed"));
+
+/* -------------------------------------------------------------------------- */
+console.log(`\n${failures.length ? "FEHLGESCHLAGEN" : "BESTANDEN"} – ${passed} Prüfungen erfolgreich, ${failures.length} fehlgeschlagen.`);
+failures.forEach(failure => console.log(`  ✗ ${failure}`));
+process.exit(failures.length ? 1 : 0);
