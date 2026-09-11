@@ -1,11 +1,11 @@
 {
   "name": "ROLEPLAY",
   "short_name": "ROLEPLAY",
-  "description": "ROLEPLAY 8.0 – personalisierbare Rollen-PWA mit Eintrag, Rollen-Hub und Auswertung",
+  "description": "ROLEPLAY 6.3.1 – Tagesreflexion, Routinen und Rollenpräsenz – lokal auf dem Gerät",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f7fb",
-  "theme_color": "#f5f7fb",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "logo.jpeg",

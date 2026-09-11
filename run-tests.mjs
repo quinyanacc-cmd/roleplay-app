@@ -10,7 +10,7 @@ import { dirname, join } from "node:path";
 import vm from "node:vm";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const source = readFileSync(join(here, "..", "app.js"), "utf8");
+const source = readFileSync(join(here, "app.js"), "utf8");
 
 /* --- Minimale Umgebung ---------------------------------------------------- */
 function createStore() {
@@ -441,8 +441,36 @@ group("Tagesphasen in chronologischer Reihenfolge", () => {
     ] }, "2026-03-05", true).stateCheckins.map(entry => entry.slot), ["morning", "night"]);
 });
 
+
+group("Schlaf- und Traumtracking am Morgen", () => {
+  const migrated = app.normalizeReview({
+    role: "Vitalist",
+    stateCheckins: [
+      { id: "m", slot: "morning", time: "08:00", energy: 70, mood: 65, taqwa: 60 },
+      { id: "n", slot: "night", time: "22:00", energy: 55, mood: 50, taqwa: 60, sleepQualityScore: 2, dreamCategory: "pleasant", dreamNote: "Testtraum" }
+    ]
+  }, "2026-09-08", true);
+  const morning = migrated.stateCheckins.find(entry => entry.slot === "morning");
+  const night = migrated.stateCheckins.find(entry => entry.slot === "night");
+  equal("Schlafqualität wandert in den Morgen", morning.sleepQualityScore, 2);
+  equal("Traumdaten wandern in den Morgen", [morning.dreamCategory, morning.dreamNote], ["pleasant", "Testtraum"]);
+  equal("Nacht behält Zustandswerte, aber keine Schlafdaten", [night.energy, night.mood, night.sleepQualityScore], [55, 50, ""]);
+  equal("Kompatible Top-Level-Felder spiegeln den Morgen", [migrated.sleepQualityScore, migrated.dreamCategory, migrated.dreams], [2, "pleasant", "Testtraum"]);
+
+  const legacy = app.normalizeReview({ sleepQualityScore: 1, dreamCategory: "neutral", dreams: "Altbestand" }, "2026-09-07", true);
+  const legacyMorning = legacy.stateCheckins.find(entry => entry.slot === "morning");
+  equal("Alte Schlafdaten erzeugen einen Morgen-Check-in", [legacyMorning.slot, legacyMorning.sleepQualityScore, legacyMorning.dreamNote], ["morning", 1, "Altbestand"]);
+});
+
+group("Höherer Wochenliniengraph", () => {
+  const svg = app.buildWeeklyTrendChart(["Mo", "Di"], [
+    { label: "Energie", className: "energy", values: [60, 70] }
+  ]);
+  equal("SVG nutzt die neue Höhe von 380", svg.includes('viewBox="0 0 440 380"'), true);
+});
+
 group("Wochenrückblick ohne Gebetslinie", () => {
-  const source = readFileSync(join(here, "..", "app.js"), "utf8");
+  const source = readFileSync(join(here, "app.js"), "utf8");
   equal("Der Liniengraph führt keine Gebetsserie mehr", /className: "prayers"/.test(source), false);
   equal("prayerPercent wird nicht mehr berechnet", /prayerPercent/.test(source), false);
   equal("Das SVG-Label nennt nur die drei Zustandswerte",
